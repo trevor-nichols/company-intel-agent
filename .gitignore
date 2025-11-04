@@ -1,0 +1,66 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+**/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+*.log*
+# next.js
+/.next/
+/.turbo/
+/out/
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+packages/**/src/**/*.js
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts
+packages/**/src/**/*.d.ts.map
+lib/core/db/.generated/
+lib/core/db/schemas/**/*.js
+lib/integrations/payments/**/*.js
+lib/integrations/payments/**/*.js.map
+lib/integrations/payments/**/*.d.ts
+lib/integrations/payments/**/*.d.ts.map
+lib/core/**/*.js
+lib/core/**/*.d.ts
+lib/core/**/*.d.ts.map
+
+# tmp directories
+tmp/
+**/tmp/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env.local
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.vscode
+
+# Docker
+postgres_data/
+.env*.local
+__pycache__/*
+*/__pycache__
+# Sentry Config File
+.env.sentry-build-plugin
+
+.mcp.json
+.claude/scripts/

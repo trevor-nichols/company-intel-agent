@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "allowJs": false,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "dist",
+    "src/**/*.stories.ts",
+    "src/**/*.stories.tsx",
+    "src/storybook/**/*"
+  ]
+}

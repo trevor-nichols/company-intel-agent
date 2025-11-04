@@ -1,0 +1,1 @@
+export { RunIntelForm } from './RunIntelForm';

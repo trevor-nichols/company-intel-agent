@@ -403,9 +403,10 @@ async function performSiteIntel(
         error: error as Error,
         durationMs,
       });
-      log.error('site-intel:extract:error', error instanceof Error ? error : undefined, {
+      log.error('site-intel:extract:error', {
         url: selection.url,
         durationMs,
+        error: error instanceof Error ? { name: error.name, message: error.message } : error ?? null,
       });
     }
   }

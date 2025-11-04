@@ -51,7 +51,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 .vscode
 
 # Docker
@@ -64,6 +63,3 @@ __pycache__/*
 
 .mcp.json
 .claude/scripts/
-
-# Documentation (local)
-docs/

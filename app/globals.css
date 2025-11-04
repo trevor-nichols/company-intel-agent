@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 33% 99%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 222 89% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 222 47% 20%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 217 16% 46%;
+  --accent: 220 14% 94%;
+  --accent-foreground: 222 47% 20%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 33% 99%;
+  --border: 216 16% 88%;
+  --input: 216 16% 88%;
+  --ring: 222 89% 56%;
+  --radius: 1rem;
+}
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 13%;
+  --secondary: 217 32% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 32% 20%;
+  --muted-foreground: 215 20% 72%;
+  --accent: 217 32% 23%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 32% 24%;
+  --input: 217 32% 24%;
+  --ring: 224 76% 48%;
+  --radius: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .shimmering-text {
+    @apply relative overflow-hidden;
+    background: linear-gradient(90deg, hsl(var(--muted-foreground) / 0.3) 0%, hsl(var(--muted-foreground) / 0.7) 50%, hsl(var(--muted-foreground) / 0.3) 100%);
+    background-size: 200% auto;
+    animation: shimmer 2.5s linear infinite;
+  }
+}

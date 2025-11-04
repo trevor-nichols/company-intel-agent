@@ -165,6 +165,10 @@ function normaliseStructuredProfileSummary(value: unknown): CompanyIntelSnapshot
   } satisfies CompanyIntelSnapshotStructuredProfileSummary;
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
 export function normaliseSnapshotSummaries(value: unknown): CompanyIntelSnapshotSummaries | null {
   if (!value || typeof value !== 'object') {
     return null;
@@ -354,50 +358,64 @@ function toScrapeRecords(raw: unknown): CompanyIntelScrapeRecord[] {
   return records;
 }
 
-export function toCompanyProfile(raw: any): CompanyProfile {
+export function toCompanyProfile(raw: unknown): CompanyProfile {
+  const record = asRecord(raw);
+  const createdAt = parseDate(record.createdAt as string | Date | null | undefined) ?? new Date();
+  const updatedAt = parseDate(record.updatedAt as string | Date | null | undefined) ?? new Date();
+  const lastRefreshedAt = parseDate(record.lastRefreshedAt as string | Date | null | undefined);
+  const status = typeof record.status === 'string' ? (record.status as CompanyProfileStatus) : 'pending';
+
   return {
-    id: Number(raw.id),
-    teamId: Number(raw.teamId),
-    domain: typeof raw.domain === 'string' ? raw.domain : raw.domain ?? null,
-    status: (raw.status as CompanyProfileStatus) ?? 'pending',
-    companyName: typeof raw.companyName === 'string' ? raw.companyName : null,
-    tagline: typeof raw.tagline === 'string' ? raw.tagline : null,
-    overview: typeof raw.overview === 'string' ? raw.overview : null,
-    valueProps: normaliseStringArray(raw.valueProps),
-    keyOfferings: normaliseKeyOfferings(raw.keyOfferings),
-    primaryIndustries: normaliseStringArray(raw.primaryIndustries),
-    faviconUrl: typeof raw.faviconUrl === 'string' ? raw.faviconUrl : null,
-    lastSnapshotId: typeof raw.lastSnapshotId === 'number' ? raw.lastSnapshotId : raw.lastSnapshotId ?? null,
-    lastRefreshedAt: parseDate(raw.lastRefreshedAt),
-    lastError: typeof raw.lastError === 'string' ? raw.lastError : null,
-    createdAt: parseDate(raw.createdAt) ?? new Date(),
-    updatedAt: parseDate(raw.updatedAt) ?? new Date(),
+    id: Number(record.id),
+    teamId: Number(record.teamId),
+    domain: typeof record.domain === 'string' ? record.domain : null,
+    status,
+    companyName: typeof record.companyName === 'string' ? record.companyName : null,
+    tagline: typeof record.tagline === 'string' ? record.tagline : null,
+    overview: typeof record.overview === 'string' ? record.overview : null,
+    valueProps: normaliseStringArray(record.valueProps),
+    keyOfferings: normaliseKeyOfferings(record.keyOfferings),
+    primaryIndustries: normaliseStringArray(record.primaryIndustries),
+    faviconUrl: typeof record.faviconUrl === 'string' ? record.faviconUrl : null,
+    lastSnapshotId: typeof record.lastSnapshotId === 'number' ? record.lastSnapshotId : null,
+    lastRefreshedAt,
+    lastError: typeof record.lastError === 'string' ? record.lastError : null,
+    createdAt,
+    updatedAt,
   };
 }
 
-function toCompanyProfileSnapshot(raw: any): CompanyProfileSnapshot {
+function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
+  const record = asRecord(raw);
+  const rawScrapesInput = (record.rawScrapes ?? record.raw_scrapes) as unknown;
+  const createdAt = parseDate(record.createdAt as string | Date | null | undefined) ?? new Date();
+  const completedAt = parseDate(record.completedAt as string | Date | null | undefined);
+  const initiatedCandidate = record.initiatedByUserId ?? record.initiated_by_user_id;
+  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'pending';
+
   return {
-    id: Number(raw.id),
-    teamId: Number(raw.teamId),
-    domain: typeof raw.domain === 'string' ? raw.domain : raw.domain ?? null,
-    status: (raw.status as CompanyProfileSnapshotStatus) ?? 'pending',
-    selectedUrls: normaliseStringArray(raw.selectedUrls),
-    mapPayload: raw.mapPayload ?? null,
-    summaries: normaliseSnapshotSummaries(raw.summaries ?? raw.summary),
-    rawScrapes: toScrapeRecords(raw.rawScrapes ?? raw.raw_scrapes),
-    initiatedByUserId: typeof raw.initiatedByUserId === 'number' ? raw.initiatedByUserId : raw.initiatedByUserId ?? null,
-    error: typeof raw.error === 'string' ? raw.error : null,
-    createdAt: parseDate(raw.createdAt) ?? new Date(),
-    completedAt: parseDate(raw.completedAt),
+    id: Number(record.id),
+    teamId: Number(record.teamId),
+    domain: typeof record.domain === 'string' ? record.domain : null,
+    status,
+    selectedUrls: normaliseStringArray(record.selectedUrls),
+    mapPayload: record.mapPayload ?? null,
+    summaries: normaliseSnapshotSummaries(record.summaries ?? record.summary),
+    rawScrapes: toScrapeRecords(rawScrapesInput),
+    initiatedByUserId: typeof initiatedCandidate === 'number' ? initiatedCandidate : null,
+    error: typeof record.error === 'string' ? record.error : null,
+    createdAt,
+    completedAt,
   };
 }
 
-export function toCompanyIntelData(payload: any): CompanyIntelData {
-  const profile = payload?.profile ? toCompanyProfile(payload.profile) : null;
-  const snapshotsArray = Array.isArray(payload?.snapshots) ? payload.snapshots : [];
+export function toCompanyIntelData(payload: unknown): CompanyIntelData {
+  const record = asRecord(payload);
+  const profileRaw = record.profile ?? null;
+  const snapshotsArray = Array.isArray(record.snapshots) ? (record.snapshots as unknown[]) : [];
 
   return {
-    profile,
+    profile: profileRaw ? toCompanyProfile(profileRaw) : null,
     snapshots: snapshotsArray.map(toCompanyProfileSnapshot),
   };
 }
@@ -440,14 +458,16 @@ function toSelections(raw: unknown): CompanyIntelSelection[] {
   return selections;
 }
 
-export function toTriggerResult(payload: any) {
+export function toTriggerResult(payload: unknown) {
+  const record = asRecord(payload);
+  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'pending';
   return {
-    snapshotId: Number(payload.snapshotId),
-    teamId: Number(payload.teamId),
-    status: payload.status as CompanyProfileSnapshotStatus,
-    selections: toSelections(payload.selections),
-    totalLinksMapped: Number(payload.totalLinksMapped ?? 0),
-    successfulPages: Number(payload.successfulPages ?? 0),
-    failedPages: Number(payload.failedPages ?? 0),
+    snapshotId: Number(record.snapshotId),
+    teamId: Number(record.teamId),
+    status,
+    selections: toSelections(record.selections),
+    totalLinksMapped: Number(record.totalLinksMapped ?? 0),
+    successfulPages: Number(record.successfulPages ?? 0),
+    failedPages: Number(record.failedPages ?? 0),
   };
 }

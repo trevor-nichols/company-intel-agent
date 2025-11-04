@@ -4,6 +4,7 @@
 
 import { logger as defaultLogger } from '@agenai/logging';
 import { zodTextFormat } from 'openai/helpers/zod';
+import type { ResponseCreateParams } from 'openai/resources/responses/responses';
 
 import { resolveOpenAIResponses, type OpenAIClientLike } from '../shared/openai';
 
@@ -62,7 +63,7 @@ export async function generateCompanyOverview(
 
   const model = params.model ?? 'gpt-5';
 
-  const requestPayload = {
+  const requestPayload: ResponseCreateParams = {
     model,
     input: [
       {
@@ -80,7 +81,7 @@ export async function generateCompanyOverview(
     reasoning: {
       summary: 'auto',
     },
-  } as const;
+  };
 
   const shouldStream = typeof responsesClient.stream === 'function' && typeof dependencies.onDelta === 'function';
 
@@ -88,9 +89,14 @@ export async function generateCompanyOverview(
 
   const response = shouldStream
     ? await (async () => {
-        const runner = responsesClient.stream!(requestPayload);
+        const streamPayload: ResponseCreateParams = {
+          ...requestPayload,
+          stream: true,
+        };
+        const runner = responsesClient.stream!(streamPayload);
 
-        runner.on?.('response.output_text.delta', (event: { delta?: unknown; snapshot?: unknown }) => {
+        runner.on?.('response.output_text.delta', (rawEvent: unknown) => {
+          const event = rawEvent as { delta?: unknown; snapshot?: unknown };
           const delta = typeof event.delta === 'string' ? event.delta : undefined;
           if (!delta || delta.length === 0) {
             return;
@@ -114,7 +120,8 @@ export async function generateCompanyOverview(
           dependencies.onDelta?.({ delta, snapshot: snapshotText ?? null, parsed });
         });
 
-        runner.on?.('response.reasoning_summary_text.delta', (event: { delta?: unknown; snapshot?: unknown }) => {
+        runner.on?.('response.reasoning_summary_text.delta', (rawEvent: unknown) => {
+          const event = rawEvent as { delta?: unknown; snapshot?: unknown };
           const delta = typeof event.delta === 'string' ? event.delta : undefined;
           if (!delta || delta.length === 0) {
             return;
@@ -124,8 +131,11 @@ export async function generateCompanyOverview(
           dependencies.onReasoningDelta?.({ delta, snapshot: snapshotText ?? null });
         });
 
-        runner.on?.('response.error', (event: { error?: unknown }) => {
-          log.error('company-intel:overview:stream-error', undefined, {
+        type StreamOn = NonNullable<typeof runner.on>;
+        const streamErrorEvent = 'response.error' as Parameters<StreamOn>[0];
+        runner.on?.(streamErrorEvent, (rawEvent: unknown) => {
+          const event = rawEvent as { error?: unknown };
+          log.error('company-intel:overview:stream-error', {
             domain: params.domain,
             model,
             error: event?.error ?? null,
@@ -138,7 +148,7 @@ export async function generateCompanyOverview(
 
   const parsed = response.output_parsed;
   if (!parsed) {
-    log.error('company-intel:overview:parse-missing', undefined, {
+    log.error('company-intel:overview:parse-missing', {
       domain: params.domain,
       model,
       responseId: response.id,

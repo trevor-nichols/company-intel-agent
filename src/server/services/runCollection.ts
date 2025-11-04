@@ -535,9 +535,10 @@ export async function runCompanyIntelCollection(
     });
 
     const err = error instanceof Error ? error : new Error(message);
-    log.error('site-intel:persistence:failure', err, {
+    log.error('site-intel:persistence:failure', {
       teamId: teamId.toString(),
       snapshotId: snapshot.id,
+      error: { name: err.name, message: err.message },
     });
 
     emitEvent({

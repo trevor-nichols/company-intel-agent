@@ -1,0 +1,106 @@
+// ------------------------------------------------------------------------------------------------
+//                bootstrap.ts - Factory helpers for constructing the Company Intel server runtime
+// ------------------------------------------------------------------------------------------------
+
+import { getEnvVar } from '@agenai/config';
+import { logger as defaultLogger } from '@agenai/logging';
+
+import { createCompanyIntelServer } from './server';
+import type { CompanyIntelServer } from './bridge';
+import type { CompanyIntelPersistence } from './services/persistence';
+import { createOpenAIClient } from './agents/openai/client';
+import { createTavilyClient, type TavilyClient } from './tavily/tavily';
+import type { OpenAIClientLike } from './agents/shared/openai';
+import { createMemoryPersistence, createRedisPersistence } from './persistence';
+
+const DEFAULT_STRUCTURED_MODEL = 'gpt-4.1-mini';
+const DEFAULT_OVERVIEW_MODEL = 'gpt-4.1-mini';
+
+export interface CompanyIntelBootstrapOverrides {
+  readonly persistence?: CompanyIntelPersistence;
+  readonly redisUrl?: string | null;
+  readonly openAIClient?: OpenAIClientLike;
+  readonly tavilyClient?: TavilyClient;
+  readonly logger?: typeof defaultLogger;
+  readonly structuredOutputModel?: string;
+  readonly overviewModel?: string;
+}
+
+export interface CompanyIntelEnvironment {
+  readonly server: CompanyIntelServer;
+  readonly persistence: CompanyIntelPersistence;
+}
+
+let cachedEnvironment: CompanyIntelEnvironment | null = null;
+
+function resolvePersistence(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): CompanyIntelPersistence {
+  if (overrides.persistence) {
+    return overrides.persistence;
+  }
+
+  const redisUrl = overrides.redisUrl ?? getEnvVar('REDIS_URL');
+  if (redisUrl) {
+    return createRedisPersistence({ url: redisUrl, logger: log });
+  }
+
+  return createMemoryPersistence({ logger: log });
+}
+
+function resolveOpenAI(overrides: CompanyIntelBootstrapOverrides): OpenAIClientLike {
+  if (overrides.openAIClient) {
+    return overrides.openAIClient;
+  }
+  const { client } = createOpenAIClient();
+  return client;
+}
+
+function resolveTavily(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): TavilyClient {
+  if (overrides.tavilyClient) {
+    return overrides.tavilyClient;
+  }
+  return createTavilyClient({ logger: log });
+}
+
+function resolveStructuredModel(overrides: CompanyIntelBootstrapOverrides): string {
+  return overrides.structuredOutputModel ?? getEnvVar('OPENAI_MODEL_STRUCTURED') ?? DEFAULT_STRUCTURED_MODEL;
+}
+
+function resolveOverviewModel(overrides: CompanyIntelBootstrapOverrides): string {
+  return overrides.overviewModel ?? getEnvVar('OPENAI_MODEL_OVERVIEW') ?? DEFAULT_OVERVIEW_MODEL;
+}
+
+export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
+  const log = overrides.logger ?? defaultLogger;
+  const persistence = resolvePersistence(overrides, log);
+  const openAI = resolveOpenAI(overrides);
+  const tavily = resolveTavily(overrides, log);
+  const structuredOutputModel = resolveStructuredModel(overrides);
+  const overviewModel = resolveOverviewModel(overrides);
+
+  const server = createCompanyIntelServer({
+    tavily,
+    openAI,
+    persistence,
+    logger: log,
+    structuredOutputModel,
+    overviewModel,
+  });
+
+  return { server, persistence } satisfies CompanyIntelEnvironment;
+}
+
+export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
+  if (!cachedEnvironment && Object.keys(overrides).length === 0) {
+    cachedEnvironment = createCompanyIntelEnvironment();
+  }
+
+  if (cachedEnvironment && Object.keys(overrides).length === 0) {
+    return cachedEnvironment;
+  }
+
+  return createCompanyIntelEnvironment(overrides);
+}
+
+export function resetCompanyIntelEnvironment(): void {
+  cachedEnvironment = null;
+}

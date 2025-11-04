@@ -1,0 +1,6 @@
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - gitleaks-secret-scanner
+  - msw
+  - unrs-resolver

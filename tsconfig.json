@@ -1,20 +1,63 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true,
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2022"
+    ],
     "allowJs": false,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "jsx": "react-jsx"
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "types": [
+      "node"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@app/*": [
+        "app/*"
+      ],
+      "@agenai/logging": [
+        "src/vendor/logging.ts"
+      ],
+      "@agenai/config": [
+        "src/vendor/config.ts"
+      ],
+      "@agenai/ui": [
+        "src/vendor/ui/index.ts"
+      ],
+      "@agenai/ui/*": [
+        "src/vendor/ui/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["src/**/*"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
   "exclude": [
-    "dist",
-    "src/**/*.stories.ts",
-    "src/**/*.stories.tsx",
-    "src/storybook/**/*"
+    "node_modules",
+    "dist"
   ]
 }

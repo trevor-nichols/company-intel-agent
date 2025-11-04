@@ -4,6 +4,7 @@
 
 import { logger as defaultLogger } from '@agenai/logging';
 import { zodTextFormat } from 'openai/helpers/zod';
+import type { ResponseCreateParams } from 'openai/resources/responses/responses';
 
 import { resolveOpenAIResponses, type OpenAIClientLike } from '../shared/openai';
 
@@ -65,7 +66,7 @@ export async function generateStructuredCompanyProfile(
 
   const model = params.model ?? 'gpt-5';
 
-  const requestPayload = {
+  const requestPayload: ResponseCreateParams = {
     model,
     input: [
       {
@@ -83,7 +84,7 @@ export async function generateStructuredCompanyProfile(
     reasoning: {
       summary: 'auto',
     },
-  } as const;
+  };
 
   const shouldStream = typeof responsesClient.stream === 'function' && typeof dependencies.onDelta === 'function';
 
@@ -91,9 +92,14 @@ export async function generateStructuredCompanyProfile(
 
   const response = shouldStream
     ? await (async () => {
-        const runner = responsesClient.stream!(requestPayload);
+        const streamPayload: ResponseCreateParams = {
+          ...requestPayload,
+          stream: true,
+        };
+        const runner = responsesClient.stream!(streamPayload);
 
-        runner.on?.('response.output_text.delta', (event: { readonly delta?: unknown; readonly snapshot?: unknown }) => {
+        runner.on?.('response.output_text.delta', (rawEvent: unknown) => {
+          const event = rawEvent as { readonly delta?: unknown; readonly snapshot?: unknown };
           const delta = typeof event.delta === 'string' ? event.delta : undefined;
           if (!delta || delta.length === 0) {
             return;
@@ -122,7 +128,8 @@ export async function generateStructuredCompanyProfile(
           });
         });
 
-        runner.on?.('response.reasoning_summary_text.delta', (event: { readonly delta?: unknown; readonly snapshot?: unknown }) => {
+        runner.on?.('response.reasoning_summary_text.delta', (rawEvent: unknown) => {
+          const event = rawEvent as { readonly delta?: unknown; readonly snapshot?: unknown };
           const delta = typeof event.delta === 'string' ? event.delta : undefined;
           if (!delta || delta.length === 0) {
             return;
@@ -135,8 +142,11 @@ export async function generateStructuredCompanyProfile(
           });
         });
 
-        runner.on?.('response.error', (event: { readonly error?: unknown }) => {
-          log.error('company-intel:structured:stream-error', undefined, {
+        type StreamOn = NonNullable<typeof runner.on>;
+        const streamErrorEvent = 'response.error' as Parameters<StreamOn>[0];
+        runner.on?.(streamErrorEvent, (rawEvent: unknown) => {
+          const event = rawEvent as { readonly error?: unknown };
+          log.error('company-intel:structured:stream-error', {
             domain: params.domain,
             model,
             error: event?.error ?? null,
@@ -149,7 +159,7 @@ export async function generateStructuredCompanyProfile(
 
   const parsed = response.output_parsed;
   if (!parsed) {
-    log.error('company-intel:structured-output:parse-missing', undefined, {
+    log.error('company-intel:structured-output:parse-missing', {
       domain: params.domain,
       model,
       responseId: response.id,

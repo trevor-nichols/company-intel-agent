@@ -164,9 +164,10 @@ export function createTavilyClient(config: TavilyClientConfig = {}): TavilyClien
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      log.error('tavily:request:error', error instanceof Error ? error : undefined, {
+      log.error('tavily:request:error', {
         path,
         url: target,
+        error: error instanceof Error ? { name: error.name, message: error.message } : error ?? null,
       });
       throw new TavilyClientError('Failed to reach Tavily API', 0, error);
     }
@@ -177,17 +178,18 @@ export function createTavilyClient(config: TavilyClientConfig = {}): TavilyClien
       try {
         json = JSON.parse(text);
       } catch (error) {
-        log.error('tavily:response:parse-error', error instanceof Error ? error : undefined, {
+        log.error('tavily:response:parse-error', {
           path,
           status: response.status,
           textSnippet: text.slice(0, 512),
+          error: error instanceof Error ? { name: error.name, message: error.message } : error ?? null,
         });
         throw new TavilyClientError('Failed to parse Tavily response', response.status, text);
       }
     }
 
     if (!response.ok) {
-      log.error('tavily:response:http-error', undefined, {
+      log.error('tavily:response:http-error', {
         path,
         status: response.status,
         payload: json,

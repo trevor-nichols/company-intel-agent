@@ -345,7 +345,7 @@ You can upload multiple files, each less than 10 MB. The total content limit acr
 
 **Supported models**
 
-Only models that support both text and image inputs, such as gpt-4o, gpt-4o-mini, or o1, can accept PDF files as input. [Check model features here](/docs/models).
+Only models that support both text and image inputs, such as gpt-5, gpt-5-mini, or o1, can accept PDF files as input. [Check model features here](/docs/models).
 
 **File upload purpose**
 

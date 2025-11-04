@@ -23,25 +23,24 @@
     "types": [
       "node"
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
       "@app/*": [
-        "app/*"
+        "./app/*"
       ],
       "@agenai/logging": [
-        "src/vendor/logging.ts"
+        "./src/vendor/logging.ts"
       ],
       "@agenai/config": [
-        "src/vendor/config.ts"
+        "./src/vendor/config.ts"
       ],
       "@agenai/ui": [
-        "src/vendor/ui/index.ts"
+        "./src/vendor/ui/index.ts"
       ],
       "@agenai/ui/*": [
-        "src/vendor/ui/*"
+        "./src/vendor/ui/*"
       ]
     },
     "plugins": [

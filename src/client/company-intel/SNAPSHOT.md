@@ -1,6 +1,6 @@
 .
-├── CompanyIntelPage.stories.tsx     # Storybook stories for the main company intel page.
-├── CompanyIntelPage.tsx             # Main component that assembles the company intel UI.
+├── CompanyIntelPanel.stories.tsx    # Storybook stories for the main company intel panel.
+├── CompanyIntelPanel.tsx            # Main component that assembles the company intel UI.
 ├── components                       # Contains all UI components for the Company Intel feature.
 │   ├── Common                     # Small, reusable components shared across the feature.
 │   │   ├── EmptyPlaceholder.tsx # A component to display a message in an empty state.

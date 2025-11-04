@@ -728,7 +728,7 @@ formatted_results = format_results(results.data)
 '\n'.join('\n'.join(c.text) for c in result.content for result in results.data)
 
 completion = client.chat.completions.create(
-    model="gpt-4.1",
+    model="gpt-5",
     messages=[
         {
             "role": "developer",
@@ -750,7 +750,7 @@ const formattedResults = formatResults(results.data);
 const textSources = results.data.map(result => result.content.map(c => c.text).join('\n')).join('\n');
 
 const completion = await client.chat.completions.create({
-    model: "gpt-4.1",
+    model: "gpt-5",
     messages: [
         {
             role: "developer",

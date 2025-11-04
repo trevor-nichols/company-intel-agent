@@ -33,7 +33,7 @@ flowchart LR
 
 * React Query hooks call the API; UI shows streaming draft & saved snapshots.
 
-**API (App Router):** `app/api/protected/onboarding/company-intel/**`
+**API (App Router):** `app/api/company-intel/**`
 
 * GET profile/snapshots, POST preview, POST trigger (SSE), GET export PDF.
 
@@ -57,23 +57,23 @@ flowchart LR
 
 ### 4.1 Endpoints
 
-* `GET /api/protected/onboarding/company-intel`
+* `GET /api/company-intel`
   → `{ data: { profile: CompanyProfile|null, snapshots: CompanyProfileSnapshot[] } }`
 
-* `PATCH /api/protected/onboarding/company-intel`
+* `PATCH /api/company-intel`
   Body subset of: `{ overview?, companyName?, tagline?, primaryIndustries?, valueProps?, keyOfferings? }`
   → `{ data: CompanyProfile }`
 
-* `POST /api/protected/onboarding/company-intel/preview`
+* `POST /api/company-intel/preview`
   Body: `{ domain: string, options? }`
   → `{ data: CompanyIntelPreviewResult }`
 
-* `POST /api/protected/onboarding/company-intel`
+* `POST /api/company-intel`
 
   * If `Accept: text/event-stream` → **SSE stream** (see 4.2) then `[DONE]`
   * Else → `{ data: TriggerCompanyIntelResult }`
 
-* `GET /api/protected/onboarding/company-intel/snapshots/:id/export`
+* `GET /api/company-intel/snapshots/:id/export`
   → `application/pdf` with `Content-Disposition: attachment; filename=...`
 
 ### 4.2 SSE events (each frame = `data: <json>\n\n`)
@@ -193,8 +193,8 @@ type CompanyProfileSnapshot = {
 ```
 OPENAI_API_KEY=...
 TAVILY_API_KEY=...
-OPENAI_MODEL_STRUCTURED=gpt-4.1-mini
-OPENAI_MODEL_OVERVIEW=gpt-4.1-mini
+OPENAI_MODEL_STRUCTURED=gpt-5
+OPENAI_MODEL_OVERVIEW=gpt-5
 REDIS_URL=
 ALLOW_ORIGINS=http://localhost:3000
 ```
@@ -270,7 +270,7 @@ import { CompanyIntelClientProvider, CompanyIntelPanel } from '@/client/company-
 export default function Page(){
   return (
     <main className="p-6">
-      <CompanyIntelClientProvider teamId={1} apiBasePath="/api/protected/onboarding/company-intel">
+      <CompanyIntelClientProvider teamId={1} apiBasePath="/api/company-intel">
         <CompanyIntelPanel />
       </CompanyIntelClientProvider>
     </main>

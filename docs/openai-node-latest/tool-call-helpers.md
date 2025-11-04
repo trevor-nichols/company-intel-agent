@@ -2,7 +2,6 @@
 #!/usr/bin/env -S npm run tsn -T
 
 import OpenAI from 'openai';
-import { RunnableToolFunction } from 'openai/lib/RunnableFunction';
 
 // gets API Key from environment variable OPENAI_API_KEY
 const openai = new OpenAI();
@@ -14,89 +13,112 @@ const openai = new OpenAI();
  * For that functionality, please see the `tool-call-helpers-zod.ts` example,
  * which shows a fully typesafe, schema-validating version.
  */
-const tools: RunnableToolFunction<any>[] = [
+const tools = [
   {
     type: 'function',
     function: {
       name: 'list',
-      description: 'list queries books by genre, and returns a list of names of books',
+      description: 'List queries books by genre, and returns a list of names of books',
       parameters: {
         type: 'object',
         properties: {
           genre: { type: 'string', enum: ['mystery', 'nonfiction', 'memoir', 'romance', 'historical'] },
         },
+        required: ['genre'],
       },
-      function: list,
-      parse: JSON.parse,
     },
-  } as RunnableToolFunction<{ genre: string }>,
+  },
   {
     type: 'function',
     function: {
       name: 'search',
-      description: 'search queries books by their name and returns a list of book names and their ids',
+      description: 'Search queries books by their name and returns a list of book names and their ids',
       parameters: {
         type: 'object',
         properties: {
           name: { type: 'string' },
         },
+        required: ['name'],
       },
-      function: search,
-      parse: JSON.parse,
     },
-  } as RunnableToolFunction<{ name: string }>,
+  },
   {
     type: 'function',
     function: {
       name: 'get',
       description:
-        "get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.",
+        "Get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.",
       parameters: {
         type: 'object',
         properties: {
           id: { type: 'string' },
         },
+        required: ['id'],
       },
-      function: get,
-      parse: JSON.parse,
     },
-  } as RunnableToolFunction<{ id: string }>,
+  },
 ];
 
 async function main() {
-  const runner = await openai.chat.completions
-    .runTools({
-      model: 'gpt-4-1106-preview',
-      stream: true,
-      tools,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Please use our book database, which you can access using functions to answer the following questions.',
-        },
-        {
-          role: 'user',
-          content:
-            'I really enjoyed reading To Kill a Mockingbird, could you recommend me a book that is similar and tell me why?',
-        },
-      ],
-    })
-    .on('message', (msg) => console.log('msg', msg))
-    .on('functionToolCall', (functionCall) => console.log('functionCall', functionCall))
-    .on('functionToolCallResult', (functionCallResult) =>
-      console.log('functionCallResult', functionCallResult),
-    )
-    .on('content', (diff) => process.stdout.write(diff));
+  let response = await openai.responses.create({
+    model: 'gpt-5',
+    input: [
+      {
+        role: 'system',
+        content:
+          'Please use our book database, which you can access using functions to answer the following questions.',
+      },
+      {
+        role: 'user',
+        content:
+          'I really enjoyed reading To Kill a Mockingbird, could you recommend me a book that is similar and tell me why?',
+      },
+    ],
+    tools,
+  });
 
-  const result = await runner.finalChatCompletion();
-  console.log();
-  console.log('messages');
-  console.log(runner.messages);
+  while (response.status === 'requires_action') {
+    const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
+    const toolOutputs = [];
 
-  console.log();
-  console.log('final chat completion');
-  console.dir(result, { depth: null });
+    for (const toolCall of toolCalls) {
+      if (toolCall.type !== 'function') {
+        continue;
+      }
+
+      const args = JSON.parse(toolCall.function.arguments);
+      let result: unknown;
+
+      switch (toolCall.function.name) {
+        case 'list':
+          result = await list(args);
+          break;
+        case 'search':
+          result = await search(args);
+          break;
+        case 'get':
+          result = await get(args);
+          break;
+        default:
+          throw new Error(`Unknown tool: ${toolCall.function.name}`);
+      }
+
+      toolOutputs.push({
+        tool_call_id: toolCall.id,
+        output: JSON.stringify(result ?? null),
+      });
+    }
+
+    response = await openai.responses.submitToolOutputs(response.id, {
+      tool_outputs: toolOutputs,
+    });
+  }
+
+  if (response.status !== 'completed') {
+    throw new Error(`Response finished with status ${response.status}`);
+  }
+
+  console.log(response.output_text);
 }
 
 const db = [

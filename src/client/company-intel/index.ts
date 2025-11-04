@@ -2,7 +2,7 @@
 //                Company Intel Module - Exports
 // ------------------------------------------------------------------------------------------------
 
-export { CompanyIntelPanel } from './CompanyIntelPage';
+export { CompanyIntelPanel } from './CompanyIntelPanel';
 export * from './hooks';
 export * from './types';
 export * from './utils/formatters';

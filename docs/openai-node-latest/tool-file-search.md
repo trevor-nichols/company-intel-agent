@@ -159,7 +159,7 @@ from openai import OpenAI
 client = OpenAI()
 
 response = client.responses.create(
-    model="gpt-4.1",
+    model="gpt-5",
     input="What is deep research by OpenAI?",
     tools=[{
         "type": "file_search",
@@ -174,7 +174,7 @@ import OpenAI from "openai";
 const openai = new OpenAI();
 
 const response = await openai.responses.create({
-    model: "gpt-4.1",
+    model: "gpt-5",
     input: "What is deep research by OpenAI?",
     tools: [
         {
@@ -273,7 +273,7 @@ Limit the number of results
 
 ```python
 response = client.responses.create(
-    model="gpt-4.1",
+    model="gpt-5",
     input="What is deep research by OpenAI?",
     tools=[{
         "type": "file_search",
@@ -286,7 +286,7 @@ print(response)
 
 ```javascript
 const response = await openai.responses.create({
-    model: "gpt-4.1",
+    model: "gpt-5",
     input: "What is deep research by OpenAI?",
     tools: [{
         type: "file_search",
@@ -307,7 +307,7 @@ Include search results
 
 ```python
 response = client.responses.create(
-    model="gpt-4.1",
+    model="gpt-5",
     input="What is deep research by OpenAI?",
     tools=[{
         "type": "file_search",
@@ -320,7 +320,7 @@ print(response)
 
 ```javascript
 const response = await openai.responses.create({
-    model: "gpt-4.1",
+    model: "gpt-5",
     input: "What is deep research by OpenAI?",
     tools: [{
         type: "file_search",
@@ -342,7 +342,7 @@ Metadata filtering
 
 ```python
 response = client.responses.create(
-    model="gpt-4.1",
+    model="gpt-5",
     input="What is deep research by OpenAI?",
     tools=[{
         "type": "file_search",
@@ -359,7 +359,7 @@ print(response)
 
 ```javascript
 const response = await openai.responses.create({
-    model: "gpt-4.1",
+    model: "gpt-5",
     input: "What is deep research by OpenAI?",
     tools: [{
         type: "file_search",

@@ -12,7 +12,7 @@ vi.mock('@/server/bootstrap', () => ({
   }),
 }));
 
-import { POST } from '@app/api/protected/onboarding/company-intel/route';
+import { POST } from '../company-intel/route';
 import { NextRequest } from 'next/server';
 
 describe('Company intel SSE route', () => {
@@ -51,7 +51,7 @@ describe('Company intel SSE route', () => {
 
   it('streams SSE frames followed by [DONE]', async () => {
     const body = JSON.stringify({ domain: 'example.com' });
-    const request = new NextRequest('http://localhost/api/protected/onboarding/company-intel', {
+    const request = new NextRequest('http://localhost/api/company-intel', {
       method: 'POST',
       headers: {
         Accept: 'text/event-stream',

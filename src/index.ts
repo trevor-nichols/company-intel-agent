@@ -28,8 +28,6 @@ export {
   deriveInitials,
 } from './client/company-intel/utils/formatters';
 
-export * from './client/components';
-
 export type {
   CompanyIntelClientContextValue,
   CompanyIntelClientProviderProps,

@@ -32,9 +32,9 @@ const UISchema: z.ZodType<UI> = z.lazy(() =>
 );
 
 async function main() {
-  const completion = await openai.chat.completions.parse({
-    model: 'gpt-4o-2024-08-06',
-    messages: [
+  const response = await openai.responses.parse({
+    model: 'gpt-5',
+    input: [
       {
         role: 'system',
         content: 'You are a UI generator AI. Convert the user input into a UI.',
@@ -44,8 +44,7 @@ async function main() {
     response_format: zodResponseFormat(UISchema, 'ui'),
   });
 
-  const message = completion.choices[0]!.message;
-  const ui = message.parsed;
+  const ui = response.output_parsed;
   console.dir(ui, { depth: 10 });
 }
 

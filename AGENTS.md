@@ -46,25 +46,25 @@ Deliver professional code (strict TS, tests, CI, docs) with **no private deps**.
 ```
 OPENAI_API_KEY=
 TAVILY_API_KEY=
-OPENAI_MODEL_STRUCTURED=gpt-4.1-mini
-OPENAI_MODEL_OVERVIEW=gpt-4.1-mini
+OPENAI_MODEL_STRUCTURED=gpt-5
+OPENAI_MODEL_OVERVIEW=gpt-5
 REDIS_URL=
 ALLOW_ORIGINS=http://localhost:3000
 ```
 
 ## 7) Public HTTP API (authoritative)
 
-* `GET /api/protected/onboarding/company-intel`
+* `GET /api/company-intel`
   → `{ data: { profile, snapshots } }`
-* `PATCH /api/protected/onboarding/company-intel`
+* `PATCH /api/company-intel`
   Body subset: `{ overview?, companyName?, tagline?, primaryIndustries?, valueProps?, keyOfferings? }`
-* `POST /api/protected/onboarding/company-intel/preview`
+* `POST /api/company-intel/preview`
   → `{ data: preview }`
-* `POST /api/protected/onboarding/company-intel`
+* `POST /api/company-intel`
 
   * `Accept: text/event-stream` → **SSE stream** (see §8) + final `[DONE]`
   * else `{ data: result }`
-* `GET /api/protected/onboarding/company-intel/snapshots/:id/export` → `application/pdf`
+* `GET /api/company-intel/snapshots/:id/export` → `application/pdf`
 
 ## 8) SSE contract (strict)
 
@@ -212,4 +212,3 @@ export const CompanyOverviewZ = z.object({ overview: z.string().min(60) }).stric
 // After streaming buffer:
 const parsed = CompanyOverviewZ.parse(JSON.parse(buffer));
 ```
-

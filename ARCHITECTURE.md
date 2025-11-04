@@ -55,7 +55,7 @@ The bootstrap picks Redis automatically when `REDIS_URL` is present; otherwise m
 
 ## 5. Public API Contract
 
-All endpoints live under `/api/protected/onboarding/company-intel`.
+All endpoints live under `/api/company-intel`.
 
 | Method | Path | Description |
 | --- | --- | --- |
@@ -88,7 +88,7 @@ Each frame is formatted `data: { ... }\n\n` with the terminal frame `data: [DONE
 2. Choose persistence (Redis if `REDIS_URL`, else memory).
 3. Instantiate OpenAI client (Responses API, configurable via env).
 4. Instantiate Tavily client (requires `TAVILY_API_KEY`).
-5. Create `CompanyIntelServer` with defaults (`gpt-4.1-mini` models unless overridden).
+5. Create `CompanyIntelServer` with defaults (`gpt-5` reasoning models unless overridden).
 
 `getCompanyIntelEnvironment()` caches the singleton for reuse across route handlers; `resetCompanyIntelEnvironment()` is available for tests.
 
@@ -111,8 +111,8 @@ Required environment variables (see `.env.example`):
 ```
 OPENAI_API_KEY=
 TAVILY_API_KEY=
-OPENAI_MODEL_STRUCTURED=gpt-4.1-mini
-OPENAI_MODEL_OVERVIEW=gpt-4.1-mini
+OPENAI_MODEL_STRUCTURED=gpt-5
+OPENAI_MODEL_OVERVIEW=gpt-5
 REDIS_URL=
 ALLOW_ORIGINS=http://localhost:3000
 ```

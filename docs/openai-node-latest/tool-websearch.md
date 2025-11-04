@@ -302,7 +302,7 @@ curl "https://api.openai.com/v1/responses" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $OPENAI_API_KEY" \
     -d '{
-        "model": "o4-mini",
+        "model": "gpt-5-mini",
         "tools": [{
             "type": "web_search",
             "user_location": {
@@ -319,14 +319,14 @@ curl "https://api.openai.com/v1/responses" \
 API compatibility
 -----------------
 
-Web search is available in the Responses API as the generally available version of the tool, `web_search`, as well as the earlier tool version, `web_search_preview`. To use web search in the Chat Completions API, use the specialized web search models `gpt-5-search-api`, `gpt-4o-search-preview` and `gpt-4o-mini-search-preview`.
+Web search is available in the Responses API as the generally available version of the tool, `web_search`, as well as the earlier tool version, `web_search_preview`. To use web search in the Chat Completions API, use the specialized web search models `gpt-5-search-api`, `gpt-5-search-preview` and `gpt-5-mini-search-preview`.
 
 Limitations
 -----------
 
-*   Web search is currently not supported in [`gpt-5`](/docs/models/gpt-5) with `minimal` reasoning, and [`gpt-4.1-nano`](/docs/models/gpt-4.1-nano).
+*   Web search is currently not supported in [`gpt-5`](/docs/models/gpt-5) with `minimal` reasoning, and [`gpt-5-nano`](/docs/models/gpt-5-nano).
 *   When used as a tool in the [Responses API](/docs/api-reference/responses), web search has the same tiered rate limits as the models above.
-*   Web search is limited to a context window size of 128000 (even with [`gpt-4.1`](/docs/models/gpt-4.1) and [`gpt-4.1-mini`](/docs/models/gpt-4.1-mini) models).
+*   Web search is limited to a context window size of 128000 (even with [`gpt-5`](/docs/models/gpt-5) and [`gpt-5-mini`](/docs/models/gpt-5-mini) models).
 
 Usage notes
 -----------

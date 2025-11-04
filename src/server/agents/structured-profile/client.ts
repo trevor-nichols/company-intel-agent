@@ -82,6 +82,7 @@ export async function generateStructuredCompanyProfile(
       format: zodTextFormat(CompanyIntelStructuredOutputSchema, 'company_profile_structured_output'),
     },
     reasoning: {
+      effort: 'medium',
       summary: 'auto',
     },
   };

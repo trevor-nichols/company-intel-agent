@@ -19,8 +19,8 @@ Visit `http://localhost:3000` to run the demo flow. By default the starter uses 
 | --- | --- | --- |
 | `OPENAI_API_KEY` | OpenAI Responses API key (used for structured profile + overview). | — |
 | `TAVILY_API_KEY` | Tavily mapping/extraction key. | — |
-| `OPENAI_MODEL_STRUCTURED` | Model for structured profile run. | `gpt-4.1-mini` |
-| `OPENAI_MODEL_OVERVIEW` | Model for overview narrative. | `gpt-4.1-mini` |
+| `OPENAI_MODEL_STRUCTURED` | Model for structured profile run. | `gpt-5` |
+| `OPENAI_MODEL_OVERVIEW` | Model for overview narrative. | `gpt-5` |
 | `REDIS_URL` | Optional Redis connection string. When empty, in-memory persistence is used. | — |
 | `ALLOW_ORIGINS` | Comma-separated origins for downstream clients. | `http://localhost:3000` |
 
@@ -38,7 +38,7 @@ Visit `http://localhost:3000` to run the demo flow. By default the starter uses 
 
 ## API Surface
 
-All routes live under `/api/protected/onboarding/company-intel` (Node runtime).
+All routes live under `/api/company-intel` (Node runtime).
 
 | Method | Route | Notes |
 | --- | --- | --- |

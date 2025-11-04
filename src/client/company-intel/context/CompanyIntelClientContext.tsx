@@ -28,7 +28,7 @@ function normaliseBasePath(basePath: string): string {
 
 export function CompanyIntelClientProvider({
   teamId,
-  apiBasePath = '/api/protected/onboarding/company-intel',
+  apiBasePath = '/api/company-intel',
   fetcher = fetch,
   children,
 }: CompanyIntelClientProviderProps) {

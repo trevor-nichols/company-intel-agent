@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------------------------------
-//                CompanyIntelPage.stories.tsx - Storybook coverage for CompanyIntelPanel
+//                CompanyIntelPanel.stories.tsx - Storybook coverage for CompanyIntelPanel
 // ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HttpResponse, delay, http } from 'msw';
 
-import { CompanyIntelPanel } from './CompanyIntelPage';
+import { CompanyIntelPanel } from './CompanyIntelPanel';
 import { CompanyIntelClientProvider } from './context';
 import type { CompanyIntelData } from './types';
 import {
@@ -24,7 +24,7 @@ import {
 } from '../../storybook/fixtures/companyIntel';
 import { withHandlers, companyIntelEmptyHandlers, createCompanyIntelHandlers } from '../../storybook/msw/handlers';
 
-const API_BASE = '/api/protected/onboarding/company-intel';
+const API_BASE = '/api/company-intel';
 
 interface StoryProvidersProps {
   readonly initialData: CompanyIntelData | null;

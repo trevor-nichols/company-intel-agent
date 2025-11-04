@@ -1,8 +1,8 @@
 .
 ├── client/                                  # Contains all front-end code for the company intel feature.
 │   ├── company-intel/                       # Main module for the company intel user interface.
-│   │   ├── CompanyIntelPage.tsx             # The main React component assembling the company intel UI page.
-│   │   ├── components/                      # Contains all React components used on the CompanyIntelPage.
+│   │   ├── CompanyIntelPanel.tsx            # The main React component assembling the company intel UI panel.
+│   │   ├── components/                      # Contains all React components used on the CompanyIntelPanel.
 │   │   │   ├── Common/                      # Contains simple, reusable UI components.
 │   │   │   │   ├── EmptyPlaceholder.tsx     # A component to display a message when there is no content.
 │   │   │   │   ├── SectionTitle.tsx         # A styled heading component for UI sections.

@@ -35,59 +35,83 @@ async function getBook({ id }: GetParams) {
 }
 
 async function main() {
-  const runner = openai.chat.completions
-    .runTools({
-      model: 'gpt-4-1106-preview',
-      stream: true,
-      tools: [
-        zodFunction({
-          name: 'listBooks',
-          function: listBooks,
-          parameters: ListParams,
-          description: 'List queries books by genre, and returns a list of names of books',
-        }),
-        zodFunction({
-          name: 'searchBooks',
-          function: searchBooks,
-          parameters: SearchParams,
-          description: 'Search queries books by their name and returns a list of book names and their ids',
-        }),
-        zodFunction({
-          name: 'getBook',
-          function: getBook,
-          parameters: GetParams,
-          description:
-            "Get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.",
-        }),
-      ],
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Please use our book database, which you can access using functions to answer the following questions.',
-        },
-        {
-          role: 'user',
-          content:
-            'I really enjoyed reading To Kill a Mockingbird, could you recommend me a book that is similar and tell me why?',
-        },
-      ],
-    })
-    .on('message', (msg) => console.log('msg', msg))
-    .on('finalFunctionToolCall', (functionCall) => console.log('functionCall', functionCall))
-    .on('finalFunctionToolCallResult', (functionCallResult) =>
-      console.log('functionCallResult', functionCallResult),
-    )
-    .on('content', (diff) => process.stdout.write(diff));
+  let response = await openai.responses.create({
+    model: 'gpt-5',
+    input: [
+      {
+        role: 'system',
+        content:
+          'Please use our book database, which you can access using functions to answer the following questions.',
+      },
+      {
+        role: 'user',
+        content:
+          'I really enjoyed reading To Kill a Mockingbird, could you recommend me a book that is similar and tell me why?',
+      },
+    ],
+    tools: [
+      zodFunction({
+        name: 'listBooks',
+        function: listBooks,
+        parameters: ListParams,
+        description: 'List queries books by genre, and returns a list of names of books',
+      }),
+      zodFunction({
+        name: 'searchBooks',
+        function: searchBooks,
+        parameters: SearchParams,
+        description: 'Search queries books by their name and returns a list of book names and their ids',
+      }),
+      zodFunction({
+        name: 'getBook',
+        function: getBook,
+        parameters: GetParams,
+        description:
+          "Get returns a book's detailed information based on the id of the book. Note that this does not accept names, and only IDs, which you can get by using search.",
+      }),
+    ],
+  });
 
-  const result = await runner.finalChatCompletion();
-  console.log();
-  console.log('messages');
-  console.log(runner.messages);
+  while (response.status === 'requires_action') {
+    const { tool_calls: toolCalls } = response.required_action.submit_tool_outputs;
+    const toolOutputs = [];
 
-  console.log();
-  console.log('final chat completion');
-  console.dir(result, { depth: null });
+    for (const call of toolCalls) {
+      if (call.type !== 'function') {
+        continue;
+      }
+
+      let result: unknown;
+      switch (call.function.name) {
+        case 'listBooks':
+          result = await listBooks(call.function.arguments as ListParams);
+          break;
+        case 'searchBooks':
+          result = await searchBooks(call.function.arguments as SearchParams);
+          break;
+        case 'getBook':
+          result = await getBook(call.function.arguments as GetParams);
+          break;
+        default:
+          throw new Error(`Unknown tool: ${call.function.name}`);
+      }
+
+      toolOutputs.push({
+        tool_call_id: call.id,
+        output: JSON.stringify(result ?? null),
+      });
+    }
+
+    response = await openai.responses.submitToolOutputs(response.id, {
+      tool_outputs: toolOutputs,
+    });
+  }
+
+  if (response.status !== 'completed') {
+    throw new Error(`Response finished with status ${response.status}`);
+  }
+
+  console.log(response.output_text);
 }
 
 const db = [

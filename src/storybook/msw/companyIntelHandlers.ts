@@ -19,7 +19,7 @@ import {
   triggerCompanyIntelEmptyResultFixture,
 } from '../fixtures/companyIntel';
 
-const API_BASE = '/api/protected/onboarding/company-intel';
+const API_BASE = '/api/company-intel';
 
 type CompanyIntelPayload =
   | typeof companyIntelApiPayload

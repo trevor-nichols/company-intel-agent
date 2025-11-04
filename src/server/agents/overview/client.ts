@@ -79,6 +79,7 @@ export async function generateCompanyOverview(
       format: zodTextFormat(CompanyOverviewSchema, 'company_overview'),
     },
     reasoning: {
+      effort: 'medium',
       summary: 'auto',
     },
   };

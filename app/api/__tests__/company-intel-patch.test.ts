@@ -12,7 +12,7 @@ vi.mock('@/server/bootstrap', () => ({
   }),
 }));
 
-import { PATCH } from '@app/api/protected/onboarding/company-intel/route';
+import { PATCH } from '../company-intel/route';
 import { NextRequest } from 'next/server';
 
 describe('Company intel PATCH route', () => {
@@ -51,7 +51,7 @@ describe('Company intel PATCH route', () => {
       };
     });
 
-    const request = new NextRequest('http://localhost/api/protected/onboarding/company-intel', {
+    const request = new NextRequest('http://localhost/api/company-intel', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

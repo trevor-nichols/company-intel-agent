@@ -13,8 +13,8 @@ import { createTavilyClient, type TavilyClient } from './tavily/tavily';
 import type { OpenAIClientLike } from './agents/shared/openai';
 import { createMemoryPersistence, createRedisPersistence } from './persistence';
 
-const DEFAULT_STRUCTURED_MODEL = 'gpt-4.1-mini';
-const DEFAULT_OVERVIEW_MODEL = 'gpt-4.1-mini';
+const DEFAULT_STRUCTURED_MODEL = 'gpt-5';
+const DEFAULT_OVERVIEW_MODEL = 'gpt-5';
 
 export interface CompanyIntelBootstrapOverrides {
   readonly persistence?: CompanyIntelPersistence;

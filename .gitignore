@@ -64,3 +64,6 @@ __pycache__/*
 
 .mcp.json
 .claude/scripts/
+
+# Documentation (local)
+docs/

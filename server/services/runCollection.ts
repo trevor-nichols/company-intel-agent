@@ -45,9 +45,7 @@ import {
 } from '../transformers';
 
 export interface RunCompanyIntelCollectionParams {
-  readonly teamId: number;
   readonly domain: string;
-  readonly initiatedByUserId?: number;
   readonly options?: CollectSiteIntelOptions;
 }
 
@@ -65,7 +63,6 @@ export interface RunCompanyIntelCollectionDependencies {
 
 export interface RunCompanyIntelCollectionResult {
   readonly snapshotId: number;
-  readonly teamId: number;
   readonly status: CompanyProfileSnapshotStatus;
   readonly selections: SiteIntelResult['selections'];
   readonly totalLinksMapped: number;
@@ -104,13 +101,11 @@ export async function runCompanyIntelCollection(
   dependencies: RunCompanyIntelCollectionDependencies,
 ): Promise<RunCompanyIntelCollectionResult> {
   const log = dependencies.logger ?? defaultLogger;
-  const { teamId, domain, initiatedByUserId, options } = params;
+  const { domain, options } = params;
   const { persistence, tavily, openAIClient } = dependencies;
 
   const snapshot = await persistence.createSnapshot({
-    teamId,
     domain,
-    initiatedByUserId,
   });
 
   let currentDomain = domain;
@@ -124,9 +119,8 @@ export async function runCompanyIntelCollection(
 
     dependencies.emit({
       snapshotId: snapshot.id,
-      teamId,
       domain: event.domain ?? currentDomain,
-      ...(event as Omit<CompanyIntelStreamEvent, 'snapshotId' | 'teamId' | 'domain'>),
+      ...(event as Omit<CompanyIntelStreamEvent, 'snapshotId' | 'domain'>),
     } as CompanyIntelStreamEvent);
   };
 
@@ -470,7 +464,6 @@ export async function runCompanyIntelCollection(
     });
 
     const profilePayload: CompanyIntelProfileUpsert = {
-      teamId,
       domain: intelResult.domain,
       status: 'ready',
       companyName: structuredResult.data.companyName,
@@ -488,7 +481,7 @@ export async function runCompanyIntelCollection(
     await persistence.upsertProfile(profilePayload);
 
     log.info('site-intel:persistence:success', {
-      teamId: teamId.toString(),
+      domain: intelResult.domain,
       snapshotId: snapshot.id,
       selections: selectedUrls.length,
       successes: successfulScrapes.length,
@@ -497,7 +490,6 @@ export async function runCompanyIntelCollection(
 
     const finalResult: RunCompanyIntelCollectionResult = {
       snapshotId: snapshot.id,
-      teamId,
       status: 'complete',
       selections: intelResult.selections,
       totalLinksMapped: intelResult.map.links.length,
@@ -507,7 +499,6 @@ export async function runCompanyIntelCollection(
 
     const streamResult: TriggerCompanyIntelResult = {
       snapshotId: finalResult.snapshotId,
-      teamId: finalResult.teamId,
       status: finalResult.status,
       selections: finalResult.selections,
       totalLinksMapped: finalResult.totalLinksMapped,
@@ -530,10 +521,9 @@ export async function runCompanyIntelCollection(
       completedAt: new Date(),
     });
 
-    const existingProfile = await persistence.getProfile(teamId);
+    const existingProfile = await persistence.getProfile();
 
     await persistence.upsertProfile({
-      teamId,
       domain: existingProfile?.domain ?? domain,
       status: 'failed',
       companyName: existingProfile?.companyName ?? null,
@@ -550,7 +540,7 @@ export async function runCompanyIntelCollection(
 
     const err = error instanceof Error ? error : new Error(message);
     log.error('site-intel:persistence:failure', {
-      teamId: teamId.toString(),
+      domain,
       snapshotId: snapshot.id,
       error: { name: err.name, message: err.message },
     });
@@ -565,17 +555,15 @@ export async function runCompanyIntelCollection(
 }
 export async function getCompanyIntelSnapshotHistory(
   persistence: CompanyIntelPersistence,
-  teamId: number,
   limit = 5,
 ) {
-  return persistence.listSnapshots({ teamId, limit });
+  return persistence.listSnapshots({ limit });
 }
 
 export function getCompanyIntelProfile(
   persistence: CompanyIntelPersistence,
-  teamId: number,
 ) {
-  return persistence.getProfile(teamId);
+  return persistence.getProfile();
 }
 
 // ------------------------------------------------------------------------------------------------

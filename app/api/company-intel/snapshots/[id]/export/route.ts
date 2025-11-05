@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 
-import { errorResponse, resolveRequestContext } from '@/server/handlers';
+import { errorResponse } from '@/server/handlers';
 import { getCompanyIntelEnvironment } from '@/server/bootstrap';
 import { CompanyIntelSnapshotNotFoundError, CompanyIntelSnapshotNotReadyError } from '@/server/services/snapshotPdf';
 
@@ -13,11 +13,9 @@ export async function GET(request: NextRequest, { params }: { readonly params: {
   }
 
   try {
-    const context = resolveRequestContext(request);
     const { server } = getCompanyIntelEnvironment();
 
     const result = await server.generateSnapshotPdf({
-      teamId: context.teamId,
       snapshotId,
     });
 

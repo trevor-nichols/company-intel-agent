@@ -367,7 +367,6 @@ export function toCompanyProfile(raw: unknown): CompanyProfile {
 
   return {
     id: Number(record.id),
-    teamId: Number(record.teamId),
     domain: typeof record.domain === 'string' ? record.domain : null,
     status,
     companyName: typeof record.companyName === 'string' ? record.companyName : null,
@@ -390,19 +389,16 @@ function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
   const rawScrapesInput = (record.rawScrapes ?? record.raw_scrapes) as unknown;
   const createdAt = parseDate(record.createdAt as string | Date | null | undefined) ?? new Date();
   const completedAt = parseDate(record.completedAt as string | Date | null | undefined);
-  const initiatedCandidate = record.initiatedByUserId ?? record.initiated_by_user_id;
   const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'pending';
 
   return {
     id: Number(record.id),
-    teamId: Number(record.teamId),
     domain: typeof record.domain === 'string' ? record.domain : null,
     status,
     selectedUrls: normaliseStringArray(record.selectedUrls),
     mapPayload: record.mapPayload ?? null,
     summaries: normaliseSnapshotSummaries(record.summaries ?? record.summary),
     rawScrapes: toScrapeRecords(rawScrapesInput),
-    initiatedByUserId: typeof initiatedCandidate === 'number' ? initiatedCandidate : null,
     error: typeof record.error === 'string' ? record.error : null,
     createdAt,
     completedAt,
@@ -463,7 +459,6 @@ export function toTriggerResult(payload: unknown) {
   const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'pending';
   return {
     snapshotId: Number(record.snapshotId),
-    teamId: Number(record.teamId),
     status,
     selections: toSelections(record.selections),
     totalLinksMapped: Number(record.totalLinksMapped ?? 0),

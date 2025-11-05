@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 "use client";
 
 // ------------------------------------------------------------------------------------------------
@@ -8,7 +7,6 @@
 import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 export interface CompanyIntelClientContextValue {
-  readonly teamId: number | null;
   readonly apiBasePath: string;
   request(path: string, init?: RequestInit): Promise<Response>;
 }
@@ -18,7 +16,6 @@ const CompanyIntelClientContext = createContext<CompanyIntelClientContextValue |
 export type CompanyIntelFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 export interface CompanyIntelClientProviderProps {
-  readonly teamId: number | null;
   readonly children: ReactNode;
   readonly apiBasePath?: string;
   readonly fetcher?: CompanyIntelFetch;
@@ -30,7 +27,6 @@ function normaliseBasePath(basePath: string): string {
 }
 
 export function CompanyIntelClientProvider({
-  teamId,
   apiBasePath = '/api/company-intel',
   fetcher = fetch,
   children,
@@ -46,11 +42,10 @@ export function CompanyIntelClientProvider({
     };
 
     return {
-      teamId,
       apiBasePath: normalisedBasePath,
       request,
     };
-  }, [teamId, normalisedBasePath, fetcher]);
+  }, [normalisedBasePath, fetcher]);
 
   return (
     <CompanyIntelClientContext.Provider value={contextValue}>

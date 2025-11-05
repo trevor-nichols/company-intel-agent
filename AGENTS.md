@@ -96,13 +96,13 @@ Events (in practice you’ll see a subset, in this order):
 
 Implement `CompanyIntelPersistence` with:
 
-* **Profiles** by team
-* **Snapshots** by id + team list (newest→oldest)
+* **Profile** (single record)
+* **Snapshots** (global newest→oldest list)
 * `replaceSnapshotPages(snapshotId, pages[])` writes normalized page records
 * Serialize dates to ISO at boundaries; parse on read
 
 Redis keys (optional):
-`ci:profile:<teamId>` • `ci:snapshot:<id>` • `ci:snapshots:byTeam:<teamId>`
+`ci:profile` • `ci:snapshot:<id>` • `ci:snapshots`
 
 ## 10) LLM integration (OpenAI Responses)
 
@@ -135,7 +135,7 @@ Redis keys (optional):
 
 ## 13) Logging & errors
 
-* Log phase transitions with `{ teamId, snapshotId }`.
+* Log phase transitions with `{ snapshotId, domain }`.
 * Include `responseId`, `model`, and minimal `usage` in metadata.
 * On fatal run error: emit `run-error`, persist snapshot/profile status `failed`, end stream.
 

@@ -6,14 +6,12 @@ import type { CompanyProfileKeyOffering, CompanyProfileStatus, CompanyProfileSna
 
 export interface CompanyIntelSnapshotRecord {
   readonly id: number;
-  readonly teamId: number;
   readonly status: CompanyProfileSnapshotStatus;
   readonly domain?: string | null;
   readonly selectedUrls?: readonly string[] | null;
   readonly mapPayload?: unknown;
   readonly summaries?: unknown;
   readonly rawScrapes?: unknown;
-  readonly initiatedByUserId?: number | null;
   readonly error?: string | null;
   readonly createdAt?: Date;
   readonly completedAt?: Date | null;
@@ -21,7 +19,6 @@ export interface CompanyIntelSnapshotRecord {
 
 export interface CompanyIntelProfileRecord {
   readonly id: number;
-  readonly teamId: number;
   readonly domain: string | null;
   readonly status: CompanyProfileStatus;
   readonly companyName: string | null;
@@ -39,9 +36,7 @@ export interface CompanyIntelProfileRecord {
 }
 
 export interface CompanyIntelSnapshotCreateParams {
-  readonly teamId: number;
   readonly domain?: string | null;
-  readonly initiatedByUserId?: number | null;
   readonly status?: CompanyProfileSnapshotStatus;
 }
 
@@ -68,7 +63,6 @@ export interface CompanyIntelPageInsert {
 }
 
 export interface CompanyIntelProfileUpsert {
-  readonly teamId: number;
   readonly domain: string | null;
   readonly status: CompanyProfileStatus;
   readonly companyName: string | null;
@@ -88,7 +82,7 @@ export interface CompanyIntelPersistence {
   updateSnapshot(snapshotId: number, updates: CompanyIntelSnapshotUpdate): Promise<void>;
   replaceSnapshotPages(snapshotId: number, pages: readonly CompanyIntelPageInsert[]): Promise<void>;
   upsertProfile(params: CompanyIntelProfileUpsert): Promise<CompanyIntelProfileRecord>;
-  listSnapshots(params: { readonly teamId: number; readonly limit?: number }): Promise<readonly CompanyIntelSnapshotRecord[]>;
-  getProfile(teamId: number): Promise<CompanyIntelProfileRecord | null>;
+  listSnapshots(params?: { readonly limit?: number }): Promise<readonly CompanyIntelSnapshotRecord[]>;
+  getProfile(): Promise<CompanyIntelProfileRecord | null>;
   getSnapshotById(snapshotId: number): Promise<CompanyIntelSnapshotRecord | null>;
 }

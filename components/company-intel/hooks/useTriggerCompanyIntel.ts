@@ -22,14 +22,10 @@ export interface UseTriggerCompanyIntelOptions {
 
 export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = {}) => {
   const queryClient = useQueryClient();
-  const { teamId, request } = useCompanyIntelClient();
+  const { request } = useCompanyIntelClient();
 
   return useMutation<TriggerCompanyIntelResult, Error, TriggerCompanyIntelInput>({
     mutationFn: async (input) => {
-      if (!teamId) {
-        throw new Error('Team context unavailable');
-      }
-
       const wantsStream = Boolean(options.stream && options.onEvent);
 
       const response = await request('', {
@@ -133,9 +129,7 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
       return toTriggerResult(result.data);
     },
     onSuccess: () => {
-      if (teamId) {
-        queryClient.invalidateQueries({ queryKey: ['team-company-intel', teamId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['company-intel'] });
     },
   });
 };

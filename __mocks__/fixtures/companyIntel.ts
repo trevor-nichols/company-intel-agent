@@ -20,8 +20,6 @@ import type {
   TriggerCompanyIntelResult,
 } from '../../components/company-intel/types';
 
-export const storyTeamId = 4138;
-
 const keyOfferings: CompanyProfileKeyOffering[] = [
   {
     title: 'Adaptive Market Intel',
@@ -69,7 +67,6 @@ const structuredProfileSummary: CompanyIntelSnapshotStructuredProfileSummary = {
 
 export const companyIntelProfileFixture: CompanyProfile = {
   id: 71,
-  teamId: storyTeamId,
   domain: 'https://acmeintel.ai',
   status: 'ready',
   companyName: 'Acme Intel Systems',
@@ -119,7 +116,6 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
 
 export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
   id: 3421,
-  teamId: storyTeamId,
   domain: 'https://acmeintel.ai',
   status: 'complete',
   selectedUrls: [
@@ -183,7 +179,6 @@ export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
       },
     },
   ],
-  initiatedByUserId: 58,
   error: null,
   createdAt: new Date('2024-10-14T10:57:00.000Z'),
   completedAt: new Date('2024-10-14T11:15:00.000Z'),
@@ -191,7 +186,6 @@ export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
 
 export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
   id: 3174,
-  teamId: storyTeamId,
   domain: 'https://acmeintel.ai',
   status: 'failed',
   selectedUrls: ['https://acmeintel.ai/about'],
@@ -208,7 +202,6 @@ export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
       },
     },
   ],
-  initiatedByUserId: 58,
   error: 'Upstream source rejected all requests (429).',
   createdAt: new Date('2024-09-02T15:12:00.000Z'),
   completedAt: null,
@@ -283,7 +276,6 @@ export const companyIntelPreviewFixture: CompanyIntelPreviewResult = {
 
 export const triggerCompanyIntelResultFixture: TriggerCompanyIntelResult = {
   snapshotId: 3472,
-  teamId: storyTeamId,
   status: 'pending',
   selections: companyIntelPreviewFixture.selections as readonly CompanyIntelSelection[],
   totalLinksMapped: companyIntelPreviewFixture.map.links.length,
@@ -314,7 +306,6 @@ export const emptyCompanyIntelPreviewFixture: CompanyIntelPreviewResult = {
 
 export const triggerCompanyIntelEmptyResultFixture: TriggerCompanyIntelResult = {
   snapshotId: 3510,
-  teamId: storyTeamId,
   status: 'complete',
   selections: [],
   totalLinksMapped: 0,

@@ -43,7 +43,7 @@ function normaliseProfile(record: CompanyIntelProfileRecord | null) {
 }
 
 async function exercisePersistence(persistence: CompanyIntelPersistence) {
-  const snapshot = await persistence.createSnapshot({ teamId: 1, domain: 'example.com' });
+  const snapshot = await persistence.createSnapshot({ domain: 'example.com' });
   const completedAt = new Date('2025-01-01T00:30:00.000Z');
 
   await persistence.updateSnapshot(snapshot.id, {
@@ -67,7 +67,6 @@ async function exercisePersistence(persistence: CompanyIntelPersistence) {
   ]);
 
   await persistence.upsertProfile({
-    teamId: 1,
     domain: 'example.com',
     status: 'ready',
     companyName: 'Example Co',
@@ -84,8 +83,8 @@ async function exercisePersistence(persistence: CompanyIntelPersistence) {
 
   return {
     snapshot: normaliseSnapshot(await persistence.getSnapshotById(snapshot.id)),
-    snapshots: (await persistence.listSnapshots({ teamId: 1, limit: 5 })).map(normaliseSnapshot),
-    profile: normaliseProfile(await persistence.getProfile(1)),
+    snapshots: (await persistence.listSnapshots({ limit: 5 })).map(normaliseSnapshot),
+    profile: normaliseProfile(await persistence.getProfile()),
   };
 }
 

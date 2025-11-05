@@ -21,21 +21,18 @@ describe('Company intel SSE route', () => {
       overrides?.onEvent?.({
         type: 'snapshot-created',
         snapshotId: 99,
-        teamId: 1,
         domain: 'https://example.com',
         status: 'pending',
       });
       overrides?.onEvent?.({
         type: 'status',
         snapshotId: 99,
-        teamId: 1,
         domain: 'https://example.com',
         stage: 'mapping',
       });
 
       return {
         snapshotId: 99,
-        teamId: 1,
         status: 'complete',
         selections: [],
         totalLinksMapped: 4,
@@ -93,6 +90,6 @@ describe('Company intel SSE route', () => {
 
     expect(runCollectionMock).toHaveBeenCalledTimes(1);
     const [params] = runCollectionMock.mock.calls[0];
-    expect(params).toMatchObject({ domain: 'example.com', teamId: 1 });
+    expect(params).toMatchObject({ domain: 'example.com' });
   });
 });

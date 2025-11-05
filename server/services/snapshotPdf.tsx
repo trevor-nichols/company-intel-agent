@@ -15,7 +15,6 @@ import { normaliseSnapshotSummaries } from '../../components/company-intel/utils
 import { CompanyIntelReportDocument } from '../reports/CompanyIntelReportDocument';
 
 export interface GenerateSnapshotPdfParams {
-  readonly teamId: number;
   readonly snapshotId: number;
 }
 
@@ -29,7 +28,6 @@ export interface CompanyIntelSnapshotPdfResult {
   readonly contentType: 'application/pdf';
   readonly buffer: Buffer;
   readonly snapshotId: number;
-  readonly teamId: number;
   readonly generatedAtIso: string;
 }
 
@@ -128,9 +126,8 @@ export async function generateSnapshotPdf(
   const { persistence, logger = defaultLogger } = dependencies;
 
   const snapshot = await persistence.getSnapshotById(params.snapshotId);
-  if (!snapshot || snapshot.teamId !== params.teamId) {
+  if (!snapshot) {
     logger.warn('company-intel:pdf:snapshot-missing', {
-      teamId: params.teamId.toString(),
       snapshotId: params.snapshotId.toString(),
     });
     throw new CompanyIntelSnapshotNotFoundError();
@@ -138,15 +135,14 @@ export async function generateSnapshotPdf(
 
   if (snapshot.status !== 'complete') {
     logger.warn('company-intel:pdf:snapshot-not-ready', {
-      teamId: params.teamId.toString(),
       snapshotId: params.snapshotId.toString(),
       status: snapshot.status,
     });
     throw new CompanyIntelSnapshotNotReadyError();
   }
 
-  const profile = await persistence.getProfile(params.teamId);
-  const domain = snapshot.domain ?? profile?.domain ?? `team-${params.teamId}`;
+  const profile = await persistence.getProfile();
+  const domain = snapshot.domain ?? profile?.domain ?? `snapshot-${params.snapshotId}`;
 
   const generatedAt = snapshot.completedAt ?? snapshot.createdAt ?? new Date();
   const { structuredProfile, overview } = ensureSummary(snapshot);
@@ -198,7 +194,6 @@ export async function generateSnapshotPdf(
   const filename = createFilename(domain, params.snapshotId, generatedAt);
 
   logger.info('company-intel:pdf:generated', {
-    teamId: params.teamId.toString(),
     snapshotId: params.snapshotId.toString(),
     filename,
   });
@@ -208,7 +203,6 @@ export async function generateSnapshotPdf(
     contentType: 'application/pdf',
     buffer,
     snapshotId: params.snapshotId,
-    teamId: params.teamId,
     generatedAtIso,
   } satisfies CompanyIntelSnapshotPdfResult;
 }

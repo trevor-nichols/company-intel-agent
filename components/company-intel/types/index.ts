@@ -12,7 +12,6 @@ export interface CompanyProfileKeyOffering {
 
 export interface CompanyProfile {
   readonly id: number;
-  readonly teamId: number;
   readonly domain: string | null;
   readonly status: CompanyProfileStatus;
   readonly companyName: string | null;
@@ -72,14 +71,12 @@ export interface CompanyIntelStreamStructuredPayload {
 
 export interface CompanyProfileSnapshot {
   readonly id: number;
-  readonly teamId: number;
   readonly domain: string | null;
   readonly status: CompanyProfileSnapshotStatus;
   readonly selectedUrls: readonly string[];
   readonly mapPayload: unknown;
   readonly summaries: CompanyIntelSnapshotSummaries | null;
   readonly rawScrapes: readonly CompanyIntelScrapeRecord[];
-  readonly initiatedByUserId: number | null;
   readonly error: string | null;
   readonly createdAt: Date;
   readonly completedAt: Date | null;
@@ -171,7 +168,6 @@ export interface TriggerCompanyIntelInput {
 
 export interface TriggerCompanyIntelResult {
   readonly snapshotId: number;
-  readonly teamId: number;
   readonly status: CompanyProfileSnapshotStatus;
   readonly selections: readonly CompanyIntelSelection[];
   readonly totalLinksMapped: number;
@@ -188,7 +184,6 @@ export type CompanyIntelRunStage =
 
 export interface CompanyIntelStreamBaseEvent {
   readonly snapshotId: number;
-  readonly teamId: number;
   readonly domain: string;
 }
 

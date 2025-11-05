@@ -84,7 +84,6 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
     'Summarising why Acme accelerates GTM teams';
   const baseEvent = {
     snapshotId: triggerResult.snapshotId,
-    teamId: triggerResult.teamId,
     domain,
   };
 

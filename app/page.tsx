@@ -11,7 +11,7 @@ export default function HomePage(): JSX.Element {
           </p>
         </div>
       </header>
-      <CompanyIntelProviders teamId={1}>
+      <CompanyIntelProviders>
         <main className="mx-auto w-full max-w-screen-2xl py-12">
           <CompanyIntelPanel />
         </main>

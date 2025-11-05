@@ -110,8 +110,8 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
     this.log = options.logger ?? defaultLogger;
   }
 
-  private profileKey(teamId: number): string {
-    return `${this.prefix}:profile:${teamId}`;
+  private profileKey(): string {
+    return `${this.prefix}:profile`;
   }
 
   private snapshotKey(snapshotId: number): string {
@@ -122,8 +122,8 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
     return `${this.prefix}:snapshot-pages:${snapshotId}`;
   }
 
-  private snapshotsByTeamKey(teamId: number): string {
-    return `${this.prefix}:snapshots:byTeam:${teamId}`;
+  private snapshotOrderKey(): string {
+    return `${this.prefix}:snapshots`;
   }
 
   private snapshotSequenceKey(): string {
@@ -151,14 +151,12 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
 
     const record: CompanyIntelSnapshotRecord = {
       id,
-      teamId: params.teamId,
       status: params.status ?? 'pending',
       domain: params.domain ?? null,
       selectedUrls: null,
       mapPayload: null,
       summaries: null,
       rawScrapes: null,
-      initiatedByUserId: params.initiatedByUserId ?? null,
       error: null,
       createdAt: now,
       completedAt: null,
@@ -169,14 +167,14 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
     await this.redis
       .multi()
       .set(this.snapshotKey(id), payload)
-      .lpush(this.snapshotsByTeamKey(params.teamId), id.toString())
+      .lpush(this.snapshotOrderKey(), id.toString())
       .exec();
 
     await this.redis.del(this.snapshotPagesKey(id));
 
     this.log.debug('persistence:redis:snapshot:create', {
       snapshotId: id,
-      teamId: params.teamId,
+      domain: record.domain,
     });
 
     return record;
@@ -229,7 +227,7 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
 
   async upsertProfile(params: CompanyIntelProfileUpsert): Promise<CompanyIntelProfileRecord> {
     await this.ensureConnected();
-    const profileKey = this.profileKey(params.teamId);
+    const profileKey = this.profileKey();
     const existingRaw = await this.redis.get(profileKey);
     const now = new Date();
 
@@ -237,7 +235,6 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
 
     const profile: CompanyIntelProfileRecord = {
       id: existing?.id ?? (await this.redis.incr(this.profileSequenceKey())),
-      teamId: params.teamId,
       status: params.status,
       domain: params.domain,
       companyName: params.companyName,
@@ -257,16 +254,17 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
     await this.redis.set(profileKey, JSON.stringify(serializeProfile(profile)));
 
     this.log.debug('persistence:redis:profile:upsert', {
-      teamId: params.teamId,
       profileId: profile.id,
+      domain: profile.domain,
     });
 
     return profile;
   }
 
-  async listSnapshots({ teamId, limit }: { readonly teamId: number; readonly limit?: number }): Promise<readonly CompanyIntelSnapshotRecord[]> {
+  async listSnapshots(params: { readonly limit?: number } = {}): Promise<readonly CompanyIntelSnapshotRecord[]> {
     await this.ensureConnected();
-    const listKey = this.snapshotsByTeamKey(teamId);
+    const { limit } = params;
+    const listKey = this.snapshotOrderKey();
     const end = typeof limit === 'number' ? Math.max(limit - 1, 0) : -1;
     const snapshotIds = await this.redis.lrange(listKey, 0, end);
 
@@ -274,16 +272,21 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
       return [];
     }
 
-    const payloads = await this.redis.mget(snapshotIds.map(id => this.snapshotKey(Number.parseInt(id, 10))));
+    const keys = snapshotIds
+      .map(id => Number.parseInt(id, 10))
+      .filter((value): value is number => Number.isFinite(value))
+      .map(id => this.snapshotKey(id));
+
+    const payloads = await this.redis.mget(keys);
 
     return payloads
       .filter((value): value is string => typeof value === 'string')
       .map(value => deserializeSnapshot(JSON.parse(value) as PersistedSnapshotRecord));
   }
 
-  async getProfile(teamId: number): Promise<CompanyIntelProfileRecord | null> {
+  async getProfile(): Promise<CompanyIntelProfileRecord | null> {
     await this.ensureConnected();
-    const payload = await this.redis.get(this.profileKey(teamId));
+    const payload = await this.redis.get(this.profileKey());
     if (!payload) {
       return null;
     }

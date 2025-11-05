@@ -11,7 +11,6 @@ describe('serialization helpers', () => {
 
     const profile: CompanyIntelProfileRecord = {
       id: 42,
-      teamId: 7,
       domain: 'example.com',
       status: 'ready',
       companyName: 'Example Co',
@@ -31,7 +30,6 @@ describe('serialization helpers', () => {
     const serialised = serializeProfile(profile);
     expect(serialised).toMatchObject({
       id: 42,
-      teamId: 7,
       domain: 'example.com',
       status: 'ready',
       companyName: 'Example Co',
@@ -54,14 +52,12 @@ describe('serialization helpers', () => {
 
     const snapshot: CompanyIntelSnapshotRecord = {
       id: 55,
-      teamId: 7,
       status: 'complete',
       domain: 'https://example.com',
       selectedUrls: ['https://example.com/about'],
       mapPayload: { links: ['https://example.com/about'] },
       summaries: { overview: 'Great company' },
       rawScrapes: [{ url: 'https://example.com/about', success: true, durationMs: 123 }],
-      initiatedByUserId: 99,
       error: null,
       createdAt,
       completedAt,
@@ -71,7 +67,6 @@ describe('serialization helpers', () => {
 
     expect(serialised).toMatchObject({
       id: 55,
-      teamId: 7,
       status: 'complete',
       domain: 'https://example.com',
       selectedUrls: ['https://example.com/about'],

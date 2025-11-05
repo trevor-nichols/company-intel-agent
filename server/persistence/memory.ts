@@ -40,10 +40,10 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
   private readonly log: Logger;
   private profileSequence = 1;
   private snapshotSequence = 1;
-  private readonly profilesByTeam = new Map<number, CompanyIntelProfileRecord>();
+  private profile: CompanyIntelProfileRecord | null = null;
   private readonly snapshots = new Map<number, InternalSnapshotRecord>();
   private readonly snapshotPages = new Map<number, CompanyIntelPageInsert[]>();
-  private readonly snapshotsByTeam = new Map<number, number[]>();
+  private readonly snapshotOrder: number[] = [];
 
   constructor(options: MemoryPersistenceOptions = {}) {
     this.log = options.logger ?? defaultLogger;
@@ -54,14 +54,12 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
     const createdAt = new Date();
     const record: InternalSnapshotRecord = {
       id,
-      teamId: params.teamId,
       status: params.status ?? 'pending',
       domain: params.domain ?? null,
       selectedUrls: null,
       mapPayload: null,
       summaries: null,
       rawScrapes: null,
-      initiatedByUserId: params.initiatedByUserId ?? null,
       error: null,
       createdAt,
       completedAt: null,
@@ -70,12 +68,11 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
     this.snapshots.set(id, record);
     this.snapshotPages.delete(id);
 
-    const existingList = this.snapshotsByTeam.get(params.teamId) ?? [];
-    this.snapshotsByTeam.set(params.teamId, [id, ...existingList]);
+    this.snapshotOrder.unshift(id);
 
     this.log.debug('persistence:memory:snapshot:create', {
       snapshotId: id,
-      teamId: params.teamId,
+      domain: record.domain,
     });
 
     return clone(record);
@@ -117,12 +114,11 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
   }
 
   async upsertProfile(params: CompanyIntelProfileUpsert): Promise<CompanyIntelProfileRecord> {
-    const existing = this.profilesByTeam.get(params.teamId);
+    const existing = this.profile;
     const now = new Date();
 
     const profile: CompanyIntelProfileRecord = {
       id: existing?.id ?? this.profileSequence++,
-      teamId: params.teamId,
       status: params.status,
       domain: params.domain,
       companyName: params.companyName,
@@ -139,29 +135,28 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
       updatedAt: now,
     } satisfies CompanyIntelProfileRecord;
 
-    this.profilesByTeam.set(params.teamId, profile);
+    this.profile = profile;
 
     this.log.debug('persistence:memory:profile:upsert', {
-      teamId: params.teamId,
       profileId: profile.id,
+      domain: profile.domain,
     });
 
     return clone(profile);
   }
 
-  async listSnapshots({ teamId, limit }: { readonly teamId: number; readonly limit?: number }): Promise<readonly CompanyIntelSnapshotRecord[]> {
-    const snapshotIds = this.snapshotsByTeam.get(teamId) ?? [];
-    const limited = typeof limit === 'number' ? snapshotIds.slice(0, limit) : snapshotIds;
+  async listSnapshots(params: { readonly limit?: number } = {}): Promise<readonly CompanyIntelSnapshotRecord[]> {
+    const { limit } = params;
+    const snapshotIds = typeof limit === 'number' ? this.snapshotOrder.slice(0, limit) : [...this.snapshotOrder];
 
-    return limited
+    return snapshotIds
       .map(id => this.snapshots.get(id))
       .filter((record): record is InternalSnapshotRecord => Boolean(record))
       .map(record => clone(record));
   }
 
-  async getProfile(teamId: number): Promise<CompanyIntelProfileRecord | null> {
-    const record = this.profilesByTeam.get(teamId);
-    return record ? clone(record) : null;
+  async getProfile(): Promise<CompanyIntelProfileRecord | null> {
+    return this.profile ? clone(this.profile) : null;
   }
 
   async getSnapshotById(snapshotId: number): Promise<CompanyIntelSnapshotRecord | null> {

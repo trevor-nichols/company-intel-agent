@@ -24,7 +24,6 @@ describe('Company intel snapshot export route', () => {
       contentType: 'application/pdf' as const,
       buffer: pdfBuffer,
       snapshotId: 123,
-      teamId: 1,
       generatedAtIso: '2025-01-01T00:00:00.000Z',
     });
   });
@@ -46,7 +45,6 @@ describe('Company intel snapshot export route', () => {
     expect(body.equals(pdfBuffer)).toBe(true);
 
     expect(generateSnapshotPdfMock).toHaveBeenCalledWith({
-      teamId: 1,
       snapshotId: 123,
     });
   });

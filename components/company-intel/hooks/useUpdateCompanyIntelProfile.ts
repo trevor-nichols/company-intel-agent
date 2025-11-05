@@ -26,7 +26,6 @@ interface UpdateCompanyIntelProfileInput {
 
 interface MutationContext {
   readonly previousData?: CompanyIntelData;
-  readonly teamId?: number;
 }
 
 function sanitisePayload(input: UpdateCompanyIntelProfileInput) {
@@ -86,14 +85,10 @@ function sanitisePayload(input: UpdateCompanyIntelProfileInput) {
 
 export function useUpdateCompanyIntelProfile() {
   const queryClient = useQueryClient();
-  const { teamId, request } = useCompanyIntelClient();
+  const { request } = useCompanyIntelClient();
 
   return useMutation<CompanyProfile, Error, UpdateCompanyIntelProfileInput, MutationContext>({
     mutationFn: async input => {
-      if (!teamId) {
-        throw new Error('Team context unavailable');
-      }
-
       const payload = sanitisePayload(input);
       if (Object.keys(payload).length === 0) {
         throw new Error('No changes detected.');
@@ -116,11 +111,7 @@ export function useUpdateCompanyIntelProfile() {
       return toCompanyProfile(profilePayload);
     },
     onMutate: async input => {
-      if (!teamId) {
-        return { teamId: undefined, previousData: undefined };
-      }
-
-      const queryKey = ['team-company-intel', teamId];
+      const queryKey = ['company-intel'];
       await queryClient.cancelQueries({ queryKey });
 
       const previousData = queryClient.getQueryData<CompanyIntelData>(queryKey);
@@ -149,22 +140,17 @@ export function useUpdateCompanyIntelProfile() {
         });
       }
 
-      return { previousData, teamId };
+      return { previousData };
     },
     onError: (_error, _input, context) => {
-      if (!context?.teamId || !context.previousData) {
+      if (!context?.previousData) {
         return;
       }
 
-      const queryKey = ['team-company-intel', context.teamId];
-      queryClient.setQueryData(queryKey, context.previousData);
+      queryClient.setQueryData(['company-intel'], context.previousData);
     },
-    onSuccess: (profile, _input, context) => {
-      if (!context?.teamId) {
-        return;
-      }
-
-      const queryKey = ['team-company-intel', context.teamId];
+    onSuccess: (profile) => {
+      const queryKey = ['company-intel'];
       queryClient.setQueryData<CompanyIntelData | undefined>(queryKey, current =>
         current
           ? {
@@ -174,11 +160,8 @@ export function useUpdateCompanyIntelProfile() {
           : current,
       );
     },
-    onSettled: (_result, _error, _variables, context) => {
-      if (!context?.teamId) {
-        return;
-      }
-      queryClient.invalidateQueries({ queryKey: ['team-company-intel', context.teamId] });
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-intel'] });
     },
   });
 }

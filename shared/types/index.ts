@@ -36,11 +36,6 @@ export interface CompanyIntelSnapshotPreview {
   readonly failedPages: number;
 }
 
-export interface CompanyIntelCollectionContext {
-  readonly teamId?: number;
-  readonly initiatedByUserId?: number;
-}
-
 export interface CompanyIntelCollectionResult {
   readonly snapshotId?: number;
   readonly structuredSummary: CompanyIntelStructuredSummary;
@@ -52,29 +47,21 @@ export interface CompanyIntelCollectionResult {
 
 export interface CompanyIntelAdapter {
   runCollection(params: CompanyIntelRunParams): Promise<CompanyIntelCollectionResult>;
-  getSnapshotHistory?(params: CompanyIntelHistoryParams): Promise<unknown>;
-  getProfile?(params: CompanyIntelProfileParams): Promise<unknown>;
+  getSnapshotHistory?(params?: CompanyIntelHistoryParams): Promise<unknown>;
+  getProfile?(): Promise<unknown>;
   updateProfile?(params: CompanyIntelProfileUpdateParams): Promise<unknown>;
 }
 
 export interface CompanyIntelRunParams {
   readonly domain: string;
   readonly options?: Record<string, unknown>;
-  readonly context?: CompanyIntelCollectionContext;
 }
 
 export interface CompanyIntelHistoryParams {
-  readonly teamId: number;
   readonly limit?: number;
 }
 
-export interface CompanyIntelProfileParams {
-  readonly teamId: number;
-}
-
 export interface CompanyIntelProfileUpdateParams {
-  readonly teamId: number;
-  readonly initiatedByUserId: number;
   readonly updates: Partial<{
     companyName: string | null;
     tagline: string | null;

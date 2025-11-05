@@ -33,7 +33,6 @@ describe('Company intel PATCH route', () => {
 
       return {
         id: 1,
-        teamId: 1,
         domain: 'example.com',
         status: 'ready',
         companyName: 'Example Inc',

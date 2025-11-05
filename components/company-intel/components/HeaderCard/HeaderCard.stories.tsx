@@ -12,10 +12,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { HeaderCard } from './HeaderCard';
 import type { CompanyProfile, CompanyProfileSnapshot } from '../../types';
 import { CompanyIntelProviders } from '../../hooks';
-import {
-  companyIntelDataFixture,
-  storyTeamId,
-} from '../../../../__mocks__/fixtures/companyIntel';
+import { companyIntelDataFixture } from '../../../../__mocks__/fixtures/companyIntel';
 import type { CompanyIntelFetch } from '../../context/CompanyIntelClientContext';
 
 const profile = companyIntelDataFixture.profile as CompanyProfile;
@@ -66,7 +63,7 @@ const meta: Meta<typeof HeaderCard> = {
   },
   decorators: [
     Story => (
-      <CompanyIntelProviders teamId={storyTeamId} fetcher={mockExportFetch}>
+      <CompanyIntelProviders fetcher={mockExportFetch}>
         <Story />
       </CompanyIntelProviders>
     ),

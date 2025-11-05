@@ -8,7 +8,6 @@ import type { CompanyProfileKeyOffering } from '../../components/company-intel/t
 import type { CompanyIntelPersistence, CompanyIntelProfileRecord, CompanyIntelProfileUpsert } from './persistence';
 
 export interface UpdateCompanyIntelProfileParams {
-  readonly teamId: number;
   readonly updates: Partial<{
     companyName: string | null;
     tagline: string | null;
@@ -17,7 +16,6 @@ export interface UpdateCompanyIntelProfileParams {
     valueProps: readonly string[];
     keyOfferings: readonly CompanyProfileKeyOffering[];
   }>;
-  readonly initiatedByUserId: number;
 }
 
 export interface UpdateCompanyIntelProfileDependencies {
@@ -26,16 +24,13 @@ export interface UpdateCompanyIntelProfileDependencies {
 }
 
 export async function updateCompanyIntelProfile({
-  teamId,
   updates,
-  initiatedByUserId,
 }: UpdateCompanyIntelProfileParams, dependencies: UpdateCompanyIntelProfileDependencies): Promise<CompanyIntelProfileRecord> {
   const logger = dependencies.logger ?? defaultLogger;
-  const currentProfile = await dependencies.persistence.getProfile(teamId);
+  const currentProfile = await dependencies.persistence.getProfile();
   const now = new Date();
 
   const payload: CompanyIntelProfileUpsert = {
-    teamId,
     domain: currentProfile?.domain ?? null,
     status: (updates.companyName ?? updates.tagline ?? updates.overview) ? 'ready' : (currentProfile?.status ?? 'ready'),
     companyName: updates.companyName !== undefined ? updates.companyName : currentProfile?.companyName ?? null,
@@ -62,9 +57,8 @@ export async function updateCompanyIntelProfile({
   const profile = await dependencies.persistence.upsertProfile(payload);
 
   logger.info('company-intel:profile:update', {
-    teamId: teamId.toString(),
-    userId: initiatedByUserId.toString(),
     fields: Object.keys(updates),
+    domain: profile.domain,
   });
 
   return profile;

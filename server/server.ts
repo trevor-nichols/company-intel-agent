@@ -75,12 +75,12 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
       );
     },
 
-    getProfile(teamId: number) {
-      return getProfileInternal(persistence, teamId);
+    getProfile() {
+      return getProfileInternal(persistence);
     },
 
-    getSnapshotHistory(teamId: number, limit?: number) {
-      return getSnapshotHistoryInternal(persistence, teamId, limit);
+    getSnapshotHistory(limit?: number) {
+      return getSnapshotHistoryInternal(persistence, limit);
     },
 
     generateSnapshotPdf(params: GenerateSnapshotPdfParams, overrides?: { readonly logger?: typeof defaultLogger }): Promise<CompanyIntelSnapshotPdfResult> {

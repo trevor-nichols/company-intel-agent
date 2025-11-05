@@ -19,17 +19,13 @@ export const useCompanyIntel = (
   options: UseCompanyIntelOptions = {},
 ) => {
   const { enabled = true, refetchIntervalMs = false } = options;
-  const { teamId, request } = useCompanyIntelClient();
+  const { request } = useCompanyIntelClient();
 
   return useQuery<CompanyIntelData>({
-    queryKey: ['team-company-intel', teamId],
-    enabled: enabled && Boolean(teamId),
+    queryKey: ['company-intel'],
+    enabled,
     refetchInterval: refetchIntervalMs,
     queryFn: async () => {
-      if (!teamId) {
-        throw new Error('Team context unavailable');
-      }
-
       const response = await request('');
       if (!response.ok) {
         throw await toHttpError(response, 'Unable to load company intel');

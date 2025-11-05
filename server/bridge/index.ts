@@ -53,8 +53,8 @@ export interface CompanyIntelServer {
     params: UpdateCompanyIntelProfileParams,
     overrides?: { readonly logger?: typeof defaultLogger },
   ): Promise<CompanyIntelProfileRecord>;
-  getProfile(teamId: number): Promise<CompanyIntelProfileRecord | null>;
-  getSnapshotHistory(teamId: number, limit?: number): Promise<readonly CompanyIntelSnapshotRecord[]>;
+  getProfile(): Promise<CompanyIntelProfileRecord | null>;
+  getSnapshotHistory(limit?: number): Promise<readonly CompanyIntelSnapshotRecord[]>;
   generateSnapshotPdf(
     params: GenerateSnapshotPdfParams,
     overrides?: { readonly logger?: typeof defaultLogger },

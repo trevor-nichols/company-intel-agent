@@ -21,7 +21,6 @@ export function serializeProfile(record: CompanyIntelProfileRecord | null): Reco
 
   return {
     id: record.id,
-    teamId: record.teamId,
     domain: record.domain,
     status: record.status,
     companyName: record.companyName,
@@ -42,14 +41,12 @@ export function serializeProfile(record: CompanyIntelProfileRecord | null): Reco
 export function serializeSnapshot(record: CompanyIntelSnapshotRecord): Record<string, unknown> {
   return {
     id: record.id,
-    teamId: record.teamId,
     domain: record.domain ?? null,
     status: record.status,
     selectedUrls: Array.isArray(record.selectedUrls) ? [...record.selectedUrls] : null,
     mapPayload: cloneJson(record.mapPayload ?? null),
     summaries: cloneJson(record.summaries ?? null),
     rawScrapes: cloneJson(record.rawScrapes ?? null),
-    initiatedByUserId: record.initiatedByUserId ?? null,
     error: record.error ?? null,
     createdAt: record.createdAt ? record.createdAt.toISOString() : new Date().toISOString(),
     completedAt: record.completedAt ? record.completedAt.toISOString() : null,

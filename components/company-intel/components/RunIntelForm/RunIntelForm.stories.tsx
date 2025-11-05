@@ -6,7 +6,6 @@
 //                Story Metadata & Utilities
 // ------------------------------------------------------------------------------------------------
 
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { action } from 'storybook/actions';
 

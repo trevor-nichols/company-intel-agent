@@ -105,14 +105,14 @@
 
 - ✅ **M3.1** Demo page  
   **Files**: `app/page.tsx`  
-  **Logic**: wrap `CompanyIntelPanel` with `CompanyIntelProviders teamId={1}` to supply query + client context  
+  **Logic**: wrap `CompanyIntelPanel` with `CompanyIntelProviders` to supply query + client context  
   **Acceptance**: manual flow works in browser (map → select → stream → snapshot).
 
 ### M4 — Redis (Optional Toggle)
 
 - ✅ **M4.1** Redis persistence  
   **Files**: `server/persistence/redis.ts` (use `ioredis`)  
-  **Keys**: `ci:profile:<teamId>`, `ci:snapshot:<id>`, `ci:snapshots:byTeam:<teamId>`  
+  **Keys**: `ci:profile`, `ci:snapshot:<id>`, `ci:snapshots`  
   **Acceptance**: setting `REDIS_URL` switches to Redis; parity with memory in basic tests.
 
 ### M5 — Tests

@@ -106,7 +106,7 @@ type CompanyProfileSnapshotStatus = 'pending'|'complete'|'failed';
 type CompanyProfileKeyOffering = { title: string; description?: string };
 
 type CompanyProfile = {
-  id: number; teamId: number; domain: string|null; status: CompanyProfileStatus;
+  id: number; domain: string|null; status: CompanyProfileStatus;
   companyName: string|null; tagline: string|null; overview: string|null;
   valueProps: string[]; keyOfferings: CompanyProfileKeyOffering[]; primaryIndustries: string[];
   faviconUrl: string|null; lastSnapshotId: number|null; lastRefreshedAt: Date|null;
@@ -130,10 +130,10 @@ type CompanyIntelSnapshotSummaries = {
 };
 
 type CompanyProfileSnapshot = {
-  id: number; teamId: number; domain: string|null; status: CompanyProfileSnapshotStatus;
+  id: number; domain: string|null; status: CompanyProfileSnapshotStatus;
   selectedUrls: string[]; mapPayload: unknown; summaries: CompanyIntelSnapshotSummaries|null;
   rawScrapes: { url: string; success: boolean; durationMs: number; response?: any; error?: { name:string; message:string } }[];
-  initiatedByUserId: number|null; error: string|null; createdAt: Date; completedAt: Date|null;
+  error: string|null; createdAt: Date; completedAt: Date|null;
 };
 ```
 
@@ -143,9 +143,9 @@ type CompanyProfileSnapshot = {
 
 `CompanyIntelPersistence` (already defined). Provide **memory** impl as default; optional **redis** with keys:
 
-* `ci:profile:<teamId>`
+* `ci:profile`
 * `ci:snapshot:<id>`
-* `ci:snapshots:byTeam:<teamId>` (sorted newest→oldest ids)
+* `ci:snapshots` (newest→oldest ids)
 
 **Rule:** normalize Dates to ISO at serialize boundaries; parse on read.
 
@@ -170,8 +170,8 @@ type CompanyProfileSnapshot = {
 ## 8) API route responsibilities
 
 * **preview/route.ts (POST):** `server.preview(domain, options)` → `{ data: preview }`
-* **route.ts (GET):** `server.getProfile(teamId)` + `server.getSnapshotHistory(teamId, 5)`
-* **route.ts (PATCH):** sanitize payload, `server.updateProfile({ teamId, updates, initiatedByUserId })`
+* **route.ts (GET):** `server.getProfile()` + `server.getSnapshotHistory(5)`
+* **route.ts (PATCH):** sanitize payload, `server.updateProfile({ updates })`
 * **route.ts (POST):**
 
   * If `Accept: text/event-stream`: create `ReadableStream`, subscribe `onEvent`, write frames; close with `[DONE]`.
@@ -269,7 +269,7 @@ Mount:
 import { CompanyIntelPanel, CompanyIntelProviders } from '@/components/company-intel';
 export default function Page(){
   return (
-    <CompanyIntelProviders teamId={1}>
+    <CompanyIntelProviders>
       <main className="p-6">
         <CompanyIntelPanel />
       </main>

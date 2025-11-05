@@ -9,8 +9,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import React, { useState, type ReactNode } from 'react';
 import { HttpResponse, delay, http } from 'msw';
-import { within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { within, userEvent } from '@storybook/testing-library';
 
 import { CompanyIntelPanel } from './CompanyIntelPanel';
 import { CompanyIntelProviders, createCompanyIntelQueryClient } from './hooks';
@@ -24,7 +23,6 @@ import {
   emptyCompanyIntelApiPayload,
   companyIntelPreviewFixture,
   triggerCompanyIntelEmptyResultFixture,
-  storyTeamId,
 } from '../../__mocks__/fixtures/companyIntel';
 import {
   withHandlers,
@@ -49,14 +47,14 @@ function CompanyIntelStoryProviders({ initialData, children }: StoryProvidersPro
     });
 
     if (initialData) {
-      client.setQueryData(['team-company-intel', storyTeamId], initialData);
+      client.setQueryData(['company-intel'], initialData);
     }
 
     return client;
   });
 
   return (
-    <CompanyIntelProviders teamId={storyTeamId} queryClient={queryClient} resetOnUnmount>
+    <CompanyIntelProviders queryClient={queryClient} resetOnUnmount>
       {children}
     </CompanyIntelProviders>
   );
@@ -114,7 +112,6 @@ export const Default: Story = {
 };
 
 export const ReasoningHeadlines: Story = {
-  name: 'Reasoning Headlines',
   render: () => (
     <CompanyIntelStoryProviders initialData={companyIntelReasoningDataFixture}>
       <CompanyIntelPanel />
@@ -148,7 +145,6 @@ export const Loading: Story = {
 };
 
 export const EmptyState: Story = {
-  name: 'Empty State',
   render: () => (
     <CompanyIntelStoryProviders initialData={emptyCompanyIntelDataFixture}>
       <CompanyIntelPanel />
@@ -162,7 +158,6 @@ export const EmptyState: Story = {
 };
 
 export const MappingInProgress: Story = {
-  name: 'Mapping In Progress',
   render: () => (
     <CompanyIntelStoryProviders initialData={emptyCompanyIntelDataFixture}>
       <CompanyIntelPanel />
@@ -180,7 +175,6 @@ export const MappingInProgress: Story = {
 };
 
 export const PreviewComplete: Story = {
-  name: 'Preview Complete',
   render: () => (
     <CompanyIntelStoryProviders initialData={emptyCompanyIntelDataFixture}>
       <CompanyIntelPanel />

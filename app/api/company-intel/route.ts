@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { errorResponse, jsonResponse, resolveRequestContext } from '@/server/handlers';
+import { errorResponse, jsonResponse } from '@/server/handlers';
 import { getCompanyIntelEnvironment } from '@/server/bootstrap';
 import { serializeProfile, serializeSnapshot } from '@/server/handlers/serialization';
 import {
@@ -10,6 +10,7 @@ import {
 import type { CollectSiteIntelOptions } from '@/server/tavily';
 
 import type { CompanyProfileKeyOffering } from '@/components/company-intel/types';
+import type { UpdateCompanyIntelProfileParams } from '@/server/services/profileUpdates';
 
 const textEncoder = new TextEncoder();
 
@@ -94,7 +95,6 @@ function hasOwn<T extends object>(value: T, key: keyof T): boolean {
 
 export async function GET(request: NextRequest) {
   try {
-    const context = resolveRequestContext(request);
     const { server } = getCompanyIntelEnvironment();
 
     const limitParam = request.nextUrl.searchParams.get('limit');
@@ -102,8 +102,8 @@ export async function GET(request: NextRequest) {
     const historyLimit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 25) : 10;
 
     const [profileRecord, snapshots] = await Promise.all([
-      server.getProfile(context.teamId),
-      server.getSnapshotHistory(context.teamId, historyLimit),
+      server.getProfile(),
+      server.getSnapshotHistory(historyLimit),
     ]);
 
     return jsonResponse({
@@ -136,7 +136,6 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const context = resolveRequestContext(request);
     const { server } = getCompanyIntelEnvironment();
 
     const updates: Record<string, unknown> = {};
@@ -168,9 +167,7 @@ export async function PATCH(request: NextRequest) {
 
     const profile = await server.updateProfile(
       {
-        teamId: context.teamId,
-        initiatedByUserId: context.userId,
-        updates,
+        updates: updates as UpdateCompanyIntelProfileParams['updates'],
       },
       {},
     );
@@ -203,7 +200,6 @@ export async function POST(request: NextRequest) {
   const wantsStream = acceptHeader.toLowerCase().includes('text/event-stream');
 
   try {
-    const context = resolveRequestContext(request);
     const { server } = getCompanyIntelEnvironment();
 
     const { domain } = parsed.data;
@@ -222,9 +218,7 @@ export async function POST(request: NextRequest) {
     const options: CollectSiteIntelOptions | undefined = Object.keys(mergedOptions).length > 0 ? mergedOptions : undefined;
 
     const runParams = {
-      teamId: context.teamId,
       domain: domainTrimmed,
-      initiatedByUserId: context.userId,
       ...(options ? { options } : {}),
     };
 
@@ -261,7 +255,6 @@ export async function POST(request: NextRequest) {
           sendEvent({
             type: 'run-error',
             snapshotId: lastSnapshotId ?? -1,
-            teamId: context.teamId,
             domain: lastDomain,
             message: 'Stream aborted by client',
           });
@@ -288,7 +281,6 @@ export async function POST(request: NextRequest) {
             sendEvent({
               type: 'run-complete',
               snapshotId: result.snapshotId,
-              teamId: result.teamId,
               domain: lastDomain,
               result,
             });
@@ -301,7 +293,6 @@ export async function POST(request: NextRequest) {
             sendEvent({
               type: 'run-error',
               snapshotId: lastSnapshotId ?? -1,
-              teamId: context.teamId,
               domain: lastDomain,
               message,
             });

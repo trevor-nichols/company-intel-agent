@@ -139,12 +139,6 @@ export function HeaderCard({
               Live update
             </span>
           ) : null}
-          {isScraping ? (
-            <span className="flex items-center gap-2 text-foreground">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              Refreshing…
-            </span>
-          ) : null}
           {isExportError ? (
             <span className="self-end text-xs font-medium text-destructive">
               Unable to export. Please try again.

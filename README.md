@@ -23,6 +23,11 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
    pnpm dev
    ```
 3. Visit `http://localhost:3000` to use the demo workflow. By default the app uses in-memory persistence; set `REDIS_URL` to enable Redis-backed storage. For a production build run `pnpm build` followed by `pnpm start`.
+4. Launch Storybook (optional) to explore isolated UI states:
+   ```bash
+   pnpm storybook
+   ```
+   Storybook runs at `http://localhost:6007` and uses MSW fixtures to simulate streaming states.
 
 ## Environment
 
@@ -100,4 +105,3 @@ The UI hooks in `components/company-intel/hooks` assume this order and will fail
 - Integration tests mock Tavily and OpenAI; real runs require valid API keys.
 - Redis persistence uses basic JSON serialization. Add TTLs, indices, or sharding strategies before serving heavy multi-tenant traffic.
 - PDF generation runs server-side via `@react-pdf/renderer`. Consider queuing long-running exports in production environments.
-

@@ -31,7 +31,14 @@ export interface CompanyIntelEnvironment {
   readonly persistence: CompanyIntelPersistence;
 }
 
-let cachedEnvironment: CompanyIntelEnvironment | null = null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __companyIntelEnvironment: CompanyIntelEnvironment | null | undefined;
+}
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+let cachedEnvironment: CompanyIntelEnvironment | null = globalThis.__companyIntelEnvironment ?? null;
 
 function resolvePersistence(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): CompanyIntelPersistence {
   if (overrides.persistence) {
@@ -90,17 +97,30 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
 }
 
 export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
-  if (!cachedEnvironment && Object.keys(overrides).length === 0) {
+  const hasOverrides = Object.keys(overrides).length > 0;
+
+  if (!cachedEnvironment && !hasOverrides) {
     cachedEnvironment = createCompanyIntelEnvironment();
+    if (!isProduction) {
+      globalThis.__companyIntelEnvironment = cachedEnvironment;
+    }
   }
 
-  if (cachedEnvironment && Object.keys(overrides).length === 0) {
+  if (cachedEnvironment && !hasOverrides) {
     return cachedEnvironment;
   }
 
-  return createCompanyIntelEnvironment(overrides);
+  const environment = createCompanyIntelEnvironment(overrides);
+  if (!hasOverrides && !isProduction) {
+    globalThis.__companyIntelEnvironment = environment;
+    cachedEnvironment = environment;
+  }
+  return environment;
 }
 
 export function resetCompanyIntelEnvironment(): void {
   cachedEnvironment = null;
+  if (!isProduction) {
+    globalThis.__companyIntelEnvironment = null;
+  }
 }

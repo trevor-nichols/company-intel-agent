@@ -28,7 +28,11 @@ const baseArgs = {
   isBusy: false,
   isPreviewing: false,
   isScraping: false,
+  isResuming: false,
+  isStreaming: false,
+  isCancelling: false,
   hasPreview: false,
+  hasActiveRun: false,
   errorMessage: null,
   manualError: null,
   statusMessages: [] as string[],
@@ -41,6 +45,7 @@ const baseArgs = {
   recommendedSelections: [] as typeof companyIntelPreviewFixture.selections,
   manualSelectedUrls: [] as string[],
   previewData: null,
+  cancelActiveRun: noopAsync,
 };
 
 const meta: Meta<typeof RunIntelForm> = {

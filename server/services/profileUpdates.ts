@@ -29,10 +29,19 @@ export async function updateCompanyIntelProfile({
   const logger = dependencies.logger ?? defaultLogger;
   const currentProfile = await dependencies.persistence.getProfile();
   const now = new Date();
+  const currentStatus = currentProfile?.status ?? 'not_configured';
+  const nextStatus =
+    currentStatus === 'refreshing'
+      ? 'refreshing'
+      : (updates.companyName ?? updates.tagline ?? updates.overview ?? updates.primaryIndustries ?? updates.valueProps ?? updates.keyOfferings)
+          ? 'ready'
+          : currentStatus === 'not_configured'
+            ? 'ready'
+            : currentStatus;
 
   const payload: CompanyIntelProfileUpsert = {
     domain: currentProfile?.domain ?? null,
-    status: (updates.companyName ?? updates.tagline ?? updates.overview) ? 'ready' : (currentProfile?.status ?? 'ready'),
+    status: nextStatus,
     companyName: updates.companyName !== undefined ? updates.companyName : currentProfile?.companyName ?? null,
     tagline: updates.tagline !== undefined ? updates.tagline : currentProfile?.tagline ?? null,
     overview: updates.overview !== undefined ? updates.overview : currentProfile?.overview ?? null,
@@ -50,6 +59,8 @@ export async function updateCompanyIntelProfile({
         : currentProfile?.primaryIndustries ?? [],
     faviconUrl: currentProfile?.faviconUrl ?? null,
     lastSnapshotId: currentProfile?.lastSnapshotId ?? null,
+    activeSnapshotId: currentProfile?.activeSnapshotId ?? null,
+    activeSnapshotStartedAt: currentProfile?.activeSnapshotStartedAt ?? null,
     lastRefreshedAt: now,
     lastError: null,
   };

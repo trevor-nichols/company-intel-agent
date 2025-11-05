@@ -14,16 +14,26 @@ import type {
   CompanyIntelSnapshotUpdate,
   CompanyIntelPageInsert,
 } from '../services/persistence';
+import type { CompanyIntelRunStage } from '@/shared/company-intel/types';
 
-type PersistedSnapshotRecord = Omit<CompanyIntelSnapshotRecord, 'createdAt' | 'completedAt'> & {
-  readonly createdAtIso: string;
-  readonly completedAtIso: string | null;
+type PersistedSnapshotProgress = {
+  readonly stage: CompanyIntelRunStage;
+  readonly completed?: number;
+  readonly total?: number;
+  readonly updatedAtIso: string;
 };
 
-type PersistedProfileRecord = Omit<CompanyIntelProfileRecord, 'createdAt' | 'updatedAt' | 'lastRefreshedAt'> & {
+type PersistedSnapshotRecord = Omit<CompanyIntelSnapshotRecord, 'createdAt' | 'completedAt' | 'progress'> & {
+  readonly createdAtIso: string;
+  readonly completedAtIso: string | null;
+  readonly progress?: PersistedSnapshotProgress | null;
+};
+
+type PersistedProfileRecord = Omit<CompanyIntelProfileRecord, 'createdAt' | 'updatedAt' | 'lastRefreshedAt' | 'activeSnapshotStartedAt'> & {
   readonly createdAtIso: string;
   readonly updatedAtIso: string;
   readonly lastRefreshedAtIso: string | null;
+  readonly activeSnapshotStartedAtIso: string | null;
 };
 
 interface PersistedSnapshotPages {
@@ -57,15 +67,31 @@ function ensureRedisClient(options: RedisPersistenceOptions): { client: RedisCli
 function serializeSnapshot(record: CompanyIntelSnapshotRecord): PersistedSnapshotRecord {
   return {
     ...record,
+    progress: record.progress
+      ? {
+          stage: record.progress.stage,
+          completed: record.progress.completed,
+          total: record.progress.total,
+          updatedAtIso: record.progress.updatedAt.toISOString(),
+        }
+      : null,
     createdAtIso: record.createdAt ? record.createdAt.toISOString() : new Date().toISOString(),
     completedAtIso: record.completedAt ? record.completedAt.toISOString() : null,
   } satisfies PersistedSnapshotRecord;
 }
 
 function deserializeSnapshot(payload: PersistedSnapshotRecord): CompanyIntelSnapshotRecord {
-  const { createdAtIso, completedAtIso, ...rest } = payload;
+  const { createdAtIso, completedAtIso, progress, ...rest } = payload;
   return {
     ...rest,
+    progress: progress
+      ? {
+          stage: progress.stage,
+          completed: progress.completed,
+          total: progress.total,
+          updatedAt: new Date(progress.updatedAtIso),
+        }
+      : null,
     createdAt: new Date(createdAtIso),
     completedAt: completedAtIso ? new Date(completedAtIso) : null,
   } satisfies CompanyIntelSnapshotRecord;
@@ -80,11 +106,12 @@ function serializeProfile(record: CompanyIntelProfileRecord): PersistedProfileRe
     createdAtIso: record.createdAt.toISOString(),
     updatedAtIso: record.updatedAt.toISOString(),
     lastRefreshedAtIso: record.lastRefreshedAt ? record.lastRefreshedAt.toISOString() : null,
+    activeSnapshotStartedAtIso: record.activeSnapshotStartedAt ? record.activeSnapshotStartedAt.toISOString() : null,
   } satisfies PersistedProfileRecord;
 }
 
 function deserializeProfile(payload: PersistedProfileRecord): CompanyIntelProfileRecord {
-  const { createdAtIso, updatedAtIso, lastRefreshedAtIso, ...rest } = payload;
+  const { createdAtIso, updatedAtIso, lastRefreshedAtIso, activeSnapshotStartedAtIso, ...rest } = payload;
   return {
     ...rest,
     valueProps: [...payload.valueProps],
@@ -93,6 +120,7 @@ function deserializeProfile(payload: PersistedProfileRecord): CompanyIntelProfil
     createdAt: new Date(createdAtIso),
     updatedAt: new Date(updatedAtIso),
     lastRefreshedAt: lastRefreshedAtIso ? new Date(lastRefreshedAtIso) : null,
+    activeSnapshotStartedAt: activeSnapshotStartedAtIso ? new Date(activeSnapshotStartedAtIso) : null,
   } satisfies CompanyIntelProfileRecord;
 }
 
@@ -151,13 +179,21 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
 
     const record: CompanyIntelSnapshotRecord = {
       id,
-      status: params.status ?? 'pending',
+      status: params.status ?? 'running',
       domain: params.domain ?? null,
       selectedUrls: null,
       mapPayload: null,
       summaries: null,
       rawScrapes: null,
       error: null,
+      progress: params.progress
+        ? {
+            stage: params.progress.stage,
+            completed: params.progress.completed,
+            total: params.progress.total,
+            updatedAt: new Date(),
+          }
+        : null,
       createdAt: now,
       completedAt: null,
     } satisfies CompanyIntelSnapshotRecord;
@@ -197,6 +233,16 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
       summaries: updates.summaries ?? existing.summaries,
       rawScrapes: updates.rawScrapes ?? existing.rawScrapes,
       error: updates.error ?? existing.error,
+      progress: updates.progress === undefined
+        ? existing.progress ?? null
+        : updates.progress
+            ? {
+                stage: updates.progress.stage,
+                completed: updates.progress.completed,
+                total: updates.progress.total,
+                updatedAt: updates.progress.updatedAt ?? new Date(),
+              }
+            : null,
       completedAt: updates.completedAt !== undefined
         ? updates.completedAt
           ? new Date(updates.completedAt)
@@ -245,8 +291,10 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
       primaryIndustries: [...params.primaryIndustries],
       faviconUrl: params.faviconUrl,
       lastSnapshotId: params.lastSnapshotId,
-      lastRefreshedAt: params.lastRefreshedAt ?? now,
-      lastError: params.lastError ?? null,
+      activeSnapshotId: params.activeSnapshotId,
+      activeSnapshotStartedAt: params.activeSnapshotStartedAt,
+      lastRefreshedAt: params.lastRefreshedAt,
+      lastError: params.lastError,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     } satisfies CompanyIntelProfileRecord;
@@ -300,6 +348,19 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
       return null;
     }
     return deserializeSnapshot(JSON.parse(payload) as PersistedSnapshotRecord);
+  }
+
+  async deleteSnapshot(snapshotId: number): Promise<void> {
+    await this.ensureConnected();
+    await this.redis
+      .multi()
+      .del(this.snapshotKey(snapshotId), this.snapshotPagesKey(snapshotId))
+      .lrem(this.snapshotOrderKey(), 0, snapshotId.toString())
+      .exec();
+
+    this.log.debug('persistence:redis:snapshot:delete', {
+      snapshotId,
+    });
   }
 
   async getSnapshotPages(snapshotId: number): Promise<CompanyIntelPageInsert[] | null> {

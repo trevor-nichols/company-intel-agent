@@ -78,13 +78,21 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
     const createdAt = new Date();
     const record: InternalSnapshotRecord = {
       id,
-      status: params.status ?? 'pending',
+      status: params.status ?? 'running',
       domain: params.domain ?? null,
       selectedUrls: null,
       mapPayload: null,
       summaries: null,
       rawScrapes: null,
       error: null,
+      progress: params.progress
+        ? {
+            stage: params.progress.stage,
+            completed: params.progress.completed,
+            total: params.progress.total,
+            updatedAt: new Date(),
+          }
+        : null,
       createdAt,
       completedAt: null,
     } satisfies InternalSnapshotRecord;
@@ -117,6 +125,16 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
       summaries: updates.summaries ?? record.summaries,
       rawScrapes: updates.rawScrapes ?? record.rawScrapes,
       error: updates.error ?? record.error,
+      progress: updates.progress === undefined
+        ? record.progress ?? null
+        : updates.progress
+            ? {
+                stage: updates.progress.stage,
+                completed: updates.progress.completed,
+                total: updates.progress.total,
+                updatedAt: updates.progress.updatedAt ? new Date(updates.progress.updatedAt.getTime()) : new Date(),
+              }
+            : null,
       completedAt: updates.completedAt !== undefined ? ensureDate(updates.completedAt) : record.completedAt,
     } satisfies InternalSnapshotRecord;
 
@@ -153,7 +171,12 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
       primaryIndustries: [...params.primaryIndustries],
       faviconUrl: params.faviconUrl,
       lastSnapshotId: params.lastSnapshotId,
-      lastRefreshedAt: params.lastRefreshedAt ?? now,
+      activeSnapshotId: params.activeSnapshotId ?? null,
+      activeSnapshotStartedAt: params.activeSnapshotStartedAt ?? null,
+      lastRefreshedAt:
+        params.lastRefreshedAt !== undefined
+          ? params.lastRefreshedAt
+          : existing?.lastRefreshedAt ?? null,
       lastError: params.lastError ?? null,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
@@ -186,6 +209,18 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
   async getSnapshotById(snapshotId: number): Promise<CompanyIntelSnapshotRecord | null> {
     const record = this.snapshots.get(snapshotId);
     return record ? clone(record) : null;
+  }
+
+  async deleteSnapshot(snapshotId: number): Promise<void> {
+    this.snapshots.delete(snapshotId);
+    this.snapshotPages.delete(snapshotId);
+    const index = this.snapshotOrder.indexOf(snapshotId);
+    if (index !== -1) {
+      this.snapshotOrder.splice(index, 1);
+    }
+    this.log.debug('persistence:memory:snapshot:delete', {
+      snapshotId,
+    });
   }
 
   getSnapshotPages(snapshotId: number): CompanyIntelPageInsert[] | null {

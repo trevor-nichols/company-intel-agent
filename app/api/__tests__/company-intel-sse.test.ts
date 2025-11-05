@@ -1,14 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
 
-import type { CompanyIntelServer } from '@/server/bridge';
-
-const runCollectionMock = vi.fn();
+const startRunMock = vi.fn();
+const subscribeMock = vi.fn();
 
 vi.mock('@/server/bootstrap', () => ({
   getCompanyIntelEnvironment: () => ({
     server: {
-      runCollection: runCollectionMock,
-    } satisfies Pick<CompanyIntelServer, 'runCollection'>,
+      runCollection: vi.fn(),
+    },
+    runtime: {
+      startRun: startRunMock,
+      subscribe: subscribeMock,
+      getActiveRunForDomain: () => null,
+    },
   }),
 }));
 
@@ -17,33 +22,47 @@ import { NextRequest } from 'next/server';
 
 describe('Company intel SSE route', () => {
   beforeEach(() => {
-    runCollectionMock.mockImplementation(async (_params, overrides) => {
-      overrides?.onEvent?.({
+    startRunMock.mockResolvedValue({
+      snapshotId: 99,
+      domain: 'https://example.com',
+      startedAt: new Date(),
+    });
+
+    subscribeMock.mockImplementation((_snapshotId, listener: (event: CompanyIntelStreamEvent) => void) => {
+      listener({
         type: 'snapshot-created',
         snapshotId: 99,
         domain: 'https://example.com',
-        status: 'pending',
+        status: 'running',
       });
-      overrides?.onEvent?.({
+      listener({
         type: 'status',
         snapshotId: 99,
         domain: 'https://example.com',
         stage: 'mapping',
       });
-
-      return {
+      listener({
+        type: 'run-complete',
         snapshotId: 99,
-        status: 'complete',
-        selections: [],
-        totalLinksMapped: 4,
-        successfulPages: 4,
-        failedPages: 0,
+        domain: 'https://example.com',
+        result: {
+          snapshotId: 99,
+          status: 'complete',
+          selections: [],
+          totalLinksMapped: 4,
+          successfulPages: 4,
+          failedPages: 0,
+        },
+      });
+      return {
+        unsubscribe: vi.fn(),
       };
     });
   });
 
   afterEach(() => {
-    runCollectionMock.mockReset();
+    startRunMock.mockReset();
+    subscribeMock.mockReset();
   });
 
   it('streams SSE frames followed by [DONE]', async () => {
@@ -88,8 +107,9 @@ describe('Company intel SSE route', () => {
     expect(payloads[1]).toMatchObject({ type: 'status', stage: 'mapping' });
     expect(payloads.at(-1)).toMatchObject({ type: 'run-complete', result: { status: 'complete' } });
 
-    expect(runCollectionMock).toHaveBeenCalledTimes(1);
-    const [params] = runCollectionMock.mock.calls[0];
+    expect(startRunMock).toHaveBeenCalledTimes(1);
+    const [params] = startRunMock.mock.calls[0];
     expect(params).toMatchObject({ domain: 'example.com' });
+    expect(subscribeMock).toHaveBeenCalledTimes(1);
   });
 });

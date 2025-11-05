@@ -5,10 +5,10 @@
 'use client';
 
 import * as React from 'react';
-import { motion, useInView, type UseInViewOptions } from 'framer-motion';
+import { motion, useInView, type UseInViewOptions, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
-export interface ShimmeringTextProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface ShimmeringTextProps extends Omit<HTMLMotionProps<'span'>, 'ref'> {
   readonly shimmer?: boolean;
   readonly text?: string;
   readonly children?: React.ReactNode;
@@ -44,6 +44,8 @@ export function ShimmeringText({
   const ref = React.useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once, margin: inViewMargin });
 
+  const { style: motionStyle, ...restProps } = props;
+
   const content = text ?? children;
   const textContent = typeof content === 'string' ? content : String(content ?? '');
 
@@ -57,7 +59,8 @@ export function ShimmeringText({
     return (
       <span
         className={cn('inline-flex items-center gap-1 font-medium text-muted-foreground', className)}
-        {...props}
+        style={motionStyle as React.CSSProperties | undefined}
+        {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}
       >
         {content}
       </span>
@@ -80,6 +83,7 @@ export function ShimmeringText({
         ...(color && { '--base-color': color }),
         ...(shimmeringColor && { '--shimmer-color': shimmeringColor }),
         backgroundImage: `var(--shimmer-bg), linear-gradient(var(--base-color), var(--base-color))`,
+        ...(motionStyle ?? {}),
       } as React.CSSProperties}
       initial={{
         backgroundPosition: '100% center',
@@ -106,7 +110,7 @@ export function ShimmeringText({
           delay,
         },
       }}
-      {...props}
+      {...restProps}
     >
       {textContent}
     </motion.span>

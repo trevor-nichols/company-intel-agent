@@ -33,8 +33,11 @@ export function getStatusVariant(
       return 'default';
     case 'failed':
       return 'destructive';
-    case 'pending':
+    case 'refreshing':
+    case 'running':
       return 'secondary';
+    case 'cancelled':
+      return 'outline';
     default:
       return 'outline';
   }

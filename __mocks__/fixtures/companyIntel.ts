@@ -79,6 +79,8 @@ export const companyIntelProfileFixture: CompanyProfile = {
   primaryIndustries: structuredProfileSummary.primaryIndustries,
   faviconUrl: 'https://assets.agen-ai.com/storybook/acmeintel/favicon.png',
   lastSnapshotId: 3421,
+  activeSnapshotId: null,
+  activeSnapshotStartedAt: null,
   lastRefreshedAt: new Date('2024-10-14T11:15:00.000Z'),
   lastError: null,
   createdAt: new Date('2024-05-12T09:00:00.000Z'),
@@ -180,6 +182,7 @@ export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
     },
   ],
   error: null,
+  progress: null,
   createdAt: new Date('2024-10-14T10:57:00.000Z'),
   completedAt: new Date('2024-10-14T11:15:00.000Z'),
 };
@@ -203,6 +206,7 @@ export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
     },
   ],
   error: 'Upstream source rejected all requests (429).',
+  progress: null,
   createdAt: new Date('2024-09-02T15:12:00.000Z'),
   completedAt: null,
 };
@@ -276,7 +280,7 @@ export const companyIntelPreviewFixture: CompanyIntelPreviewResult = {
 
 export const triggerCompanyIntelResultFixture: TriggerCompanyIntelResult = {
   snapshotId: 3472,
-  status: 'pending',
+  status: 'running',
   selections: companyIntelPreviewFixture.selections as readonly CompanyIntelSelection[],
   totalLinksMapped: companyIntelPreviewFixture.map.links.length,
   successfulPages: 0,

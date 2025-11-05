@@ -62,6 +62,7 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
         overviewPrompt: overrides.overviewPrompt ?? overviewPrompt,
         overviewModel: overrides.overviewModel ?? overviewModel,
         emit: overrides.onEvent,
+        abortSignal: overrides.abortSignal,
       });
     },
 

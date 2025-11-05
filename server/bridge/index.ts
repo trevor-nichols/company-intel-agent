@@ -26,6 +26,7 @@ export interface RunCollectionOverrides {
   readonly overviewModel?: string;
   readonly openAIClient?: OpenAIClientLike;
   readonly onEvent?: (event: CompanyIntelStreamEvent) => void;
+  readonly abortSignal?: AbortSignal;
 }
 
 export interface CompanyIntelServerConfig {

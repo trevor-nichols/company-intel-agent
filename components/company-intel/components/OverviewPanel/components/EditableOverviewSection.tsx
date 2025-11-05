@@ -19,6 +19,7 @@ interface EditableOverviewSectionProps {
   readonly headline?: string | null;
   readonly isStreaming?: boolean;
   readonly isThinking?: boolean;
+  readonly isEditingLocked?: boolean;
 }
 
 export function EditableOverviewSection({
@@ -29,6 +30,7 @@ export function EditableOverviewSection({
   headline,
   isStreaming = false,
   isThinking = false,
+  isEditingLocked = false,
 }: EditableOverviewSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(overview ?? '');
@@ -41,13 +43,24 @@ export function EditableOverviewSection({
     }
   }, [overview, isEditing]);
 
+  useEffect(() => {
+    if (isEditingLocked && isEditing) {
+      setIsEditing(false);
+      setDraft(overview ?? '');
+      setError(null);
+    }
+  }, [isEditingLocked, isEditing, overview]);
+
   const trimmedDraft = useMemo(() => draft.trim(), [draft]);
 
   const handleEdit = useCallback(() => {
+    if (isEditingLocked || isSaving) {
+      return;
+    }
     setDraft(overview ?? '');
     setIsEditing(true);
     setError(null);
-  }, [overview]);
+  }, [overview, isEditingLocked, isSaving]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
@@ -75,6 +88,9 @@ export function EditableOverviewSection({
   const displayNarrative = streamingNarrative ?? overview;
   const hasNarrative = Boolean(displayNarrative && displayNarrative.trim().length > 0);
   const placeholderText = headline?.trim().length ? headline.trim() : null;
+  const editTooltip = isEditingLocked
+    ? 'Analysis running — editing resumes when the run completes.'
+    : 'Edit';
 
   return (
     <section className="space-y-3">
@@ -87,8 +103,7 @@ export function EditableOverviewSection({
                 <Textarea
                   value={draft}
                   onChange={event => setDraft(event.target.value)}
-                  rows={10}
-                  className="border-0 bg-transparent focus-visible:ring-0"
+                  className="min-h-[24rem] border-0 bg-transparent focus-visible:ring-0 resize-none"
                   placeholder="Summarise the company in a few paragraphs."
                   disabled={isSaving}
                 />
@@ -107,9 +122,11 @@ export function EditableOverviewSection({
           ) : isThinking || (isStreaming && !hasNarrative) ? (
             <ThinkingPlaceholder text={placeholderText} />
           ) : hasNarrative ? (
-            <div className="space-y-3">
-              <MinimalMarkdown content={displayNarrative ?? ''} />
-            </div>
+            <ScrollArea className="max-h-[32rem]">
+              <div className="space-y-3">
+                <MinimalMarkdown content={displayNarrative ?? ''} />
+              </div>
+            </ScrollArea>
           ) : (
             <EmptyPlaceholder message="Run a collection from the right to capture an executive overview." />
           )}
@@ -123,14 +140,21 @@ export function EditableOverviewSection({
                   variant="ghost"
                   size="icon"
                   onClick={handleEdit}
-                  className="absolute right-3 top-3 h-8 w-8 rounded-full bg-background/80 text-muted-foreground opacity-0 shadow-sm shadow-black/10 transition group-hover:opacity-100 group-hover:text-foreground"
+                  disabled={isSaving}
+                  aria-disabled={isSaving || isEditingLocked}
+                  className={[
+                    'absolute right-3 top-3 h-8 w-8 rounded-full bg-background/80 text-muted-foreground opacity-0 shadow-sm shadow-black/10 transition group-hover:opacity-100 group-hover:text-foreground',
+                    isEditingLocked ? 'cursor-not-allowed' : '',
+                  ]
+                    .join(' ')
+                    .trim()}
                 >
                   <span className="sr-only">Edit overview</span>
                   <Pencil className="h-4 w-4" aria-hidden />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left" sideOffset={8} align="center">
-                Edit
+                {editTooltip}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

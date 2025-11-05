@@ -77,6 +77,8 @@ async function exercisePersistence(persistence: CompanyIntelPersistence) {
     primaryIndustries: ['Software'],
     faviconUrl: 'https://example.com/favicon.ico',
     lastSnapshotId: snapshot.id,
+    activeSnapshotId: null,
+    activeSnapshotStartedAt: null,
     lastRefreshedAt: completedAt,
     lastError: null,
   });

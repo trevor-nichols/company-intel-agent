@@ -31,6 +31,8 @@ export function serializeProfile(record: CompanyIntelProfileRecord | null): Reco
     primaryIndustries: [...record.primaryIndustries],
     faviconUrl: record.faviconUrl,
     lastSnapshotId: record.lastSnapshotId,
+    activeSnapshotId: record.activeSnapshotId,
+    activeSnapshotStartedAt: record.activeSnapshotStartedAt ? record.activeSnapshotStartedAt.toISOString() : null,
     lastRefreshedAt: record.lastRefreshedAt ? record.lastRefreshedAt.toISOString() : null,
     lastError: record.lastError,
     createdAt: record.createdAt.toISOString(),
@@ -48,6 +50,14 @@ export function serializeSnapshot(record: CompanyIntelSnapshotRecord): Record<st
     summaries: cloneJson(record.summaries ?? null),
     rawScrapes: cloneJson(record.rawScrapes ?? null),
     error: record.error ?? null,
+    progress: record.progress
+      ? {
+          stage: record.progress.stage,
+          completed: record.progress.completed ?? null,
+          total: record.progress.total ?? null,
+          updatedAt: record.progress.updatedAt.toISOString(),
+        }
+      : null,
     createdAt: record.createdAt ? record.createdAt.toISOString() : new Date().toISOString(),
     completedAt: record.completedAt ? record.completedAt.toISOString() : null,
   } satisfies Record<string, unknown>;

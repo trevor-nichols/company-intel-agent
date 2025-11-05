@@ -8,6 +8,7 @@ describe('serialization helpers', () => {
     const createdAt = new Date('2025-01-01T00:00:00.000Z');
     const updatedAt = new Date('2025-01-02T12:34:56.000Z');
     const lastRefreshedAt = new Date('2025-01-02T11:00:00.000Z');
+    const activeSnapshotStartedAt = new Date('2025-01-02T10:45:00.000Z');
 
     const profile: CompanyIntelProfileRecord = {
       id: 42,
@@ -21,6 +22,8 @@ describe('serialization helpers', () => {
       primaryIndustries: ['Software'],
       faviconUrl: 'https://example.com/favicon.ico',
       lastSnapshotId: 101,
+      activeSnapshotId: null,
+      activeSnapshotStartedAt,
       lastRefreshedAt,
       lastError: null,
       createdAt,
@@ -38,6 +41,8 @@ describe('serialization helpers', () => {
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
       lastRefreshedAt: lastRefreshedAt.toISOString(),
+      activeSnapshotId: null,
+      activeSnapshotStartedAt: activeSnapshotStartedAt.toISOString(),
     });
 
     // Mutating the original arrays should not affect the serialised payload.
@@ -59,6 +64,7 @@ describe('serialization helpers', () => {
       summaries: { overview: 'Great company' },
       rawScrapes: [{ url: 'https://example.com/about', success: true, durationMs: 123 }],
       error: null,
+      progress: null,
       createdAt,
       completedAt,
     };
@@ -72,6 +78,7 @@ describe('serialization helpers', () => {
       selectedUrls: ['https://example.com/about'],
       createdAt: createdAt.toISOString(),
       completedAt: completedAt.toISOString(),
+      progress: null,
     });
 
     // Ensure nested objects are cloned.

@@ -93,7 +93,7 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
     {
       ...baseEvent,
       type: 'snapshot-created',
-      status: 'pending',
+      status: 'running',
     },
     {
       ...baseEvent,

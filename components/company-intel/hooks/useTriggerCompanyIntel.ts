@@ -18,6 +18,7 @@ import { toHttpError } from '../utils/errors';
 export interface UseTriggerCompanyIntelOptions {
   readonly stream?: boolean;
   readonly onEvent?: (event: CompanyIntelStreamEvent) => void;
+  readonly resumeSnapshotId?: number | null;
 }
 
 export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = {}) => {
@@ -27,15 +28,27 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
   return useMutation<TriggerCompanyIntelResult, Error, TriggerCompanyIntelInput>({
     mutationFn: async (input) => {
       const wantsStream = Boolean(options.stream && options.onEvent);
+      const resumeSnapshotId = typeof options.resumeSnapshotId === 'number' ? options.resumeSnapshotId : null;
 
-      const response = await request('', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(wantsStream ? { Accept: 'text/event-stream' } : {}),
-        },
-        body: JSON.stringify(input),
-      });
+      let response: Response;
+
+      if (resumeSnapshotId && wantsStream) {
+        response = await request(`/runs/${resumeSnapshotId}/stream`, {
+          method: 'GET',
+          headers: {
+            Accept: 'text/event-stream',
+          },
+        });
+      } else {
+        response = await request('', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(wantsStream ? { Accept: 'text/event-stream' } : {}),
+          },
+          body: JSON.stringify(input),
+        });
+      }
 
       if (!response.ok) {
         throw await toHttpError(response, 'Unable to trigger company intel');
@@ -107,6 +120,8 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
                 finalResult = event.result;
               } else if (event.type === 'run-error') {
                 throw new Error(event.message);
+              } else if (event.type === 'run-cancelled') {
+                throw new Error(event.reason ?? 'Run cancelled');
               }
             }
 

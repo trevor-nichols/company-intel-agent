@@ -59,6 +59,7 @@ export interface RunCompanyIntelCollectionDependencies {
   readonly overviewModel?: string;
   readonly persistence: CompanyIntelPersistence;
   readonly emit?: (event: CompanyIntelStreamEvent) => void;
+  readonly abortSignal?: AbortSignal;
 }
 
 export interface RunCompanyIntelCollectionResult {
@@ -68,6 +69,13 @@ export interface RunCompanyIntelCollectionResult {
   readonly totalLinksMapped: number;
   readonly successfulPages: number;
   readonly failedPages: number;
+}
+
+export class CompanyIntelRunCancelledError extends Error {
+  constructor(message = 'Company intel run cancelled') {
+    super(message);
+    this.name = 'CompanyIntelRunCancelledError';
+  }
 }
 
 export async function previewCompanyIntel(
@@ -103,12 +111,68 @@ export async function runCompanyIntelCollection(
   const log = dependencies.logger ?? defaultLogger;
   const { domain, options } = params;
   const { persistence, tavily, openAIClient } = dependencies;
+  const abortSignal = dependencies.abortSignal;
+
+  const runStartedAt = new Date();
+  const existingProfile = await persistence.getProfile();
+
+  const normalizedDomain = domain.trim().length > 0 ? domain.trim() : existingProfile?.domain ?? domain;
+  const previousSnapshotId = existingProfile?.lastSnapshotId ?? null;
+  const previousProfileStatus = existingProfile?.status ?? 'not_configured';
+  const previousLastRefreshedAt = existingProfile?.lastRefreshedAt ?? null;
+  const previousCompanyName = existingProfile?.companyName ?? null;
+  const previousTagline = existingProfile?.tagline ?? null;
+  const previousOverview = existingProfile?.overview ?? null;
+  const previousValueProps = existingProfile?.valueProps ?? [];
+  const previousKeyOfferings = existingProfile?.keyOfferings ?? [];
+  const previousPrimaryIndustries = existingProfile?.primaryIndustries ?? [];
+  const previousFaviconUrl = existingProfile?.faviconUrl ?? null;
+  const previousLastError = existingProfile?.lastError ?? null;
+
+  let cancellationReason: string | null = null;
+  const throwIfAborted = (stage: string): void => {
+    if (!abortSignal?.aborted) {
+      return;
+    }
+    const reason = typeof abortSignal.reason === 'string' && abortSignal.reason.length > 0
+      ? abortSignal.reason
+      : 'Run cancelled by user';
+    cancellationReason = reason;
+    log.info('company-intel:run:aborted', {
+      domain: normalizedDomain,
+      stage,
+    });
+    throw new CompanyIntelRunCancelledError(reason);
+  };
+
+  if (abortSignal) {
+    abortSignal.addEventListener(
+      'abort',
+      () => {
+        if (cancellationReason) {
+          return;
+        }
+        const reason = typeof abortSignal.reason === 'string' && abortSignal.reason.length > 0
+          ? abortSignal.reason
+          : 'Run cancelled by user';
+        cancellationReason = reason;
+        log.debug('company-intel:run:abort-signal-received', {
+          domain: normalizedDomain,
+        });
+      },
+      { once: true },
+    );
+  }
+
+  throwIfAborted('initial');
 
   const snapshot = await persistence.createSnapshot({
-    domain,
+    domain: normalizedDomain,
+    status: 'running',
   });
 
-  let currentDomain = domain;
+  let currentDomain = normalizedDomain;
+  let isTerminated = false;
 
   const emitEvent = (
     event: Record<string, unknown> & { readonly type: CompanyIntelStreamEvent['type']; readonly domain?: string },
@@ -117,14 +181,42 @@ export async function runCompanyIntelCollection(
       return;
     }
 
-    dependencies.emit({
+    const payload = {
       snapshotId: snapshot.id,
       domain: event.domain ?? currentDomain,
       ...(event as Omit<CompanyIntelStreamEvent, 'snapshotId' | 'domain'>),
-    } as CompanyIntelStreamEvent);
+    } as CompanyIntelStreamEvent;
+
+    if (payload.type === 'run-complete' || payload.type === 'run-error' || payload.type === 'run-cancelled') {
+      isTerminated = true;
+    }
+
+    dependencies.emit(payload);
+  };
+
+  const persistProgress = (stage: CompanyIntelRunStage, progress?: { readonly completed?: number; readonly total?: number }): void => {
+    void persistence
+      .updateSnapshot(snapshot.id, {
+        progress: {
+          stage,
+          completed: progress?.completed,
+          total: progress?.total,
+          updatedAt: new Date(),
+        },
+      })
+      .catch(error => {
+        log.warn('company-intel:persistence:progress-error', {
+          snapshotId: snapshot.id,
+          stage,
+          error: error instanceof Error ? { name: error.name, message: error.message } : error ?? null,
+        });
+      });
   };
 
   const emitStage = (stage: CompanyIntelRunStage, progress?: { readonly completed?: number; readonly total?: number }): void => {
+    if (!isTerminated) {
+      persistProgress(stage, progress);
+    }
     emitEvent({
       type: 'status',
       stage,
@@ -132,6 +224,23 @@ export async function runCompanyIntelCollection(
       ...(progress?.total !== undefined ? { total: progress.total } : {}),
     });
   };
+
+  await persistence.upsertProfile({
+    domain: existingProfile?.domain ?? normalizedDomain,
+    status: 'refreshing',
+    companyName: previousCompanyName,
+    tagline: previousTagline,
+    overview: previousOverview,
+    valueProps: [...previousValueProps],
+    keyOfferings: previousKeyOfferings.map(offering => ({ ...offering })),
+    primaryIndustries: [...previousPrimaryIndustries],
+    faviconUrl: previousFaviconUrl,
+    lastSnapshotId: previousSnapshotId,
+    activeSnapshotId: snapshot.id,
+    activeSnapshotStartedAt: runStartedAt,
+    lastRefreshedAt: previousLastRefreshedAt,
+    lastError: null,
+  });
 
   emitEvent({
     type: 'snapshot-created',
@@ -142,7 +251,7 @@ export async function runCompanyIntelCollection(
     emitStage('mapping');
 
     const intelResult = await collectSiteIntel(
-      domain,
+      normalizedDomain,
       {
         ...options,
       },
@@ -153,6 +262,8 @@ export async function runCompanyIntelCollection(
     );
 
     currentDomain = intelResult.domain;
+
+    throwIfAborted('mapping');
 
     const selectedUrls = intelResult.selections.map(selection => selection.url);
     const rawScrapes = intelResult.scrapes.map(scrape => ({
@@ -173,6 +284,7 @@ export async function runCompanyIntelCollection(
       selectedUrls,
       mapPayload: intelResult.map,
       rawScrapes,
+      status: 'running',
     });
 
     const totalScrapes = intelResult.scrapes.length;
@@ -186,6 +298,8 @@ export async function runCompanyIntelCollection(
     }
 
     for (const scrape of intelResult.scrapes) {
+      throwIfAborted('scraping');
+
       if (scrape.success && scrape.response) {
         successfulScrapes.push(scrape);
         const document = getPrimaryDocument(scrape);
@@ -239,6 +353,7 @@ export async function runCompanyIntelCollection(
       .find((value): value is string => Boolean(value)) ?? null;
 
     emitStage('analysis_structured');
+    throwIfAborted('analysis_structured');
 
     let structuredDeltaBuffer = '';
     let structuredReasoningSummaryBuffer = '';
@@ -258,7 +373,7 @@ export async function runCompanyIntelCollection(
         logger: log,
         onDelta: dependencies.emit
           ? ({ delta, snapshot, parsed }) => {
-              if (!delta) {
+              if (!delta || isTerminated) {
                 return;
               }
 
@@ -277,12 +392,17 @@ export async function runCompanyIntelCollection(
           : undefined,
         onReasoningDelta: dependencies.emit
           ? ({ delta, snapshot }) => {
-              if (!delta) {
+              if (!delta || delta.length === 0 || isTerminated) {
                 return;
               }
 
               structuredReasoningSummaryBuffer += delta;
-              structuredReasoningHeadline = extractReasoningHeadline(structuredReasoningSummaryBuffer);
+              const headlineCandidate = extractReasoningHeadline(structuredReasoningSummaryBuffer);
+              structuredReasoningHeadline = deriveReasoningHeadline(
+                structuredReasoningSummaryBuffer,
+                headlineCandidate,
+                structuredReasoningHeadline,
+              );
               emittedStructuredReasoningDelta = true;
               emitEvent({
                 type: 'structured-reasoning-delta',
@@ -295,9 +415,16 @@ export async function runCompanyIntelCollection(
       },
     );
 
+    throwIfAborted('analysis_structured_complete');
+
     if (!emittedStructuredReasoningDelta && structuredResult.reasoningSummary) {
       structuredReasoningSummaryBuffer = structuredResult.reasoningSummary;
-      structuredReasoningHeadline = extractReasoningHeadline(structuredReasoningSummaryBuffer);
+      const headlineCandidate = extractReasoningHeadline(structuredReasoningSummaryBuffer);
+      structuredReasoningHeadline = deriveReasoningHeadline(
+        structuredReasoningSummaryBuffer,
+        headlineCandidate,
+        structuredReasoningHeadline,
+      );
       if (dependencies.emit && structuredReasoningSummaryBuffer.length > 0) {
         emitEvent({
           type: 'structured-reasoning-delta',
@@ -308,7 +435,11 @@ export async function runCompanyIntelCollection(
       }
     }
 
-    structuredReasoningHeadline = structuredReasoningHeadline ?? extractReasoningHeadline(structuredResult.reasoningSummary ?? null);
+    structuredReasoningHeadline = deriveReasoningHeadline(
+      structuredResult.reasoningSummary ?? null,
+      structuredResult.reasoningSummary ? extractReasoningHeadline(structuredResult.reasoningSummary) : null,
+      structuredReasoningHeadline,
+    );
 
     const { summary: structuredProfileSummary, normalizedTagline } = buildStructuredProfileSummary(structuredResult.data);
 
@@ -336,6 +467,7 @@ export async function runCompanyIntelCollection(
     });
 
     emitStage('analysis_overview');
+    throwIfAborted('analysis_overview');
 
     let overviewReasoningSummaryBuffer = '';
     let overviewReasoningHeadline: string | null = null;
@@ -353,7 +485,11 @@ export async function runCompanyIntelCollection(
         openAIClient,
         logger: log,
         onDelta: dependencies.emit
-          ? ({ delta, snapshot: snapshotText, parsed, displayText }) => {
+          ? ({ delta, snapshot, parsed, displayText }) => {
+              if (isTerminated) {
+                return;
+              }
+
               const normalizedDisplayText = (() => {
                 if (typeof displayText === 'string' && displayText.trim().length > 0) {
                   return displayText.trim();
@@ -377,34 +513,46 @@ export async function runCompanyIntelCollection(
               emitEvent({
                 type: 'overview-delta',
                 delta: cleanDelta,
-                snapshot: snapshotText ?? null,
+                snapshot: snapshot ?? null,
                 displayText: overviewDraft,
               });
             }
           : undefined,
         onReasoningDelta: dependencies.emit
-          ? ({ delta, snapshot: snapshotText }) => {
-              if (!delta) {
+          ? ({ delta, snapshot }) => {
+              if (!delta || delta.length === 0 || isTerminated) {
                 return;
               }
 
               overviewReasoningSummaryBuffer += delta;
-              overviewReasoningHeadline = extractReasoningHeadline(overviewReasoningSummaryBuffer);
+              const headlineCandidate = extractReasoningHeadline(overviewReasoningSummaryBuffer);
+              overviewReasoningHeadline = deriveReasoningHeadline(
+                overviewReasoningSummaryBuffer,
+                headlineCandidate,
+                overviewReasoningHeadline,
+              );
               emittedOverviewReasoningDelta = true;
               emitEvent({
                 type: 'overview-reasoning-delta',
                 delta,
                 headline: overviewReasoningHeadline,
-                snapshot: snapshotText ?? null,
+                snapshot: snapshot ?? null,
               });
             }
           : undefined,
       },
     );
 
+    throwIfAborted('analysis_overview_complete');
+
     if (!emittedOverviewReasoningDelta && overviewResult.reasoningSummary) {
       overviewReasoningSummaryBuffer = overviewResult.reasoningSummary;
-      overviewReasoningHeadline = extractReasoningHeadline(overviewReasoningSummaryBuffer);
+      const headlineCandidate = extractReasoningHeadline(overviewReasoningSummaryBuffer);
+      overviewReasoningHeadline = deriveReasoningHeadline(
+        overviewReasoningSummaryBuffer,
+        headlineCandidate,
+        overviewReasoningHeadline,
+      );
       if (dependencies.emit && overviewReasoningSummaryBuffer.length > 0) {
         emitEvent({
           type: 'overview-reasoning-delta',
@@ -415,7 +563,11 @@ export async function runCompanyIntelCollection(
       }
     }
 
-    overviewReasoningHeadline = overviewReasoningHeadline ?? extractReasoningHeadline(overviewResult.reasoningSummary ?? null);
+    overviewReasoningHeadline = deriveReasoningHeadline(
+      overviewResult.reasoningSummary ?? null,
+      overviewResult.reasoningSummary ? extractReasoningHeadline(overviewResult.reasoningSummary) : null,
+      overviewReasoningHeadline,
+    );
 
     const overviewReasoningSummaryRaw = overviewReasoningSummaryBuffer || overviewResult.reasoningSummary || null;
     const overviewReasoningSummary = normalizeReasoningSummary(
@@ -431,6 +583,7 @@ export async function runCompanyIntelCollection(
     });
 
     emitStage('persisting');
+    throwIfAborted('persisting');
 
     await persistence.updateSnapshot(snapshot.id, {
       summaries: {
@@ -460,6 +613,7 @@ export async function runCompanyIntelCollection(
 
     await persistence.updateSnapshot(snapshot.id, {
       status: 'complete',
+      progress: null,
       completedAt: new Date(),
     });
 
@@ -474,6 +628,8 @@ export async function runCompanyIntelCollection(
       primaryIndustries: structuredProfileSummary.primaryIndustries,
       faviconUrl,
       lastSnapshotId: snapshot.id,
+      activeSnapshotId: null,
+      activeSnapshotStartedAt: null,
       lastRefreshedAt: new Date(),
       lastError: null,
     };
@@ -513,34 +669,67 @@ export async function runCompanyIntelCollection(
 
     return finalResult;
   } catch (error) {
+    if (error instanceof CompanyIntelRunCancelledError) {
+      const reason = cancellationReason ?? error.message;
+
+      await persistence.deleteSnapshot(snapshot.id);
+
+      await persistence.upsertProfile({
+        domain: existingProfile?.domain ?? normalizedDomain,
+        status: previousSnapshotId ? previousProfileStatus : 'not_configured',
+        companyName: previousCompanyName,
+        tagline: previousTagline,
+        overview: previousOverview,
+        valueProps: [...previousValueProps],
+        keyOfferings: previousKeyOfferings.map(offering => ({ ...offering })),
+        primaryIndustries: [...previousPrimaryIndustries],
+        faviconUrl: previousFaviconUrl,
+        lastSnapshotId: previousSnapshotId,
+        activeSnapshotId: null,
+        activeSnapshotStartedAt: null,
+        lastRefreshedAt: previousLastRefreshedAt,
+        lastError: previousLastError,
+      });
+
+      emitEvent({
+        type: 'run-cancelled',
+        reason,
+      });
+
+      throw error;
+    }
+
     const message = error instanceof Error ? error.message : 'Unknown error collecting site intel';
 
     await persistence.updateSnapshot(snapshot.id, {
       status: 'failed',
       error: message,
+      progress: null,
       completedAt: new Date(),
     });
 
-    const existingProfile = await persistence.getProfile();
+    const profileAfterFailure = await persistence.getProfile();
 
     await persistence.upsertProfile({
-      domain: existingProfile?.domain ?? domain,
+      domain: profileAfterFailure?.domain ?? normalizedDomain,
       status: 'failed',
-      companyName: existingProfile?.companyName ?? null,
-      tagline: existingProfile?.tagline ?? null,
-      overview: existingProfile?.overview ?? null,
-      valueProps: existingProfile?.valueProps ?? [],
-      keyOfferings: existingProfile?.keyOfferings ?? [],
-      primaryIndustries: existingProfile?.primaryIndustries ?? [],
-      faviconUrl: existingProfile?.faviconUrl ?? null,
+      companyName: profileAfterFailure?.companyName ?? previousCompanyName,
+      tagline: profileAfterFailure?.tagline ?? previousTagline,
+      overview: profileAfterFailure?.overview ?? previousOverview,
+      valueProps: profileAfterFailure?.valueProps ?? [...previousValueProps],
+      keyOfferings: profileAfterFailure?.keyOfferings ?? previousKeyOfferings.map(offering => ({ ...offering })),
+      primaryIndustries: profileAfterFailure?.primaryIndustries ?? [...previousPrimaryIndustries],
+      faviconUrl: profileAfterFailure?.faviconUrl ?? previousFaviconUrl,
       lastSnapshotId: snapshot.id,
+      activeSnapshotId: null,
+      activeSnapshotStartedAt: null,
       lastRefreshedAt: new Date(),
       lastError: message,
     });
 
     const err = error instanceof Error ? error : new Error(message);
     log.error('site-intel:persistence:failure', {
-      domain,
+      domain: normalizedDomain,
       snapshotId: snapshot.id,
       error: { name: err.name, message: err.message },
     });
@@ -553,6 +742,7 @@ export async function runCompanyIntelCollection(
     throw err;
   }
 }
+
 export async function getCompanyIntelSnapshotHistory(
   persistence: CompanyIntelPersistence,
   limit = 5,
@@ -565,7 +755,6 @@ export function getCompanyIntelProfile(
 ) {
   return persistence.getProfile();
 }
-
 // ------------------------------------------------------------------------------------------------
 //                Internal Helpers
 // ------------------------------------------------------------------------------------------------
@@ -673,4 +862,48 @@ function normalizeReasoningSummary(summary: string | null, headline: string | nu
 
   trimmed = trimmed.replace(/^\n+/g, '').trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function hasExplicitReasoningHeadline(summary: string | null): boolean {
+  if (!summary) {
+    return false;
+  }
+
+  const trimmed = summary.trimStart();
+  if (!trimmed.startsWith('**')) {
+    return false;
+  }
+
+  const closingIndex = trimmed.indexOf('**', 2);
+  if (closingIndex <= 2) {
+    return false;
+  }
+
+  const headlineLength = closingIndex - 2;
+  return headlineLength > 0 && headlineLength <= 120;
+}
+
+function deriveReasoningHeadline(
+  summary: string | null,
+  candidate: string | null,
+  current: string | null,
+): string | null {
+  if (!candidate) {
+    return current ?? null;
+  }
+
+  const normalizedCandidate = candidate.trim();
+  if (normalizedCandidate.length === 0) {
+    return current ?? null;
+  }
+
+  if (!hasExplicitReasoningHeadline(summary)) {
+    return current ?? null;
+  }
+
+  if (normalizedCandidate.length > 160) {
+    return `${normalizedCandidate.slice(0, 157).trimEnd()}…`;
+  }
+
+  return normalizedCandidate;
 }

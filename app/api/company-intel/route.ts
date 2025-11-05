@@ -9,6 +9,9 @@ import {
   UpdateCompanyIntelProfileSchema,
 } from '@/server/handlers/schemas';
 import type { CollectSiteIntelOptions } from '@/server/web-search';
+import { ActiveRunError } from '@/server/runtime/runCoordinator';
+import type { RunSubscription } from '@/server/runtime/runCoordinator';
+import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
 
 import type { CompanyProfileKeyOffering } from '@/components/company-intel/types';
 import type { UpdateCompanyIntelProfileParams } from '@/server/services/profileUpdates';
@@ -201,7 +204,7 @@ export async function POST(request: NextRequest) {
   const wantsStream = acceptHeader.toLowerCase().includes('text/event-stream');
 
   try {
-    const { server } = getCompanyIntelEnvironment();
+    const { runtime } = getCompanyIntelEnvironment();
 
     const { domain } = parsed.data;
     const domainTrimmed = domain.trim();
@@ -224,15 +227,56 @@ export async function POST(request: NextRequest) {
     };
 
     if (!wantsStream) {
-      const result = await server.runCollection(runParams);
+      const activeRun = runtime.getActiveRunForDomain(domainTrimmed);
+      if (activeRun && activeRun.status === 'running') {
+        return jsonResponse(
+          {
+            error: 'Company intel run already in progress for this domain.',
+            snapshotId: activeRun.snapshotId,
+          },
+          { status: 409 },
+        );
+      }
 
-      return jsonResponse({ data: result });
+      try {
+        const result = await runtime.runToCompletion(runParams);
+        return jsonResponse({ data: result });
+      } catch (error) {
+        if (error instanceof ActiveRunError) {
+          return jsonResponse(
+            {
+              error: 'Company intel run already in progress for this domain.',
+              snapshotId: error.snapshotId,
+            },
+            { status: 409 },
+          );
+        }
+        throw error;
+      }
     }
+
+    let startResult;
+    try {
+      startResult = await runtime.startRun(runParams);
+    } catch (error) {
+      if (error instanceof ActiveRunError) {
+        return jsonResponse(
+          {
+            error: 'Company intel run already in progress for this domain.',
+            snapshotId: error.snapshotId,
+          },
+          { status: 409 },
+        );
+      }
+      throw error;
+    }
+
+    let streamSubscription: RunSubscription | null = null;
 
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         const write = (payload: string) => controller.enqueue(textEncoder.encode(payload));
-        const sendEvent = (event: unknown) => {
+        const sendEvent = (event: CompanyIntelStreamEvent | { readonly type: string; readonly [key: string]: unknown }) => {
           try {
             write(`data: ${JSON.stringify(event)}\n\n`);
           } catch (error) {
@@ -245,8 +289,7 @@ export async function POST(request: NextRequest) {
         };
         const sendDone = () => write('data: [DONE]\n\n');
 
-        let lastSnapshotId: number | null = null;
-        let lastDomain = domainTrimmed;
+        let lastDomain = startResult.domain;
         let isClosed = false;
 
         const closeStream = () => {
@@ -257,54 +300,42 @@ export async function POST(request: NextRequest) {
         };
 
         const abortHandler = () => {
-          sendEvent({
-            type: 'run-error',
-            snapshotId: lastSnapshotId ?? -1,
-            domain: lastDomain,
-            message: 'Stream aborted by client',
-          });
-          sendDone();
+          streamSubscription?.unsubscribe();
+          streamSubscription = null;
           closeStream();
         };
 
         request.signal.addEventListener('abort', abortHandler, { once: true });
 
-        server
-          .runCollection(
-            runParams,
-            {
-              onEvent: event => {
-                lastSnapshotId = event.snapshotId;
-                if (event.domain) {
-                  lastDomain = event.domain;
-                }
-                sendEvent(event);
-              },
-            },
-          )
-          .then(result => {
-            sendEvent({
-              type: 'run-complete',
-              snapshotId: result.snapshotId,
-              domain: lastDomain,
-              result,
-            });
+        streamSubscription = runtime.subscribe(startResult.snapshotId, event => {
+          if (event.domain) {
+            lastDomain = event.domain;
+          }
+          sendEvent(event);
+          if (event.type === 'run-complete' || event.type === 'run-error' || event.type === 'run-cancelled') {
+            streamSubscription?.unsubscribe();
+            streamSubscription = null;
             sendDone();
             closeStream();
             request.signal.removeEventListener('abort', abortHandler);
-          })
-          .catch(error => {
-            const message = error instanceof Error ? error.message : 'Company intel run failed';
-            sendEvent({
-              type: 'run-error',
-              snapshotId: lastSnapshotId ?? -1,
-              domain: lastDomain,
-              message,
-            });
-            sendDone();
-            closeStream();
-            request.signal.removeEventListener('abort', abortHandler);
+          }
+        }, { replay: true });
+
+        if (!streamSubscription) {
+          sendEvent({
+            type: 'run-error',
+            snapshotId: startResult.snapshotId,
+            domain: lastDomain,
+            message: 'Unable to attach to company intel run',
           });
+          sendDone();
+          closeStream();
+          request.signal.removeEventListener('abort', abortHandler);
+        }
+      },
+      cancel() {
+        streamSubscription?.unsubscribe();
+        streamSubscription = null;
       },
     });
 

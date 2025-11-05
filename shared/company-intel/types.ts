@@ -2,8 +2,8 @@
 //                types.ts - Company intel shared domain contracts
 // ------------------------------------------------------------------------------------------------
 
-export type CompanyProfileStatus = 'not_configured' | 'pending' | 'ready' | 'failed';
-export type CompanyProfileSnapshotStatus = 'pending' | 'complete' | 'failed';
+export type CompanyProfileStatus = 'not_configured' | 'refreshing' | 'ready' | 'failed';
+export type CompanyProfileSnapshotStatus = 'running' | 'complete' | 'failed' | 'cancelled';
 
 export interface CompanyProfileKeyOffering {
   readonly title: string;
@@ -22,6 +22,8 @@ export interface CompanyProfile {
   readonly primaryIndustries: readonly string[];
   readonly faviconUrl: string | null;
   readonly lastSnapshotId: number | null;
+  readonly activeSnapshotId: number | null;
+  readonly activeSnapshotStartedAt: Date | null;
   readonly lastRefreshedAt: Date | null;
   readonly lastError: string | null;
   readonly createdAt: Date;
@@ -69,6 +71,13 @@ export interface CompanyIntelStreamStructuredPayload {
   readonly reasoningHeadline?: string | null;
 }
 
+export interface CompanyIntelSnapshotProgress {
+  readonly stage: CompanyIntelRunStage;
+  readonly completed?: number;
+  readonly total?: number;
+  readonly updatedAt: Date;
+}
+
 export interface CompanyProfileSnapshot {
   readonly id: number;
   readonly domain: string | null;
@@ -78,6 +87,7 @@ export interface CompanyProfileSnapshot {
   readonly summaries: CompanyIntelSnapshotSummaries | null;
   readonly rawScrapes: readonly CompanyIntelScrapeRecord[];
   readonly error: string | null;
+  readonly progress: CompanyIntelSnapshotProgress | null;
   readonly createdAt: Date;
   readonly completedAt: Date | null;
 }
@@ -239,6 +249,10 @@ export type CompanyIntelStreamEvent =
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'run-error';
       readonly message: string;
+    })
+  | (CompanyIntelStreamBaseEvent & {
+      readonly type: 'run-cancelled';
+      readonly reason?: string | null;
     });
 
 export interface CompanyIntelStreamErrorEvent extends CompanyIntelStreamBaseEvent {

@@ -2,7 +2,12 @@
 //                persistence.ts - Contracts for host-provided persistence helpers
 // ------------------------------------------------------------------------------------------------
 
-import type { CompanyProfileKeyOffering, CompanyProfileStatus, CompanyProfileSnapshotStatus } from '@/shared/company-intel/types';
+import type {
+  CompanyIntelRunStage,
+  CompanyProfileKeyOffering,
+  CompanyProfileStatus,
+  CompanyProfileSnapshotStatus,
+} from '@/shared/company-intel/types';
 
 export interface CompanyIntelSnapshotRecord {
   readonly id: number;
@@ -13,6 +18,12 @@ export interface CompanyIntelSnapshotRecord {
   readonly summaries?: unknown;
   readonly rawScrapes?: unknown;
   readonly error?: string | null;
+  readonly progress?: {
+    readonly stage: CompanyIntelRunStage;
+    readonly completed?: number;
+    readonly total?: number;
+    readonly updatedAt: Date;
+  } | null;
   readonly createdAt?: Date;
   readonly completedAt?: Date | null;
 }
@@ -29,6 +40,8 @@ export interface CompanyIntelProfileRecord {
   readonly primaryIndustries: readonly string[];
   readonly faviconUrl: string | null;
   readonly lastSnapshotId: number | null;
+  readonly activeSnapshotId: number | null;
+  readonly activeSnapshotStartedAt: Date | null;
   readonly lastRefreshedAt: Date | null;
   readonly lastError: string | null;
   readonly createdAt: Date;
@@ -38,6 +51,11 @@ export interface CompanyIntelProfileRecord {
 export interface CompanyIntelSnapshotCreateParams {
   readonly domain?: string | null;
   readonly status?: CompanyProfileSnapshotStatus;
+  readonly progress?: {
+    readonly stage: CompanyIntelRunStage;
+    readonly completed?: number;
+    readonly total?: number;
+  } | null;
 }
 
 export interface CompanyIntelSnapshotUpdate {
@@ -48,6 +66,12 @@ export interface CompanyIntelSnapshotUpdate {
   readonly summaries?: unknown;
   readonly rawScrapes?: unknown;
   readonly error?: string | null;
+  readonly progress?: {
+    readonly stage: CompanyIntelRunStage;
+    readonly completed?: number;
+    readonly total?: number;
+    readonly updatedAt?: Date;
+  } | null;
   readonly completedAt?: Date | null;
 }
 
@@ -73,6 +97,8 @@ export interface CompanyIntelProfileUpsert {
   readonly primaryIndustries: readonly string[];
   readonly faviconUrl: string | null;
   readonly lastSnapshotId: number | null;
+  readonly activeSnapshotId: number | null;
+  readonly activeSnapshotStartedAt: Date | null;
   readonly lastRefreshedAt: Date | null;
   readonly lastError: string | null;
 }
@@ -85,4 +111,5 @@ export interface CompanyIntelPersistence {
   listSnapshots(params?: { readonly limit?: number }): Promise<readonly CompanyIntelSnapshotRecord[]>;
   getProfile(): Promise<CompanyIntelProfileRecord | null>;
   getSnapshotById(snapshotId: number): Promise<CompanyIntelSnapshotRecord | null>;
+  deleteSnapshot(snapshotId: number): Promise<void>;
 }

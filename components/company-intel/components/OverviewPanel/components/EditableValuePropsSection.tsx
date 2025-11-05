@@ -16,6 +16,7 @@ interface EditableValuePropsSectionProps {
   readonly isSaving?: boolean;
   readonly headline?: string | null;
   readonly isThinking?: boolean;
+  readonly isEditingLocked?: boolean;
 }
 
 const MAX_VALUE_PROPS = 12;
@@ -26,6 +27,7 @@ export function EditableValuePropsSection({
   isSaving = false,
   headline,
   isThinking = false,
+  isEditingLocked = false,
 }: EditableValuePropsSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<string[]>(() => [...valueProps]);
@@ -38,11 +40,22 @@ export function EditableValuePropsSection({
     }
   }, [valueProps, isEditing]);
 
+  useEffect(() => {
+    if (isEditingLocked && isEditing) {
+      setIsEditing(false);
+      setDraft([...valueProps]);
+      setError(null);
+    }
+  }, [isEditingLocked, isEditing, valueProps]);
+
   const handleEdit = useCallback(() => {
+    if (isEditingLocked || isSaving) {
+      return;
+    }
     setIsEditing(true);
     setDraft([...valueProps]);
     setError(null);
-  }, [valueProps]);
+  }, [valueProps, isEditingLocked, isSaving]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
@@ -88,6 +101,9 @@ export function EditableValuePropsSection({
   }, [draft, onSave]);
 
   const hasValueProps = valueProps.length > 0;
+  const editTooltip = isEditingLocked
+    ? 'Analysis running — editing resumes when the run completes.'
+    : 'Edit';
 
   return (
     <section className="space-y-3">
@@ -176,14 +192,21 @@ export function EditableValuePropsSection({
                   variant="ghost"
                   size="icon"
                   onClick={handleEdit}
-                  className="absolute right-3 top-3 h-8 w-8 rounded-full bg-background/80 text-muted-foreground opacity-0 shadow-sm shadow-black/10 transition group-hover:opacity-100 group-hover:text-foreground"
+                  disabled={isSaving}
+                  aria-disabled={isSaving || isEditingLocked}
+                  className={[
+                    'absolute right-3 top-3 h-8 w-8 rounded-full bg-background/80 text-muted-foreground opacity-0 shadow-sm shadow-black/10 transition group-hover:opacity-100 group-hover:text-foreground',
+                    isEditingLocked ? 'cursor-not-allowed' : '',
+                  ]
+                    .join(' ')
+                    .trim()}
                 >
                   <span className="sr-only">Edit value propositions</span>
                   <Pencil className="h-4 w-4" aria-hidden />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left" sideOffset={8} align="center">
-                Edit
+                {editTooltip}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

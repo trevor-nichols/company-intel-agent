@@ -5,8 +5,9 @@ An end-to-end Next.js starter for building company-intelligence experiences. The
 ## What You Get
 - **Full pipeline:** `map → scrape → structured outputs → overview → SSE stream → persist → export PDF` with a demo UI and API surface ready for production.
 - **GPT-5 structured intelligence:** Dual GPT-5 models produce a normalized profile and a narrative overview, validated with Zod before anything is stored or emitted.
-- **Streaming UX:** Deterministic SSE frames (`text/event-stream`) let the front end surface deltas, reasoning, and completion status in real time.
-- **Swappable persistence:** In-memory storage by default with a Redis implementation that satisfies the same `CompanyIntelPersistence` interface.
+- **Streaming UX:** Deterministic SSE frames (`text/event-stream`) let the front end surface deltas, reasoning, and completion status in real time—even if the client reconnects mid-run.
+- **Durable runs:** Active collections survive refreshes via a runtime coordinator backed by Redis. Clients can resume a stream or cancel the run with dedicated APIs.
+- **Swappable persistence:** In-memory storage for quick starts with a Redis implementation that satisfies the same `CompanyIntelPersistence` interface.
 - **Operational guardrails:** JSON-ish logging, configurable origins, secret scanning, strict ESLint/Prettier, Vitest, and CI workflows baked in.
 
 ## Quickstart
@@ -49,12 +50,14 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 4. **Narrative overview:** A second GPT-5 run produces long-form narrative context with reasoning summaries.
 5. **Persistence:** Final payloads, snapshots, and page excerpts are stored via the configured `CompanyIntelPersistence` implementation.
 6. **Export:** A PDF renderer (React-PDF) builds a branded deliverable available at `/api/company-intel/snapshots/:id/export`.
+7. **Durability:** The runtime coordinator keeps the active snapshot id and progress in Redis so clients can resume streaming or cancel mid-run.
 
 ### Architecture
 - **UI (`app/**`, `components/company-intel/**`):** Next.js App Router screens, TanStack Query providers, and shadcn-style UI shims. UI never imports server code directly; it talks to the API via fetchers in `CompanyIntelClientProvider`.
 - **API (`app/api/company-intel/**`):** Route handlers run in the Node.js runtime, coerce HTTP inputs into typed server calls, stream SSE frames, and sanitize responses for the client.
 - **Server (`server/**`):** `createCompanyIntelServer` orchestrates the collection workflow, coordinates Tavily/OpenAI integrations, enforces Zod validation, and drives PDF generation.
-- **Persistence (`server/persistence/**`):** Memory and Redis backends implement `CompanyIntelPersistence`, serializing dates to ISO at module boundaries and supporting snapshot/page replacement.
+- **Persistence (`server/persistence/**`):** Redis is the default backend (fallbacks to in-memory for local dev). Both adapters implement `CompanyIntelPersistence`, serialize dates to ISO at module boundaries, and support snapshot/page replacement.
+- **Runtime coordinator (`server/runtime/**`):** Manages single-flight execution, SSE subscriptions, cancellation, and recovery so runs survive disconnects.
 - **Bootstrap (`server/bootstrap.ts`):** `getCompanyIntelEnvironment()` resolves config, logging, persistence, Tavily, and OpenAI clients once per process and caches the singleton.
 - **Logging & metrics:** `lib/logging.ts` emits JSON-friendly logs for stage transitions, including model ids, response ids, and usage metadata when available.
 
@@ -73,7 +76,9 @@ All routes live under `/api/company-intel` and run on the Node.js runtime.
 | `GET` | `/` | Returns `{ data: { profile, snapshots } }` with ISO timestamps.
 | `PATCH` | `/` | Applies sanitized updates (`companyName`, `tagline`, `overview`, `primaryIndustries`, `valueProps`, `keyOfferings`).
 | `POST` | `/preview` | Maps a domain and returns recommended selections before scraping.
-| `POST` | `/` | Triggers a run. JSON clients receive `{ data: result }`. Clients that send `Accept: text/event-stream` receive streamed frames ending with `[DONE]`.
+| `POST` | `/` | Triggers a run. JSON clients receive `{ data: result }`. Streaming clients (`Accept: text/event-stream`) attach to a live feed ending with `[DONE]`. Returns `409` if a run is already active for the domain.
+| `GET` | `/runs/:snapshotId/stream` | Reconnects to an active run, replays buffered frames, and resumes the live SSE stream.
+| `DELETE` | `/runs/:snapshotId` | Cancels the active run (idempotent). On success the stream emits `run-cancelled` and the snapshot is pruned.
 | `GET` | `/snapshots/:id/export` | Generates a PDF export (`Content-Disposition: attachment`).
 
 ### SSE Contract
@@ -90,7 +95,8 @@ Each frame is emitted as `data: <json>\n\n` and the stream terminates with `data
 8. `overview-complete` `{ overview, headline? }`
 9. `run-complete` `{ result }`
 10. `run-error` `{ message }`
-11. `[DONE]`
+11. `run-cancelled` `{ reason? }`
+12. `[DONE]`
 
 The UI hooks in `components/company-intel/hooks` assume this order and will fail fast if malformed frames are encountered.
 

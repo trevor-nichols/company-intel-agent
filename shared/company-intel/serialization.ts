@@ -13,6 +13,7 @@ import type {
   CompanyIntelSnapshotAgentMetadata,
   CompanyIntelSnapshotStructuredProfileSummary,
   CompanyIntelSnapshotSummaries,
+  CompanyIntelRunStage,
   CompanyProfile,
   CompanyProfileKeyOffering,
   CompanyProfileSnapshot,
@@ -362,7 +363,8 @@ export function toCompanyProfile(raw: unknown): CompanyProfile {
   const createdAt = parseDate(record.createdAt as string | Date | null | undefined) ?? new Date();
   const updatedAt = parseDate(record.updatedAt as string | Date | null | undefined) ?? new Date();
   const lastRefreshedAt = parseDate(record.lastRefreshedAt as string | Date | null | undefined);
-  const status = typeof record.status === 'string' ? (record.status as CompanyProfileStatus) : 'pending';
+  const status = typeof record.status === 'string' ? (record.status as CompanyProfileStatus) : 'not_configured';
+  const activeSnapshotStartedAt = parseDate(record.activeSnapshotStartedAt as string | Date | null | undefined);
 
   return {
     id: Number(record.id),
@@ -376,6 +378,8 @@ export function toCompanyProfile(raw: unknown): CompanyProfile {
     primaryIndustries: normaliseStringArray(record.primaryIndustries),
     faviconUrl: typeof record.faviconUrl === 'string' ? record.faviconUrl : null,
     lastSnapshotId: typeof record.lastSnapshotId === 'number' ? record.lastSnapshotId : null,
+    activeSnapshotId: typeof record.activeSnapshotId === 'number' ? record.activeSnapshotId : null,
+    activeSnapshotStartedAt,
     lastRefreshedAt,
     lastError: typeof record.lastError === 'string' ? record.lastError : null,
     createdAt,
@@ -388,7 +392,30 @@ function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
   const rawScrapesInput = (record.rawScrapes ?? record.raw_scrapes) as unknown;
   const createdAt = parseDate(record.createdAt as string | Date | null | undefined) ?? new Date();
   const completedAt = parseDate(record.completedAt as string | Date | null | undefined);
-  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'pending';
+  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'running';
+
+  const progressInput = record.progress && typeof record.progress === 'object'
+    ? (record.progress as Record<string, unknown>)
+    : null;
+
+  const progress = (() => {
+    if (!progressInput) {
+      return null;
+    }
+    const stage = typeof progressInput.stage === 'string' ? (progressInput.stage as CompanyIntelRunStage) : null;
+    if (!stage) {
+      return null;
+    }
+    const completed = typeof progressInput.completed === 'number' ? progressInput.completed : undefined;
+    const total = typeof progressInput.total === 'number' ? progressInput.total : undefined;
+    const updatedAt = parseDate(progressInput.updatedAt as string | Date | null | undefined) ?? new Date();
+    return {
+      stage,
+      completed,
+      total,
+      updatedAt,
+    };
+  })();
 
   return {
     id: Number(record.id),
@@ -399,6 +426,7 @@ function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
     summaries: normaliseSnapshotSummaries(record.summaries ?? record.summary),
     rawScrapes: toScrapeRecords(rawScrapesInput),
     error: typeof record.error === 'string' ? record.error : null,
+    progress,
     createdAt,
     completedAt,
   };
@@ -455,7 +483,7 @@ function toSelections(raw: unknown): CompanyIntelSelection[] {
 
 export function toTriggerResult(payload: unknown) {
   const record = asRecord(payload);
-  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'pending';
+  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'running';
   return {
     snapshotId: Number(record.snapshotId),
     status,

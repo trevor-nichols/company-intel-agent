@@ -4,7 +4,7 @@
 //                useCompanyIntelWorkflow - Centralized state + actions for company intel UI
 // ------------------------------------------------------------------------------------------------
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   CompanyIntelPreviewResult,
   CompanyIntelSelection,
@@ -18,6 +18,7 @@ import type {
 import { useCompanyIntel } from './useCompanyIntel';
 import { useCompanyIntelPreview } from './useCompanyIntelPreview';
 import { useTriggerCompanyIntel } from './useTriggerCompanyIntel';
+import { useCancelCompanyIntelRun } from './useCancelCompanyIntelRun';
 import { useUpdateCompanyIntelProfile } from './useUpdateCompanyIntelProfile';
 import { HttpError } from '../utils/errors';
 
@@ -36,6 +37,8 @@ function resolveErrorMessage(error: unknown, fallback: string): string {
 export interface UseCompanyIntelWorkflowResult {
   readonly profile: CompanyProfile | null;
   readonly profileStatus: CompanyProfile['status'] | 'not_configured';
+  readonly activeSnapshotId: number | null;
+  readonly hasActiveRun: boolean;
   readonly snapshots: readonly CompanyProfileSnapshot[];
   readonly latestSnapshot: CompanyProfileSnapshot | null;
   readonly previewData: CompanyIntelPreviewResult | null;
@@ -55,11 +58,13 @@ export interface UseCompanyIntelWorkflowResult {
   readonly manualUrl: string;
   readonly hasPreview: boolean;
   readonly isPreviewing: boolean;
+  readonly isResuming: boolean;
   readonly isScraping: boolean;
   readonly isBusy: boolean;
   readonly isLoading: boolean;
   readonly isError: boolean;
   readonly isStreaming: boolean;
+  readonly isCancelling: boolean;
   readonly streamStage: CompanyIntelRunStage | null;
   readonly streamProgress: { readonly completed: number; readonly total: number } | null;
   readonly onDomainChange: (value: string) => void;
@@ -67,6 +72,7 @@ export interface UseCompanyIntelWorkflowResult {
   readonly addManualUrl: () => void;
   readonly removeManualUrl: (url: string) => void;
   readonly toggleSelection: (url: string, checked: boolean) => void;
+  readonly cancelActiveRun: () => Promise<void>;
   readonly submit: () => Promise<void>;
   readonly startOver: () => void;
   readonly profileEditor: {
@@ -85,6 +91,18 @@ export interface UseCompanyIntelWorkflowResult {
 
 export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const companyIntelQuery = useCompanyIntel();
+  const {
+    data: companyIntelData,
+    isLoading,
+    isError,
+    refetch,
+  } = companyIntelQuery;
+  const queryProfileStatus = companyIntelData?.profile?.status ?? null;
+  const profileStatusFromQuery = queryProfileStatus ?? 'not_configured';
+  const [streamSnapshotId, setStreamSnapshotId] = useState<number | null>(null);
+  const lastResumeSnapshotIdRef = useRef<number | null>(null);
+  const runBaselineStatusRef = useRef<CompanyProfile['status'] | 'not_configured'>('not_configured');
+  const [profileStatusOverride, setProfileStatusOverride] = useState<CompanyProfile['status'] | null>(null);
   const handleStreamEvent = useCallback((event: CompanyIntelStreamEvent) => {
     switch (event.type) {
       case 'snapshot-created':
@@ -97,6 +115,10 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setStructuredReasoningHeadlineDraft(null);
         setOverviewReasoningHeadlineDraft(null);
         setFaviconDraft(null);
+        setStreamSnapshotId(event.snapshotId);
+        lastResumeSnapshotIdRef.current = event.snapshotId;
+        runBaselineStatusRef.current = profileStatusFromQuery;
+        setProfileStatusOverride('refreshing');
         break;
       case 'status':
         setStreamActive(true);
@@ -156,6 +178,10 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setStreamStage(null);
         setStreamProgress(null);
         setStructuredTextDraft(null);
+        setStreamSnapshotId(null);
+        lastResumeSnapshotIdRef.current = event.snapshotId;
+        void refetch();
+        setProfileStatusOverride('ready');
         break;
       case 'run-error':
         setStreamActive(false);
@@ -167,16 +193,38 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setStructuredReasoningHeadlineDraft(null);
         setOverviewReasoningHeadlineDraft(null);
         setFaviconDraft(null);
+        setStreamSnapshotId(null);
+        lastResumeSnapshotIdRef.current = event.snapshotId;
+        void refetch();
+        setProfileStatusOverride('failed');
+        break;
+      case 'run-cancelled':
+        setStreamActive(false);
+        setStreamStage(null);
+        setStreamProgress(null);
+        setOverviewDraft(null);
+        setStructuredSummaryDraft(null);
+        setStructuredTextDraft(null);
+        setStructuredReasoningHeadlineDraft(null);
+        setOverviewReasoningHeadlineDraft(null);
+        setFaviconDraft(null);
+        setStreamSnapshotId(null);
+        lastResumeSnapshotIdRef.current = event.snapshotId;
+        setErrorMessage(event.reason ?? 'Company intel run cancelled.');
+        setProfileStatusOverride(runBaselineStatusRef.current);
+        void refetch();
         break;
     }
-  }, []);
+  }, [profileStatusFromQuery, refetch]);
 
   const triggerMutation = useTriggerCompanyIntel({ stream: true, onEvent: handleStreamEvent });
   const previewMutation = useCompanyIntelPreview();
   const updateProfileMutation = useUpdateCompanyIntelProfile();
+  const cancelRunMutation = useCancelCompanyIntelRun();
 
-  const { data, isLoading, isError, refetch } = companyIntelQuery;
-  const profile = data?.profile ?? null;
+  const profile = companyIntelData?.profile ?? null;
+  const activeSnapshotId = profile?.activeSnapshotId ?? null;
+  const resumeMutation = useTriggerCompanyIntel({ stream: true, onEvent: handleStreamEvent, resumeSnapshotId: activeSnapshotId ?? undefined });
   const [domain, setDomain] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
@@ -197,8 +245,9 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const [structuredReasoningHeadlineDraft, setStructuredReasoningHeadlineDraft] = useState<string | null>(null);
   const [overviewReasoningHeadlineDraft, setOverviewReasoningHeadlineDraft] = useState<string | null>(null);
   const [faviconDraft, setFaviconDraft] = useState<string | null>(null);
+  const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
 
-  const snapshots = useMemo<readonly CompanyProfileSnapshot[]>(() => data?.snapshots ?? [], [data?.snapshots]);
+  const snapshots = useMemo<readonly CompanyProfileSnapshot[]>(() => companyIntelData?.snapshots ?? [], [companyIntelData?.snapshots]);
   const latestSnapshot = useMemo(() => snapshots[0] ?? null, [snapshots]);
   const structuredReasoningHeadline = useMemo(
     () => structuredReasoningHeadlineDraft ?? latestSnapshot?.summaries?.metadata?.structuredProfile?.headline ?? null,
@@ -232,10 +281,40 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setPreviewDomain(null);
   }, [domain, previewDomain, previewMutation]);
 
+  useEffect(() => {
+    if (!activeSnapshotId) {
+      lastResumeSnapshotIdRef.current = null;
+      return;
+    }
+    if (!profile?.domain) {
+      return;
+    }
+    if (triggerMutation.isPending || resumeMutation.isPending) {
+      return;
+    }
+    if (streamSnapshotId === activeSnapshotId) {
+      return;
+    }
+    if (lastResumeSnapshotIdRef.current === activeSnapshotId) {
+      return;
+    }
+
+    lastResumeSnapshotIdRef.current = activeSnapshotId;
+    void resumeMutation
+      .mutateAsync({ domain: profile.domain })
+      .catch(error => {
+        lastResumeSnapshotIdRef.current = null;
+        setErrorMessage(resolveErrorMessage(error, 'Unable to resume active run.'));
+      });
+  }, [activeSnapshotId, profile?.domain, streamSnapshotId, triggerMutation.isPending, resumeMutation]);
+
   const trimmedDomain = useMemo(() => domain.trim(), [domain]);
   const isPreviewing = previewMutation.isPending;
-  const isScraping = triggerMutation.isPending;
-  const isBusy = isPreviewing || isScraping;
+  const isCancelling = cancelRunMutation.isPending;
+  const isResumeConnecting = resumeMutation.isPending && !isStreamActive;
+  const isScraping = triggerMutation.isPending || resumeMutation.isPending || isStreamActive;
+  const isResuming = isResumeConnecting;
+  const isBusy = isPreviewing || isScraping || isCancelling;
 
   useEffect(() => {
     if (companyIntelQuery.error) {
@@ -245,10 +324,19 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       return;
     }
 
-    if (companyIntelQuery.data) {
+    if (companyIntelData) {
       setErrorMessage(null);
     }
-  }, [companyIntelQuery.error, companyIntelQuery.data]);
+  }, [companyIntelQuery.error, companyIntelData]);
+
+  useEffect(() => {
+    if (!profileStatusOverride) {
+      return;
+    }
+    if (queryProfileStatus && queryProfileStatus === profileStatusOverride) {
+      setProfileStatusOverride(null);
+    }
+  }, [profileStatusOverride, queryProfileStatus]);
 
   const previewData: CompanyIntelPreviewResult | null = useMemo(() => {
     if (!previewMutation.data) {
@@ -281,10 +369,18 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
 
   const hasPreview = Boolean(previewData && !isPreviewing);
 
-  const profileStatus = profile?.status ?? 'not_configured';
+  const profileStatus = profileStatusOverride ?? profile?.status ?? 'not_configured';
 
   const statusMessages = useMemo(() => {
     const messages: string[] = [];
+
+    if (isResumeConnecting) {
+      messages.push('Reconnecting to active run…');
+    }
+
+    if (isCancelling) {
+      messages.push('Stopping run…');
+    }
 
     if (isPreviewing && streamStage !== 'mapping') {
       messages.push('Mapping site…');
@@ -316,9 +412,9 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
 
     return messages;
-  }, [isPreviewing, isScraping, streamProgress, streamStage]);
+  }, [isPreviewing, isScraping, streamProgress, streamStage, isResumeConnecting, isCancelling]);
 
-  const isStreaming = isStreamActive;
+  const isStreaming = isStreamActive || resumeMutation.isPending;
 
   const handleDomainChange = useCallback((value: string) => {
     setDomain(value);
@@ -463,6 +559,20 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setSelectedUrls(prev => prev.filter(item => item !== url));
   }, []);
 
+  const cancelActiveRun = useCallback(async () => {
+    const snapshotId = activeSnapshotId ?? streamSnapshotId;
+    if (!snapshotId) {
+      setErrorMessage('No active company intel run found to cancel.');
+      return;
+    }
+
+    try {
+      await cancelRunMutation.mutateAsync(snapshotId);
+    } catch (error) {
+      setErrorMessage(resolveErrorMessage(error, 'Unable to cancel company intel run.'));
+    }
+  }, [activeSnapshotId, streamSnapshotId, cancelRunMutation]);
+
   const startOver = useCallback(() => {
     previewMutation.reset();
     setSelectedUrls([]);
@@ -478,6 +588,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setStructuredReasoningHeadlineDraft(null);
     setOverviewReasoningHeadlineDraft(null);
     setFaviconDraft(null);
+    setStreamSnapshotId(null);
+    lastResumeSnapshotIdRef.current = null;
   }, [previewMutation]);
 
   const submit = useCallback(async () => {
@@ -490,6 +602,11 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setStructuredReasoningHeadlineDraft(null);
     setOverviewReasoningHeadlineDraft(null);
     setFaviconDraft(null);
+
+    if (activeSnapshotId) {
+      setErrorMessage('A company intel refresh is already running. Cancel it before starting a new one.');
+      return;
+    }
 
     if (!trimmedDomain) {
       setErrorMessage('Please provide a website domain before collecting company intel.');
@@ -514,6 +631,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
 
     try {
       setStreamActive(true);
+      setStreamSnapshotId(null);
+      lastResumeSnapshotIdRef.current = null;
       await triggerMutation.mutateAsync({
         domain: trimmedDomain,
         selectedUrls,
@@ -543,11 +662,14 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     selectedUrls,
     triggerMutation,
     refetch,
+    activeSnapshotId,
   ]);
 
   return {
     profile,
     profileStatus,
+    activeSnapshotId,
+    hasActiveRun,
     snapshots,
     latestSnapshot,
     previewData,
@@ -567,11 +689,13 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     manualUrl,
     hasPreview,
     isPreviewing,
+    isResuming,
     isScraping,
     isBusy,
     isLoading,
     isError,
     isStreaming,
+    isCancelling,
     streamStage,
     streamProgress,
     onDomainChange: handleDomainChange,
@@ -579,6 +703,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     addManualUrl,
     removeManualUrl,
     toggleSelection,
+    cancelActiveRun,
     submit,
     startOver,
     profileEditor: {

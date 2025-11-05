@@ -24,6 +24,11 @@ interface RunIntelFormProps {
   readonly isBusy: boolean;
   readonly isPreviewing: boolean;
   readonly isScraping: boolean;
+  readonly isResuming: boolean;
+  readonly isStreaming: boolean;
+  readonly isCancelling: boolean;
+  readonly hasActiveRun: boolean;
+  readonly cancelActiveRun: () => Promise<void>;
   readonly hasPreview: boolean;
   readonly errorMessage: string | null;
   readonly manualError: string | null;
@@ -49,6 +54,11 @@ export function RunIntelForm(props: RunIntelFormProps): ReactElement {
     isBusy,
     isPreviewing,
     isScraping,
+    isResuming,
+    isStreaming,
+    isCancelling,
+    hasActiveRun,
+    cancelActiveRun,
     hasPreview,
     errorMessage,
     manualError,
@@ -66,14 +76,19 @@ export function RunIntelForm(props: RunIntelFormProps): ReactElement {
 
   const [isManualEntryOpen, setManualEntryOpen] = useState(false);
   const manualEntryCommitted = useRef(false);
-
   const primaryActionLabel = hasPreview
     ? isScraping
       ? 'Analyzing pages…'
       : 'Analyze selected pages'
-    : isPreviewing
-      ? 'Mapping site…'
-      : 'Map site';
+    : hasActiveRun
+      ? isResuming
+        ? 'Reconnecting…'
+        : isStreaming
+          ? 'Running analysis…'
+          : 'Run in progress'
+      : isPreviewing
+        ? 'Mapping site…'
+        : 'Map site';
 
   const showSelectionsCard = isPreviewing || hasPreview || manualSelectedUrls.length > 0;
   const showStatusMessages = statusMessages.length > 0;
@@ -172,10 +187,22 @@ export function RunIntelForm(props: RunIntelFormProps): ReactElement {
             ) : null}
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" disabled={isBusy}>
+              <Button type="submit" disabled={isBusy || hasActiveRun}>
                 {primaryActionLabel}
               </Button>
-              {hasPreview ? (
+              {hasActiveRun ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isCancelling}
+                  onClick={() => {
+                    void cancelActiveRun();
+                  }}
+                >
+                  {isCancelling ? 'Cancelling…' : 'Cancel run'}
+                </Button>
+              ) : hasPreview ? (
                 <Button type="button" variant="ghost" size="sm" disabled={isBusy} onClick={startOver}>
                   Start over
                 </Button>

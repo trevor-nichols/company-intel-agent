@@ -15,6 +15,7 @@ interface EditableIndustriesSectionProps {
   readonly isSaving?: boolean;
   readonly headline?: string | null;
   readonly isThinking?: boolean;
+  readonly isEditingLocked?: boolean;
 }
 
 export function EditableIndustriesSection({
@@ -23,6 +24,7 @@ export function EditableIndustriesSection({
   isSaving = false,
   headline,
   isThinking = false,
+  isEditingLocked = false,
 }: EditableIndustriesSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<string[]>(() => [...industries]);
@@ -37,12 +39,24 @@ export function EditableIndustriesSection({
     }
   }, [industries, isEditing]);
 
+  useEffect(() => {
+    if (isEditingLocked && isEditing) {
+      setIsEditing(false);
+      setDraft([...industries]);
+      setPending('');
+      setError(null);
+    }
+  }, [isEditingLocked, isEditing, industries]);
+
   const handleEdit = useCallback(() => {
+    if (isEditingLocked || isSaving) {
+      return;
+    }
     setDraft([...industries]);
     setPending('');
     setIsEditing(true);
     setError(null);
-  }, [industries]);
+  }, [industries, isEditingLocked, isSaving]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
@@ -93,6 +107,9 @@ export function EditableIndustriesSection({
 
   const hasIndustries = industries.length > 0;
   const placeholderText = headline?.trim().length ? headline.trim() : null;
+  const editTooltip = isEditingLocked
+    ? 'Analysis running — editing resumes when the run completes.'
+    : 'Edit';
 
   return (
     <section className="space-y-3">
@@ -178,14 +195,21 @@ export function EditableIndustriesSection({
                   variant="ghost"
                   size="icon"
                   onClick={handleEdit}
-                  className="absolute right-3 top-3 h-8 w-8 rounded-full bg-background/80 text-muted-foreground opacity-0 shadow-sm shadow-black/10 transition group-hover:opacity-100 group-hover:text-foreground"
+                  disabled={isSaving}
+                  aria-disabled={isSaving || isEditingLocked}
+                  className={[
+                    'absolute right-3 top-3 h-8 w-8 rounded-full bg-background/80 text-muted-foreground opacity-0 shadow-sm shadow-black/10 transition group-hover:opacity-100 group-hover:text-foreground',
+                    isEditingLocked ? 'cursor-not-allowed' : '',
+                  ]
+                    .join(' ')
+                    .trim()}
                 >
                   <span className="sr-only">Edit primary industries</span>
                   <Pencil className="h-4 w-4" aria-hidden />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left" sideOffset={8} align="center">
-                Edit
+                {editTooltip}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

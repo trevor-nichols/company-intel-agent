@@ -12,6 +12,7 @@ import { createOpenAIClient } from './integrations/openai/client';
 import { createTavilyClient, type TavilyClient } from './integrations/tavily/client';
 import type { OpenAIClientLike } from './agents/shared/openai';
 import { createMemoryPersistence, createRedisPersistence } from './persistence';
+import { CompanyIntelRunCoordinator } from './runtime/runCoordinator';
 
 const DEFAULT_STRUCTURED_MODEL = 'gpt-5';
 const DEFAULT_OVERVIEW_MODEL = 'gpt-5';
@@ -29,6 +30,7 @@ export interface CompanyIntelBootstrapOverrides {
 export interface CompanyIntelEnvironment {
   readonly server: CompanyIntelServer;
   readonly persistence: CompanyIntelPersistence;
+  readonly runtime: CompanyIntelRunCoordinator;
 }
 
 declare global {
@@ -93,7 +95,12 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
     overviewModel,
   });
 
-  return { server, persistence } satisfies CompanyIntelEnvironment;
+  const runtime = new CompanyIntelRunCoordinator({
+    server,
+    logger: log,
+  });
+
+  return { server, persistence, runtime } satisfies CompanyIntelEnvironment;
 }
 
 export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {

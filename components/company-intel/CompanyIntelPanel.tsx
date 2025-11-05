@@ -50,6 +50,9 @@ export function CompanyIntelPanel({
     isLoading,
     isError,
     isStreaming,
+    isResuming,
+    isCancelling,
+    hasActiveRun,
     onDomainChange,
     onManualUrlChange,
     addManualUrl,
@@ -57,6 +60,7 @@ export function CompanyIntelPanel({
     toggleSelection,
     submit,
     startOver,
+    cancelActiveRun,
     profileEditor,
   } = workflow;
 
@@ -113,6 +117,11 @@ export function CompanyIntelPanel({
             isBusy={isBusy}
             isPreviewing={isPreviewing}
             isScraping={isScraping}
+            isResuming={isResuming}
+            isStreaming={isStreaming}
+            isCancelling={isCancelling}
+            hasActiveRun={hasActiveRun}
+            cancelActiveRun={cancelActiveRun}
             hasPreview={hasPreview}
             errorMessage={errorMessage}
             manualError={manualError}

@@ -37,10 +37,10 @@ interface OverviewPanelProps {
 }
 
 export function OverviewPanel({
+  isStreaming = false,
   profile,
   structuredProfile,
   isLoading,
-  isStreaming = false,
   isScraping,
   overviewHeadline,
   structuredHeadline,
@@ -67,6 +67,7 @@ export function OverviewPanel({
   const hasStreamingOverview = Boolean(overviewDraft && overviewDraft.trim().length > 0);
   const showOverviewThinking = isRefreshing && !hasStreamingOverview;
   const showStructuredThinking = isRefreshing && !structuredProfile;
+  const isEditingLocked = isRefreshing;
   const overviewHeadlineForDisplay = isRefreshing ? displayOverviewHeadline : null;
   const structuredHeadlineForDisplay = isRefreshing ? displayStructuredHeadline : null;
 
@@ -80,6 +81,7 @@ export function OverviewPanel({
         onSave={onSaveOverview}
         isSaving={isSavingOverview}
         headline={overviewHeadlineForDisplay}
+        isEditingLocked={isEditingLocked}
       />
 
       <Separator />
@@ -91,6 +93,7 @@ export function OverviewPanel({
           isSaving={isSavingPrimaryIndustries}
           headline={structuredHeadlineForDisplay}
           isThinking={showStructuredThinking}
+          isEditingLocked={isEditingLocked}
         />
 
         <EditableOfferingsSection
@@ -99,6 +102,7 @@ export function OverviewPanel({
           isSaving={isSavingKeyOfferings}
           headline={structuredHeadlineForDisplay}
           isThinking={showStructuredThinking}
+          isEditingLocked={isEditingLocked}
         />
 
         <EditableValuePropsSection
@@ -107,6 +111,7 @@ export function OverviewPanel({
           isSaving={isSavingValueProps}
           headline={structuredHeadlineForDisplay}
           isThinking={showStructuredThinking}
+          isEditingLocked={isEditingLocked}
         />
       </div>
     </div>

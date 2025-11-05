@@ -17,6 +17,19 @@ export interface CompanyIntelPageContent {
 //                Helpers
 // ------------------------------------------------------------------------------------------------
 
+function escapeXmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function wrapInCdata(content: string): string {
+  const safeContent = content.replace(/]]>/g, ']]]]><![CDATA[>');
+  return `<![CDATA[${safeContent}]]>`;
+}
+
 function normaliseTagName(candidate: string): string {
   const cleaned = candidate
     .toLowerCase()
@@ -59,15 +72,14 @@ export function formatPagesAsXml(pages: readonly CompanyIntelPageContent[]): str
     .map(page => {
       const tag = derivePageTagName(page.url, page.identifiedName ?? page.title ?? null);
       const trimmedContent = page.content.trim();
-      return `<page name="${tag}" url="${page.url}">
-${trimmedContent}
+      const safeTag = escapeXmlAttribute(tag);
+      const safeUrl = escapeXmlAttribute(page.url);
+      const payload = wrapInCdata(trimmedContent);
+      return `<page name="${safeTag}" url="${safeUrl}">
+${payload}
 </page>`;
     })
     .join('\n\n');
 }
-
-export const pageTransformers = {
-  formatPagesAsXml,
-};
 
 export type { CompanyIntelPageContent as StructuredPageContent };

@@ -2,7 +2,7 @@
 //                bridge/index.ts - Server-side configuration contracts for company intel feature
 // ------------------------------------------------------------------------------------------------
 
-import type { logger as defaultLogger } from '@agenai/logging';
+import type { Logger } from '@agenai/logging';
 
 import type { CollectSiteIntelOptions, SiteIntelResult } from '../tavily';
 import type { CollectSiteIntelDependencies } from '../tavily/collect';
@@ -19,7 +19,7 @@ import type { UpdateCompanyIntelProfileParams } from '../services/profileUpdates
 import type { CompanyIntelStreamEvent } from '../../components/company-intel/types';
 
 export interface RunCollectionOverrides {
-  readonly logger?: typeof defaultLogger;
+  readonly logger?: Logger;
   readonly structuredOutputPrompt?: CompanyIntelStructuredPromptConfig;
   readonly structuredOutputModel?: string;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
@@ -32,7 +32,7 @@ export interface CompanyIntelServerConfig {
   readonly tavily: CollectSiteIntelDependencies['tavily'];
   readonly openAI: OpenAIClientLike;
   readonly persistence: CompanyIntelPersistence;
-  readonly logger?: typeof defaultLogger;
+  readonly logger?: Logger;
   readonly structuredOutputPrompt?: CompanyIntelStructuredPromptConfig;
   readonly structuredOutputModel?: string;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
@@ -43,7 +43,7 @@ export interface CompanyIntelServer {
   preview(
     domain: string,
     options?: CollectSiteIntelOptions,
-    overrides?: { readonly logger?: typeof defaultLogger },
+    overrides?: { readonly logger?: Logger },
   ): Promise<SiteIntelResult>;
   runCollection(
     params: RunCompanyIntelCollectionParams,
@@ -51,12 +51,12 @@ export interface CompanyIntelServer {
   ): Promise<RunCompanyIntelCollectionResult>;
   updateProfile(
     params: UpdateCompanyIntelProfileParams,
-    overrides?: { readonly logger?: typeof defaultLogger },
+    overrides?: { readonly logger?: Logger },
   ): Promise<CompanyIntelProfileRecord>;
   getProfile(): Promise<CompanyIntelProfileRecord | null>;
   getSnapshotHistory(limit?: number): Promise<readonly CompanyIntelSnapshotRecord[]>;
   generateSnapshotPdf(
     params: GenerateSnapshotPdfParams,
-    overrides?: { readonly logger?: typeof defaultLogger },
+    overrides?: { readonly logger?: Logger },
   ): Promise<CompanyIntelSnapshotPdfResult>;
 }

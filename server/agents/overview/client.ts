@@ -155,7 +155,11 @@ export async function generateCompanyOverview(
             const normalizedDisplay = displayText.trim();
             if (normalizedDisplay.length > 0) {
               if (latestOverviewText && normalizedDisplay.startsWith(latestOverviewText)) {
-                textDelta = normalizedDisplay.slice(latestOverviewText.length);
+                if (normalizedDisplay.length > latestOverviewText.length) {
+                  textDelta = normalizedDisplay.slice(latestOverviewText.length);
+                } else if (!textDelta) {
+                  textDelta = normalizedDisplay;
+                }
               } else {
                 textDelta = normalizedDisplay;
               }

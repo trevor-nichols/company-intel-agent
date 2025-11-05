@@ -76,7 +76,6 @@ const SCORE_FOR_PATH_SEGMENTS = 12;
 const EXCLUDED_PATH_PATTERNS: readonly RegExp[] = [
   /(login|log-in|signin|sign-in|signup|sign-up|signout|sign-out|account|auth)(\/|$)/i,
   /(admin|wp-admin|dashboard)(\/|$)/i,
-  /(blog|news|insights|press)(\/|$)/i,
   /(privacy|privacy-policy|policies|gdpr|compliance)(\/|$)/i,
   /(terms|terms-of-service|termsandconditions|legal|conditions|eula)(\/|$)/i,
   /(cookie|cookies|tracking-preferences)(\/|$)/i,

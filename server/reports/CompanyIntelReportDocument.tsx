@@ -94,10 +94,6 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     color: '#323232',
   },
-  sourceUrl: {
-    fontSize: 10,
-    color: '#5a5a56',
-  },
   statRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

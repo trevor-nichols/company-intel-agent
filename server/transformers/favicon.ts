@@ -38,7 +38,3 @@ export function extractFaviconUrl(scrapeResult: SiteIntelScrapeOutcome): string 
 
   return null;
 }
-
-export const faviconTransformers = {
-  extractFaviconUrl,
-};

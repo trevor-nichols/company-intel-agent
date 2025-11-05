@@ -2,7 +2,7 @@
 //                types.ts - Shared OpenAI integration types - Dependencies: openai
 // ------------------------------------------------------------------------------------------------
 
-import type { logger as defaultLogger } from '@agenai/logging';
+import type { Logger } from '@agenai/logging';
 import type OpenAI from 'openai';
 
 export interface OpenAIClientConfig {
@@ -13,7 +13,7 @@ export interface OpenAIClientConfig {
   readonly timeoutMs?: number;
   readonly maxRetries?: number;
   readonly defaultHeaders?: Record<string, string>;
-  readonly logger?: typeof defaultLogger;
+  readonly logger?: Logger;
 }
 
 export interface ResolvedOpenAIClientConfig {

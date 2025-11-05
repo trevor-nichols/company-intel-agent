@@ -53,6 +53,7 @@ export async function generateCompanyOverview(
   }
 
   const log = dependencies.logger ?? defaultLogger;
+  const debugStream = process.env.COMPANY_INTEL_DEBUG_STREAM === 'true';
   const responsesClient = resolveOpenAIResponses(dependencies.openAIClient);
   const prompt = params.prompt ?? DEFAULT_COMPANY_OVERVIEW_PROMPT;
 
@@ -89,6 +90,14 @@ export async function generateCompanyOverview(
 
   let streamingBuffer = '';
   let latestOverviewText = '';
+  const overviewStreamState: OverviewStreamParseState = {
+    startIndex: null,
+    cursor: 0,
+    pendingEscape: false,
+    unicodeBuffer: null,
+    done: false,
+    text: '',
+  };
 
   const response = shouldStream
     ? await (async () => {
@@ -106,30 +115,62 @@ export async function generateCompanyOverview(
           }
 
           const snapshotText = typeof event.snapshot === 'string' ? event.snapshot : undefined;
+
+          if (debugStream) {
+            const preview = rawDelta.length > 160 ? `${rawDelta.slice(0, 160)}…` : rawDelta;
+            log.debug('company-intel:overview:stream-delta', {
+              domain: params.domain,
+              chunkLength: rawDelta.length,
+              chunkPreview: preview,
+              hasSnapshot: Boolean(snapshotText),
+            });
+          }
+
           streamingBuffer += rawDelta;
+
+          const incrementalDelta = consumeOverviewStream(streamingBuffer, overviewStreamState);
+          if (incrementalDelta && incrementalDelta.length > 0) {
+            latestOverviewText = overviewStreamState.text;
+            if (debugStream) {
+              const preview = incrementalDelta.length > 160 ? `${incrementalDelta.slice(0, 160)}…` : incrementalDelta;
+              log.debug('company-intel:overview:stream-text-delta', {
+                domain: params.domain,
+                chunkLength: incrementalDelta.length,
+                chunkPreview: preview,
+              });
+            }
+          }
 
           const candidate = snapshotText ?? streamingBuffer;
           const overviewCandidate = candidate ? extractOverviewFromJson(candidate) : null;
 
           let parsed: CompanyOverviewStructuredOutput | null = null;
           let displayText: string | null = null;
-          let textDelta = '';
+          let textDelta: string = incrementalDelta ?? '';
 
           if (typeof overviewCandidate === 'string') {
             parsed = { overview: overviewCandidate } satisfies CompanyOverviewStructuredOutput;
             displayText = overviewCandidate;
 
-            if (latestOverviewText && displayText.startsWith(latestOverviewText)) {
-              textDelta = displayText.slice(latestOverviewText.length);
-            } else {
-              textDelta = displayText;
-            }
+            const normalizedDisplay = displayText.trim();
+            if (normalizedDisplay.length > 0) {
+              if (latestOverviewText && normalizedDisplay.startsWith(latestOverviewText)) {
+                textDelta = normalizedDisplay.slice(latestOverviewText.length);
+              } else {
+                textDelta = normalizedDisplay;
+              }
 
-            latestOverviewText = displayText;
+              latestOverviewText = normalizedDisplay;
+              displayText = normalizedDisplay;
+              overviewStreamState.text = normalizedDisplay;
+            } else {
+              textDelta = '';
+            }
           }
 
           const normalizedDelta = textDelta;
-          if (!normalizedDelta && !displayText) {
+          const hasPayload = Boolean((normalizedDelta && normalizedDelta.length > 0) || displayText);
+          if (!hasPayload) {
             return;
           }
 
@@ -219,4 +260,146 @@ function extractOverviewFromJson(candidate: string): string | null {
     // Ignore until valid JSON is available.
     return null;
   }
+}
+
+interface OverviewStreamParseState {
+  startIndex: number | null;
+  cursor: number;
+  pendingEscape: boolean;
+  unicodeBuffer: string | null;
+  done: boolean;
+  text: string;
+}
+
+function consumeOverviewStream(buffer: string, state: OverviewStreamParseState): string | null {
+  if (!buffer || state.done) {
+    return null;
+  }
+
+  if (state.startIndex === null) {
+    const startIndex = locateOverviewStringStart(buffer);
+    if (startIndex === null) {
+      return null;
+    }
+
+    state.startIndex = startIndex;
+    state.cursor = startIndex;
+  }
+
+  let appended = '';
+  let index = state.cursor;
+
+  while (index < buffer.length) {
+    const char = buffer[index];
+
+    if (state.unicodeBuffer !== null) {
+      if (/^[0-9a-fA-F]$/.test(char)) {
+        state.unicodeBuffer += char;
+        index += 1;
+
+        if (state.unicodeBuffer.length === 4) {
+          const codePoint = Number.parseInt(state.unicodeBuffer, 16);
+          appended += String.fromCharCode(codePoint);
+          state.unicodeBuffer = null;
+        }
+      } else {
+        // Invalid sequence; abandon unicode escape and include raw character.
+        state.unicodeBuffer = null;
+        appended += char;
+        index += 1;
+      }
+
+      continue;
+    }
+
+    if (state.pendingEscape) {
+      state.pendingEscape = false;
+      switch (char) {
+        case '"':
+          appended += '"';
+          break;
+        case '\\':
+          appended += '\\';
+          break;
+        case '/':
+          appended += '/';
+          break;
+        case 'b':
+          appended += '\b';
+          break;
+        case 'f':
+          appended += '\f';
+          break;
+        case 'n':
+          appended += '\n';
+          break;
+        case 'r':
+          appended += '\r';
+          break;
+        case 't':
+          appended += '\t';
+          break;
+        case 'u':
+          state.unicodeBuffer = '';
+          break;
+        default:
+          appended += char;
+          break;
+      }
+
+      index += 1;
+      continue;
+    }
+
+    if (char === '\\') {
+      state.pendingEscape = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      state.done = true;
+      index += 1;
+      break;
+    }
+
+    appended += char;
+    index += 1;
+  }
+
+  if (index === state.cursor) {
+    return null;
+  }
+
+  state.cursor = index;
+
+  if (appended.length > 0) {
+    state.text += appended;
+    return appended;
+  }
+
+  return null;
+}
+
+function locateOverviewStringStart(buffer: string): number | null {
+  const keyIndex = buffer.indexOf('"overview"');
+  if (keyIndex === -1) {
+    return null;
+  }
+
+  let index = buffer.indexOf(':', keyIndex + '"overview"'.length);
+  if (index === -1) {
+    return null;
+  }
+
+  index += 1;
+  while (index < buffer.length && /\s/.test(buffer[index])) {
+    index += 1;
+  }
+
+  if (index >= buffer.length || buffer[index] !== '"') {
+    return null;
+  }
+
+  return index + 1;
 }

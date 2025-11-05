@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { logger } from '@agenai/logging';
 
 import { errorResponse, jsonResponse } from '@/server/handlers';
 import { getCompanyIntelEnvironment } from '@/server/bootstrap';
@@ -235,7 +236,11 @@ export async function POST(request: NextRequest) {
           try {
             write(`data: ${JSON.stringify(event)}\n\n`);
           } catch (error) {
-            console.error('sse:write:error', error);
+            const eventType = typeof event === 'object' && event !== null && 'type' in event ? (event as { type?: string }).type : undefined;
+            logger.error('company-intel:sse:write-error', {
+              eventType: typeof eventType === 'string' ? eventType : 'unknown',
+              error,
+            });
           }
         };
         const sendDone = () => write('data: [DONE]\n\n');

@@ -63,3 +63,9 @@ __pycache__/*
 
 .mcp.json
 .claude/scripts/
+
+# Snapshot files
+**/SNAPSHOT.md
+
+# Documentation directories
+**/docs/

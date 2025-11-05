@@ -1,8 +1,8 @@
-import { CompanyIntelDemoApp } from '@/app/company-intel-demo';
+import { CompanyIntelPanel, CompanyIntelProviders } from '@/components/company-intel';
 
 export default function HomePage(): JSX.Element {
   return (
-    <div className="bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border/60 bg-card/60 py-8 backdrop-blur">
         <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 px-6 text-left">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Company Intel Starter</h1>
@@ -11,7 +11,11 @@ export default function HomePage(): JSX.Element {
           </p>
         </div>
       </header>
-      <CompanyIntelDemoApp />
+      <CompanyIntelProviders teamId={1}>
+        <main className="mx-auto w-full max-w-screen-2xl py-12">
+          <CompanyIntelPanel />
+        </main>
+      </CompanyIntelProviders>
     </div>
   );
 }

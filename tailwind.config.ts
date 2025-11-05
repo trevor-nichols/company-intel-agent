@@ -5,8 +5,9 @@ const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-    './stories/**/*.{ts,tsx}',
+    './server/**/*.{ts,tsx}',
+    './shared/**/*.{ts,tsx}',
+    './__mocks__/**/*.{ts,tsx}',
   ],
   theme: {
     container: {

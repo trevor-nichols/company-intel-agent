@@ -56,11 +56,11 @@
 ### M0 — Setup & De-internalize
 
 - ✅ **M0.1** Add vendor shims  
-  **Files**: `src/vendor/logging.ts`, `src/vendor/config.ts`  
+  **Files**: `lib/logging.ts`, `lib/config.ts`  
   **Acceptance**: `@agenai/logging` and `@agenai/config` resolve to these shims and compile.
 
 - ✅ **M0.2** UI shim mapping  
-  **Files**: `src/vendor/ui/{card.tsx,badge.tsx,input.tsx,button.tsx,textarea.tsx,tooltip.tsx,dialog.tsx,separator.tsx,avatar.tsx,skeleton.tsx,scroll-area.tsx,index.ts}`, plus `MinimalMarkdown` (react-markdown) and `ShimmeringText` (CSS)  
+  **Files**: `components/ui/{card.tsx,badge.tsx,input.tsx,button.tsx,textarea.tsx,tooltip.tsx,dialog.tsx,separator.tsx,avatar.tsx,skeleton.tsx,scroll-area.tsx,index.ts}`, plus `MinimalMarkdown` (react-markdown) and `ShimmeringText` (CSS)  
   **Acceptance**: all `@agenai/ui/*` imports compile without changes in client code.
 
 - ✅ **M0.3** TS config & paths  
@@ -74,11 +74,11 @@
 ### M1 — Persistence (Memory) & Bootstrap
 
 - ✅ **M1.1** Memory persistence  
-  **Files**: `src/server/persistence/memory.ts` implementing `CompanyIntelPersistence`  
+  **Files**: `server/persistence/memory.ts` implementing `CompanyIntelPersistence`  
   **Acceptance**: create/update/list/get works; snapshots and profiles persist during process lifetime.
 
 - ✅ **M1.2** Bootstrap factory  
-  **Files**: `src/server/bootstrap.ts`  
+  **Files**: `server/bootstrap.ts`  
   **Logic**: instantiate OpenAI/Tavily clients + memory persistence; return `createCompanyIntelServer(...)`  
   **Acceptance**: server object returned with all methods callable.
 
@@ -105,13 +105,13 @@
 
 - ✅ **M3.1** Demo page  
   **Files**: `app/page.tsx`  
-  **Logic**: mount `CompanyIntelClientProvider teamId={1} apiBasePath="/api/company-intel"` + `CompanyIntelPanel`  
+  **Logic**: wrap `CompanyIntelPanel` with `CompanyIntelProviders teamId={1}` to supply query + client context  
   **Acceptance**: manual flow works in browser (map → select → stream → snapshot).
 
 ### M4 — Redis (Optional Toggle)
 
 - ✅ **M4.1** Redis persistence  
-  **Files**: `src/server/persistence/redis.ts` (use `ioredis`)  
+  **Files**: `server/persistence/redis.ts` (use `ioredis`)  
   **Keys**: `ci:profile:<teamId>`, `ci:snapshot:<id>`, `ci:snapshots:byTeam:<teamId>`  
   **Acceptance**: setting `REDIS_URL` switches to Redis; parity with memory in basic tests.
 

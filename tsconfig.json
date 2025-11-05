@@ -25,22 +25,22 @@
     ],
     "paths": {
       "@/*": [
-        "./src/*"
+        "./*"
       ],
       "@app/*": [
         "./app/*"
       ],
       "@agenai/logging": [
-        "./src/vendor/logging.ts"
+        "./lib/logging"
       ],
       "@agenai/config": [
-        "./src/vendor/config.ts"
+        "./lib/config"
       ],
       "@agenai/ui": [
-        "./src/vendor/ui/index.ts"
+        "./components/ui/index"
       ],
       "@agenai/ui/*": [
-        "./src/vendor/ui/*"
+        "./components/ui/*"
       ]
     },
     "plugins": [

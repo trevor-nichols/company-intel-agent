@@ -141,9 +141,9 @@ Redis keys (optional):
 
 ## 14) Vendor shims (replace private deps)
 
-* `src/vendor/logging.ts` → `logger.info|warn|error|debug` to `console`
-* `src/vendor/config.ts` → `getEnvVar(key) | requireEnvVar(key)`
-* `src/vendor/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `MinimalMarkdown` (`react-markdown`) and `ShimmeringText` (CSS).
+* `lib/logging.ts` → `logger.info|warn|error|debug` to `console`
+* `lib/config.ts` → `getEnvVar(key) | requireEnvVar(key)`
+* `components/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `MinimalMarkdown` (`react-markdown`) and `ShimmeringText` (CSS).
 
 ## 15) Command cheat-sheet
 

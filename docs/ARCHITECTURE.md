@@ -29,7 +29,7 @@ flowchart LR
 
 ## 3) Modules & boundaries
 
-**Client (UI):** `src/client/**`
+**Client (UI):** `components/company-intel/**`
 
 * React Query hooks call the API; UI shows streaming draft & saved snapshots.
 
@@ -37,7 +37,7 @@ flowchart LR
 
 * GET profile/snapshots, POST preview, POST trigger (SSE), GET export PDF.
 
-**Server (Domain):** `src/server/**`
+**Server (Domain):** `server/**`
 
 * `createCompanyIntelServer(config)` wires Tavily + OpenAI + Persistence.
 * `services/runCollection.ts` orchestrates full run and emits events.
@@ -45,7 +45,7 @@ flowchart LR
 * `tavily/**` maps/extracts pages.
 * `persistence/**` implements the storage contract.
 
-**Vendors/Shims:** `src/vendor/**`
+**Vendors/Shims:** `components/ui/**`, `lib/{config.ts,logging.ts}`
 
 * `logging.ts`, `config.ts`, `ui/*` small wrappers (replace private deps).
 
@@ -254,8 +254,8 @@ ALLOW_ORIGINS=http://localhost:3000
 ## 17) Code standards
 
 * Strict TS. No `any` in exported types.
-* Module boundaries: `client` never imports `server`.
-* Public contracts in `src/client/company-intel/types` are the source of truth.
+* Module boundaries: UI modules under `components/company-intel` never import `server` directly.
+* Public contracts in `components/company-intel/types` are the source of truth.
 * Keep files small, pure functions where possible, no side-effects in type modules.
 
 ---
@@ -266,14 +266,14 @@ Mount:
 
 ```tsx
 // app/page.tsx
-import { CompanyIntelClientProvider, CompanyIntelPanel } from '@/client/company-intel';
+import { CompanyIntelPanel, CompanyIntelProviders } from '@/components/company-intel';
 export default function Page(){
   return (
-    <main className="p-6">
-      <CompanyIntelClientProvider teamId={1} apiBasePath="/api/company-intel">
+    <CompanyIntelProviders teamId={1}>
+      <main className="p-6">
         <CompanyIntelPanel />
-      </CompanyIntelClientProvider>
-    </main>
+      </main>
+    </CompanyIntelProviders>
   );
 }
 ```

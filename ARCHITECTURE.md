@@ -29,10 +29,10 @@ flowchart LR
 
 | Module | Path | Responsibility |
 | --- | --- | --- |
-| UI | `src/client/**`, `app/**` | React components, hooks, and Query bindings. UI never imports server code directly. |
+| UI | `components/company-intel/**`, `app/**` | React components, hooks, and Query bindings. UI never imports server code directly. |
 | API | `app/api/**` | Next.js route handlers that adapt HTTP → server methods. Handles validation, SSE framing, sanitisation. |
-| Server | `src/server/**` | Domain orchestration (`createCompanyIntelServer`), Tavily + OpenAI integrations, persistence contract, PDF generation. |
-| Vendor shims | `src/vendor/**` | Public replacements for previous internal packages (`logging`, `config`, `ui/*`). |
+| Server | `server/**` | Domain orchestration (`createCompanyIntelServer`), Tavily + OpenAI integrations, persistence contract, PDF generation. |
+| Vendor shims | `components/ui/**`, `lib/{config.ts,logging.ts}` | Public replacements for previous internal packages (`logging`, `config`, `ui/*`). |
 
 Interaction rules:
 
@@ -42,10 +42,10 @@ Interaction rules:
 
 ## 4. Persistence
 
-`CompanyIntelPersistence` contract (`src/server/services/persistence.ts`) defines storage operations for profiles, snapshots, and page records.
+`CompanyIntelPersistence` contract (`server/services/persistence.ts`) defines storage operations for profiles, snapshots, and page records.
 
-- **Memory:** `src/server/persistence/memory.ts` – default in-memory store for local demos/tests. Keeps records in Maps with ISO serialisation.
-- **Redis:** `src/server/persistence/redis.ts` – optional production backend (enabled by `REDIS_URL`). Uses namespaced keys:
+- **Memory:** `server/persistence/memory.ts` – default in-memory store for local demos/tests. Keeps records in Maps with ISO serialisation.
+- **Redis:** `server/persistence/redis.ts` – optional production backend (enabled by `REDIS_URL`). Uses namespaced keys:
   - `ci:profile:<teamId>`
   - `ci:snapshot:<id>`
   - `ci:snapshot-pages:<id>`
@@ -82,9 +82,9 @@ Each frame is formatted `data: { ... }\n\n` with the terminal frame `data: [DONE
 
 ## 6. Bootstrap Flow
 
-`src/server/bootstrap.ts` centralises dependency wiring:
+`server/bootstrap.ts` centralises dependency wiring:
 
-1. Resolve logger (`src/vendor/logging`).
+1. Resolve logger (`lib/logging`).
 2. Choose persistence (Redis if `REDIS_URL`, else memory).
 3. Instantiate OpenAI client (Responses API, configurable via env).
 4. Instantiate Tavily client (requires `TAVILY_API_KEY`).
@@ -94,13 +94,13 @@ Each frame is formatted `data: { ... }\n\n` with the terminal frame `data: [DONE
 
 ## 7. Front-End Notes
 
-- `app/page.tsx` renders a hero header and mounts `CompanyIntelPanel` inside `CompanyIntelDemoApp` (client component providing TanStack Query + API context).
-- UI components rely on Tailwind (`tailwind.config.ts`) and shadcn-style vendor shims under `src/vendor/ui/*`.
+- `app/page.tsx` renders a hero header and wraps `CompanyIntelPanel` with `CompanyIntelProviders` (TanStack Query + feature client context).
+- UI components rely on Tailwind (`tailwind.config.ts`) and shadcn-style vendor shims under `components/ui/*`.
 - Streaming state is handled by `useCompanyIntelWorkflow`, which processes SSE frames into user-facing drafts.
 
 ## 8. Testing & CI
 
-- Tests live under `src/__tests__` and `src/server/__tests__`, using Vitest.
+- Tests live under `app/api/__tests__`, `server/__tests__`, and co-located component tests, using Vitest.
 - Coverage includes schema validation, SSE framing, and persistence parity (memory vs redis mock).
 - GitHub Actions workflow runs `pnpm install`, `lint`, `typecheck`, `test`, `build`, and `pnpm scan` (gitleaks).
 

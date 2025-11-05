@@ -10,49 +10,49 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
 import { mergeConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  stories: ['../components/**/*.stories.@(ts|tsx)'],
+
   addons: [
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
     '@storybook/addon-a11y',
     '@storybook/addon-themes',
+    '@storybook/addon-docs'
   ],
+
   framework: {
     name: '@storybook/react-vite',
     options: {},
   },
-  docs: {
-    autodocs: 'tag',
-  },
-  staticDirs: ['../../../public'],
+
+  staticDirs: [],
+
   async viteFinal(baseConfig) {
     const dirname = path.dirname(fileURLToPath(import.meta.url));
-    const rootDir = path.resolve(dirname, '../../..');
-    const storybookDir = path.resolve(dirname, '.');
+    const rootDir = path.resolve(dirname, '..'); // repo root
 
     return mergeConfig(baseConfig, {
-      resolve: {
-        alias: {
-          '@': rootDir,
-        },
-      },
+      plugins: [
+        react(),
+        tsconfigPaths({ projects: [path.join(rootDir, 'tsconfig.json')] })
+      ],
       optimizeDeps: {
-        include: ['@storybook/test'],
+        include: ['storybook/test'],
       },
       css: {
         postcss: {
           plugins: [
-            tailwindcss(path.join(storybookDir, 'tailwind.config.ts')),
+            tailwindcss(path.join(rootDir, 'tailwind.config.ts')),
             autoprefixer(),
           ],
         },
       },
     });
-  },
+  }
 };
 
 export default config;

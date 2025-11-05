@@ -7,14 +7,14 @@
 // ------------------------------------------------------------------------------------------------
 
 import React from 'react';
-import type { Decorator, Preview } from '@storybook/react';
+import type { Decorator, Preview } from '@storybook/react-vite';
 import { withThemeByClassName } from '@storybook/addon-themes';
 import { initialize, mswDecorator } from 'msw-storybook-addon';
 import { ThemeProvider } from 'next-themes';
 
-import '../../../app/globals.css';
+import '@/app/globals.css';
 import './storybook.css';
-import { defaultHandlers } from '../src/storybook/msw/handlers';
+import { defaultHandlers } from '@/__mocks__/msw/handlers';
 
 initialize({
   onUnhandledRequest: 'bypass',
@@ -42,12 +42,11 @@ const preview: Preview = {
       },
     },
     backgrounds: {
-      default: 'Canvas',
-      values: [
-        { name: 'Canvas', value: 'rgba(12,12,12,0.04)' },
-        { name: 'Surface', value: 'rgba(255,255,255,0.9)' },
-        { name: 'Night', value: 'rgba(12,12,12,0.9)' },
-      ],
+      options: {
+        canvas: { name: 'Canvas', value: 'rgba(12,12,12,0.04)' },
+        surface: { name: 'Surface', value: 'rgba(255,255,255,0.9)' },
+        night: { name: 'Night', value: 'rgba(12,12,12,0.9)' }
+      }
     },
     options: {
       storySort: {
@@ -58,6 +57,7 @@ const preview: Preview = {
       handlers: defaultHandlers,
     },
   },
+
   decorators: [
     mswDecorator,
     withNextThemes,
@@ -71,6 +71,12 @@ const preview: Preview = {
     }),
     withSurfacePadding,
   ],
+
+  initialGlobals: {
+    backgrounds: {
+      value: 'canvas'
+    }
+  }
 };
 
 export default preview;

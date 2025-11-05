@@ -9,7 +9,7 @@ import {
 } from '@/server/handlers/schemas';
 import type { CollectSiteIntelOptions } from '@/server/tavily';
 
-import type { CompanyProfileKeyOffering } from '@/client/company-intel/types';
+import type { CompanyProfileKeyOffering } from '@/components/company-intel/types';
 
 const textEncoder = new TextEncoder();
 

@@ -64,13 +64,13 @@ Each frame is emitted as `data: <json>\n\n` and the stream ends with `data: [DON
 10. `run-error` `{ message }`
 11. `[DONE]`
 
-The UI hooks in `src/client/company-intel/hooks` assume this exact order and will fail fast if malformed frames are encountered.
+The UI hooks in `components/company-intel/hooks` assume this exact order and will fail fast if malformed frames are encountered.
 
 ## Architecture Snapshot
 
 - **UI:** React + Tailwind (shadcn-inspired vendor shims) rendered by Next.js App Router (`app/page.tsx`).
 - **API:** Route handlers under `app/api/**` adapt HTTP requests to server methods, perform Zod validation, and handle SSE framing.
-- **Server:** `src/server` hosts orchestration (`createCompanyIntelServer`), Tavily + OpenAI clients, persistence, and PDF rendering.
+- **Server:** `server` hosts orchestration (`createCompanyIntelServer`), Tavily + OpenAI clients, persistence, and PDF rendering.
 - **Persistence:** In-memory by default (`createMemoryPersistence`) with optional Redis (`createRedisPersistence`). Both implement the same `CompanyIntelPersistence` interface.
 - **Bootstrap:** `getCompanyIntelEnvironment()` wires dependencies once per process to avoid repeated client instantiation.
 - **Docs:** Full system context lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md) and the milestone tracker in [`docs/COMPANY_INTEL_EXECUTION_PLAN.md`](./docs/COMPANY_INTEL_EXECUTION_PLAN.md).

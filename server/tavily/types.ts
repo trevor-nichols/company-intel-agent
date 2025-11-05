@@ -2,68 +2,19 @@
 //                types.ts - Company intel orchestration types (Tavily)
 // ------------------------------------------------------------------------------------------------
 
-export interface TavilyMapRequest {
-  readonly url: string;
-  readonly instructions?: string;
-  readonly maxDepth?: number;
-  readonly maxBreadth?: number;
-  readonly limit?: number;
-  readonly selectPaths?: readonly string[];
-  readonly selectDomains?: readonly string[];
-  readonly excludePaths?: readonly string[];
-  readonly excludeDomains?: readonly string[];
-  readonly allowExternal?: boolean;
-}
+import type { TavilyExtractDepth, TavilyExtractFormat } from '../integrations/tavily/types';
 
-export interface TavilyMapResponse {
-  readonly baseUrl: string;
-  readonly results: readonly string[];
-  readonly responseTime?: number | null;
-  readonly requestId?: string | null;
-}
-
-export type TavilyExtractDepth = 'basic' | 'advanced';
-export type TavilyExtractFormat = 'markdown' | 'text';
-
-export interface TavilyExtractRequest {
-  readonly urls: readonly string[];
-  readonly includeImages?: boolean;
-  readonly includeFavicon?: boolean;
-  readonly extractDepth?: TavilyExtractDepth;
-  readonly format?: TavilyExtractFormat;
-  readonly timeout?: number;
-}
-
-export interface TavilyExtractResult {
-  readonly url: string;
-  readonly rawContent?: string;
-  readonly markdown?: string;
-  readonly text?: string;
-  readonly images?: readonly string[];
-  readonly favicon?: string | null;
-  readonly title?: string;
-  readonly description?: string;
-  readonly metadata?: Record<string, unknown> | null;
-}
-
-export interface TavilyFailedExtractResult {
-  readonly url: string;
-  readonly error?: string;
-  readonly status?: number;
-  readonly reason?: string;
-}
-
-export interface TavilyExtractResponse {
-  readonly results: readonly TavilyExtractResult[];
-  readonly failedResults: readonly TavilyFailedExtractResult[];
-  readonly responseTime?: number | null;
-  readonly requestId?: string | null;
-}
-
-export interface TavilyClient {
-  map(request: TavilyMapRequest): Promise<TavilyMapResponse>;
-  extract(request: TavilyExtractRequest): Promise<TavilyExtractResponse>;
-}
+export type {
+  TavilyMapRequest,
+  TavilyMapResponse,
+  TavilyExtractDepth,
+  TavilyExtractFormat,
+  TavilyExtractRequest,
+  TavilyExtractResult,
+  TavilyFailedExtractResult,
+  TavilyExtractResponse,
+  TavilyClient,
+} from '../integrations/tavily/types';
 
 export interface SiteIntelSelection {
   readonly url: string;

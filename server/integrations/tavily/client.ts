@@ -17,6 +17,8 @@ import type {
   TavilyMapResponse,
 } from './types';
 
+export type { TavilyClient } from './types';
+
 const DEFAULT_BASE_URL = 'https://api.tavily.com';
 
 export interface TavilyClientConfig {

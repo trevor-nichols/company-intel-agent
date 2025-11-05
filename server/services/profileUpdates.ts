@@ -4,7 +4,7 @@
 
 import { logger as defaultLogger } from '@agenai/logging';
 
-import type { CompanyProfileKeyOffering } from '../../components/company-intel/types';
+import type { CompanyProfileKeyOffering } from '@/shared/company-intel/types';
 import type { CompanyIntelPersistence, CompanyIntelProfileRecord, CompanyIntelProfileUpsert } from './persistence';
 
 export interface UpdateCompanyIntelProfileParams {

@@ -24,9 +24,33 @@ interface MemoryPersistenceOptions {
 }
 
 function clone<T>(value: T): T {
-  return typeof structuredClone === 'function'
-    ? structuredClone(value)
-    : JSON.parse(JSON.stringify(value)) as T;
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value);
+  }
+  return deepClone(value);
+}
+
+function deepClone<T>(value: T): T {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return new Date(value.getTime()) as unknown as T;
+  }
+
+  if (Array.isArray(value)) {
+    return (value as unknown[]).map(item => deepClone(item)) as unknown as T;
+  }
+
+  const source = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  for (const [key, nested] of Object.entries(source)) {
+    result[key] = deepClone(nested);
+  }
+
+  return result as T;
 }
 
 function ensureDate(value: Date | string | null | undefined): Date | null {

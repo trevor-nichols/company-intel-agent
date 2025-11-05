@@ -2,7 +2,7 @@
 //                persistence.ts - Contracts for host-provided persistence helpers
 // ------------------------------------------------------------------------------------------------
 
-import type { CompanyProfileKeyOffering, CompanyProfileStatus, CompanyProfileSnapshotStatus } from '../../components/company-intel/types';
+import type { CompanyProfileKeyOffering, CompanyProfileStatus, CompanyProfileSnapshotStatus } from '@/shared/company-intel/types';
 
 export interface CompanyIntelSnapshotRecord {
   readonly id: number;

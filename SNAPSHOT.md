@@ -79,20 +79,29 @@
 │   │       └── schema.ts                    # Zod schema for the structured profile agent's output.
 │   ├── bridge/                              # Defines contracts and configuration interfaces for server-side logic.
 │   │   └── index.ts                         # Exports server configuration types and service interfaces.
-│   ├── handlers/                            # API route handlers (e.g., for Next.js).
-│   │   └── index.ts                         # Provides a factory for creating placeholder API handlers.
+│   ├── handlers/                            # API route helpers (used by Next.js route handlers).
+│   │   └── index.ts                         # Provides JSON/error response helpers.
 │   ├── index.ts                             # Barrel file for the server-side bundle.
+│   ├── integrations/                        # Low-level HTTP clients for external services.
+│   │   ├── openai/                          # OpenAI Responses API integration.
+│   │   │   ├── client.ts                    # Configures the OpenAI client (timeouts, retries, env vars).
+│   │   │   ├── index.ts                     # Barrel file exporting the client and helper utilities.
+│   │   │   └── types.ts                     # TypeScript contracts for the OpenAI client configuration.
+│   │   └── tavily/                          # Tavily site map/extract API integration.
+│   │       ├── client.ts                    # Fetch wrapper with retry/error handling for Tavily endpoints.
+│   │       ├── index.ts                     # Barrel file exporting the Tavily client and types.
+│   │       └── types.ts                     # Raw Tavily request/response contracts.
 │   ├── server.ts                            # Factory function to instantiate the company intel server logic.
 │   ├── services/                            # Core business logic and orchestration services.
 │   │   ├── index.ts                         # Barrel file for server-side services.
 │   │   ├── persistence.ts                   # Defines the interfaces for the data persistence layer.
 │   │   ├── profileUpdates.ts                # Service for handling manual updates to a company profile.
 │   │   └── runCollection.ts                 # Service that orchestrates the entire intel collection process.
-│   ├── tavily/                              # Module for interacting with the Tavily API for web scraping.
-│   │   ├── collect.ts                       # Orchestrates site mapping and scraping via the Tavily API.
-│   │   ├── index.ts                         # Barrel file for the Tavily module.
+│   ├── tavily/                              # Business orchestration built on the Tavily integration.
+│   │   ├── collect.ts                       # Coordinates mapping, scraping, and retry logic using the client.
+│   │   ├── index.ts                         # Barrel file for Tavily orchestration helpers.
 │   │   ├── selectors.ts                     # URL ranking heuristics to select relevant pages for scraping.
-│   │   └── types.ts                         # TypeScript types related to the Tavily API and orchestration.
+│   │   └── types.ts                         # Shared orchestration types (re-exporting Tavily API contracts).
 │   └── transformers/                        # Functions for transforming data between different formats.
 │       ├── favicon.ts                       # Helper to extract a favicon URL from scrape results.
 │       ├── index.ts                         # Barrel file for data transformers.

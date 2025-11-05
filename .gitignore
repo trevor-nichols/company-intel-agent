@@ -62,7 +62,7 @@ __pycache__/*
 .env.sentry-build-plugin
 
 .mcp.json
-.claude/scripts/
+.claude/
 
 # Snapshot files
 **/SNAPSHOT.md

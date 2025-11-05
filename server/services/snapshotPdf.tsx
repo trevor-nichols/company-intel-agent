@@ -10,8 +10,8 @@ import type {
   CompanyIntelProfileRecord,
   CompanyIntelSnapshotRecord,
 } from './persistence';
-import type { CompanyIntelSnapshotStructuredProfileSummary } from '../../components/company-intel/types';
-import { normaliseSnapshotSummaries } from '../../components/company-intel/utils/serialization';
+import type { CompanyIntelSnapshotStructuredProfileSummary } from '@/shared/company-intel/types';
+import { normaliseSnapshotSummaries } from '@/shared/company-intel/serialization';
 import { CompanyIntelReportDocument } from '../reports/CompanyIntelReportDocument';
 
 export interface GenerateSnapshotPdfParams {

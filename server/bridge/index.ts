@@ -16,7 +16,7 @@ import type { OpenAIClientLike } from '../agents/shared/openai';
 import type { CompanyIntelStructuredPromptConfig } from '../agents/structured-profile';
 import type { CompanyOverviewPromptConfig } from '../agents/overview';
 import type { UpdateCompanyIntelProfileParams } from '../services/profileUpdates';
-import type { CompanyIntelStreamEvent } from '../../components/company-intel/types';
+import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
 
 export interface RunCollectionOverrides {
   readonly logger?: Logger;

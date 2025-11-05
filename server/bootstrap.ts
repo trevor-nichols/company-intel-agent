@@ -8,8 +8,8 @@ import { logger as defaultLogger } from '@agenai/logging';
 import { createCompanyIntelServer } from './server';
 import type { CompanyIntelServer } from './bridge';
 import type { CompanyIntelPersistence } from './services/persistence';
-import { createOpenAIClient } from './agents/openai/client';
-import { createTavilyClient, type TavilyClient } from './tavily/tavily';
+import { createOpenAIClient } from './integrations/openai/client';
+import { createTavilyClient, type TavilyClient } from './integrations/tavily/client';
 import type { OpenAIClientLike } from './agents/shared/openai';
 import { createMemoryPersistence, createRedisPersistence } from './persistence';
 

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NextRequest } from 'next/server';
-import type { RunCompanyIntelCollectionResult } from '@/server/services/runCollection';
+import type { RunCompanyIntelCollectionResult } from '@/server/services/run-collection';
 
 const runToCompletionMock = vi.fn();
 

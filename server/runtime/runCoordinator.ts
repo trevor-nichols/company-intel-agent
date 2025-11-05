@@ -5,8 +5,8 @@
 import { logger as defaultLogger } from '@agenai/logging';
 
 import type { CompanyIntelServer } from '../bridge';
-import type { RunCompanyIntelCollectionParams, RunCompanyIntelCollectionResult } from '../services/runCollection';
-import { CompanyIntelRunCancelledError } from '../services/runCollection';
+import type { RunCompanyIntelCollectionParams, RunCompanyIntelCollectionResult } from '../services/run-collection';
+import { CompanyIntelRunCancelledError } from '../services/run-collection';
 import type { RunCollectionOverrides } from '../bridge';
 import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
 

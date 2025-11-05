@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CompanyIntelServer } from '@/server/bridge';
 import { CompanyIntelRunCoordinator } from '@/server/runtime/runCoordinator';
-import type { RunCompanyIntelCollectionParams, RunCompanyIntelCollectionResult } from '@/server/services/runCollection';
+import type { RunCompanyIntelCollectionParams, RunCompanyIntelCollectionResult } from '@/server/services/run-collection';
 import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
 
 function createResult(snapshotId: number): RunCompanyIntelCollectionResult {
@@ -77,4 +77,3 @@ describe('CompanyIntelRunCoordinator', () => {
     expect(coordinator.getActiveRunBySnapshot(first.snapshotId)).toBeNull();
   });
 });
-

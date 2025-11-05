@@ -9,7 +9,7 @@ import type { CollectSiteIntelDependencies } from '../web-search/collect';
 import type {
   RunCompanyIntelCollectionParams,
   RunCompanyIntelCollectionResult,
-} from '../services/runCollection';
+} from '../services/run-collection';
 import type { CompanyIntelPersistence, CompanyIntelProfileRecord, CompanyIntelSnapshotRecord } from '../services/persistence';
 import type { CompanyIntelSnapshotPdfResult, GenerateSnapshotPdfParams } from '../services/snapshotPdf';
 import type { OpenAIClientLike } from '../agents/shared/openai';

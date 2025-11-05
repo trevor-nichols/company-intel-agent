@@ -8,7 +8,7 @@ import {
   TriggerCompanyIntelSchema,
   UpdateCompanyIntelProfileSchema,
 } from '@/server/handlers/schemas';
-import type { CollectSiteIntelOptions } from '@/server/tavily';
+import type { CollectSiteIntelOptions } from '@/server/web-search';
 
 import type { CompanyProfileKeyOffering } from '@/components/company-intel/types';
 import type { UpdateCompanyIntelProfileParams } from '@/server/services/profileUpdates';

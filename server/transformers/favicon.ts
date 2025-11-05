@@ -2,7 +2,7 @@
 //                favicon.ts - Favicon extraction helpers for Tavily scrape results
 // ------------------------------------------------------------------------------------------------
 
-import type { SiteIntelScrapeOutcome } from '../tavily/types';
+import type { SiteIntelScrapeOutcome } from '../web-search/types';
 
 function getPrimaryDocument(scrape: SiteIntelScrapeOutcome) {
   if (!scrape.success || !scrape.response) {

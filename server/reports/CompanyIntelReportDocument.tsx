@@ -34,30 +34,56 @@ const styles = StyleSheet.create({
   },
   header: {
     borderBottomWidth: 1,
-    borderBottomColor: '#e7e7e3',
+    borderBottomColor: '#e4e4df',
     borderBottomStyle: 'solid',
     paddingBottom: 20,
-    marginBottom: 22,
+    marginBottom: 26,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 12,
+  },
+  headerMeta: {
+    alignItems: 'flex-end',
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 26,
   },
-  sectionHeader: {
+  sectionTitle: {
     fontSize: 12,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: '#7a7a76',
-    marginBottom: 6,
+  },
+  sectionDescription: {
+    marginTop: 2,
+    fontSize: 10,
+    color: '#7f7f7b',
+  },
+  sectionCard: {
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e4e4df',
+    backgroundColor: '#ffffff',
+    padding: 16,
+  },
+  sectionCardSoft: {
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e4e4df',
+    backgroundColor: '#fcfcfb',
+    padding: 18,
   },
   sectionBody: {
     fontSize: 11,
     color: '#181818',
+  },
+  emptyText: {
+    fontSize: 10,
+    color: '#8a8a85',
   },
   // ------------------------------------------------------------------------------------------------
   //                Header styles
@@ -78,37 +104,25 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 10,
     color: '#7d7d79',
-  },
-  // ------------------------------------------------------------------------------------------------
-  //                Section specifics
-  // ------------------------------------------------------------------------------------------------
-  listItem: {
-    marginBottom: 6,
-  },
-  listItemTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  listItemDescription: {
-    fontSize: 10.5,
-    color: '#323232',
+    textAlign: 'right',
   },
   statRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
     marginTop: 18,
   },
   statCard: {
     flexGrow: 1,
-    minWidth: 110,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    flexBasis: '45%',
+    minWidth: 120,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#ffffff',
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e7e7e3',
+    marginRight: 10,
+    marginBottom: 10,
   },
   statLabel: {
     fontSize: 9,
@@ -127,20 +141,9 @@ const styles = StyleSheet.create({
     color: '#242421',
     lineHeight: 1.55,
   },
-  gridTwo: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
-  },
-  gridColumn: {
-    flex: 1,
-    gap: 10,
-  },
   chipList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 10,
   },
   chip: {
     borderRadius: 14,
@@ -151,15 +154,21 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     fontSize: 10,
     color: '#393935',
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  offeringList: {
+    display: 'flex',
+    flexDirection: 'column',
   },
   offeringCard: {
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ecece8',
     backgroundColor: '#ffffff',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   offeringTitle: {
     fontSize: 11,
@@ -172,93 +181,101 @@ const styles = StyleSheet.create({
     color: '#4a4a46',
     lineHeight: 1.4,
   },
-  listOverflowNote: {
-    fontSize: 10,
-    color: '#7a7a76',
-    marginTop: 6,
+  valuePropList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginRight: -10,
+  },
+  valuePropCard: {
+    flexGrow: 1,
+    flexBasis: '45%',
+    minWidth: 140,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e7e7e3',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  valuePropText: {
+    fontSize: 10.5,
+    color: '#3a3a37',
+    lineHeight: 1.4,
   },
 });
 
-function renderKeyOfferings(
-  keyOfferings: CompanyIntelReportDocumentProps['keyOfferings'],
-): ReactElement | null {
-  if (keyOfferings.length === 0) {
-    return null;
-  }
-
-  const MAX_ITEMS = 3;
-  const items = keyOfferings.slice(0, MAX_ITEMS);
-  const remaining = keyOfferings.length - items.length;
+function renderPrimaryIndustries(primaryIndustries: readonly string[]): ReactElement {
+  const hasIndustries = primaryIndustries.length > 0;
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeader}>Key Offerings</Text>
-      <View style={styles.sectionBody}>
-        {items.map(offering => (
-          <View key={offering.title} style={styles.offeringCard}>
-            <Text style={styles.offeringTitle}>{offering.title}</Text>
-            {offering.description ? (
-              <Text style={styles.offeringDescription}>{offering.description}</Text>
-            ) : null}
+      <Text style={styles.sectionTitle}>Primary industries</Text>
+      <Text style={styles.sectionDescription}>Sectors most frequently referenced across your content.</Text>
+      <View style={styles.sectionCard}>
+        {hasIndustries ? (
+          <View style={styles.chipList}>
+            {primaryIndustries.map(industry => (
+              <Text key={industry} style={styles.chip}>
+                {industry}
+              </Text>
+            ))}
           </View>
-        ))}
-        {remaining > 0 ? (
-          <Text style={styles.listOverflowNote}>+{remaining} more offering{remaining > 1 ? 's' : ''}</Text>
-        ) : null}
+        ) : (
+          <Text style={styles.emptyText}>No industries identified yet.</Text>
+        )}
       </View>
     </View>
   );
 }
 
-function renderValueProps(valueProps: readonly string[]): ReactElement | null {
-  if (valueProps.length === 0) {
-    return null;
-  }
-
-  const MAX_ITEMS = 6;
-  const items = valueProps.slice(0, MAX_ITEMS);
-  const remaining = valueProps.length - items.length;
+function renderKeyOfferings(keyOfferings: CompanyIntelReportDocumentProps['keyOfferings']): ReactElement {
+  const hasOfferings = keyOfferings.length > 0;
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeader}>Value Propositions</Text>
-      <View style={styles.sectionBody}>
-        {items.map(value => (
-          <View key={value} style={styles.listItem}>
-            <Text>{value}</Text>
+      <Text style={styles.sectionTitle}>Key offerings</Text>
+      <Text style={styles.sectionDescription}>Products and services highlighted on your site.</Text>
+      <View style={styles.sectionCard}>
+        {hasOfferings ? (
+          <View style={styles.offeringList}>
+            {keyOfferings.map((offering, index) => (
+              <View key={`${offering.title}-${index}`} style={styles.offeringCard}>
+                <Text style={styles.offeringTitle}>{offering.title}</Text>
+                {offering.description ? (
+                  <Text style={styles.offeringDescription}>{offering.description}</Text>
+                ) : null}
+              </View>
+            ))}
           </View>
-        ))}
-        {remaining > 0 ? (
-          <Text style={styles.listOverflowNote}>+{remaining} more value prop{remaining > 1 ? 's' : ''}</Text>
-        ) : null}
+        ) : (
+          <Text style={styles.emptyText}>Run a collection to capture product highlights.</Text>
+        )}
       </View>
     </View>
   );
 }
 
-function renderPrimaryIndustries(primaryIndustries: readonly string[]): ReactElement | null {
-  if (primaryIndustries.length === 0) {
-    return null;
-  }
-
-  const MAX_ITEMS = 6;
-  const items = primaryIndustries.slice(0, MAX_ITEMS);
-  const remaining = primaryIndustries.length - items.length;
+function renderValueProps(valueProps: readonly string[]): ReactElement {
+  const hasValueProps = valueProps.length > 0;
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeader}>Primary Industries</Text>
-      <View style={styles.sectionBody}>
-        <View style={styles.chipList}>
-          {items.map(industry => (
-            <Text key={industry} style={styles.chip}>
-              {industry}
-            </Text>
-          ))}
-        </View>
-        {remaining > 0 ? (
-          <Text style={styles.listOverflowNote}>+{remaining} more industr{remaining > 1 ? 'ies' : 'y'}</Text>
-        ) : null}
+      <Text style={styles.sectionTitle}>Value propositions</Text>
+      <Text style={styles.sectionDescription}>Core differentiators surfaced across your public pages.</Text>
+      <View style={styles.sectionCard}>
+        {hasValueProps ? (
+          <View style={styles.valuePropList}>
+            {valueProps.map((value, index) => (
+              <View key={`${value}-${index}`} style={styles.valuePropCard}>
+                <Text style={styles.valuePropText}>{value}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>No distinct value props captured yet.</Text>
+        )}
       </View>
     </View>
   );
@@ -288,7 +305,7 @@ export function CompanyIntelReportDocument({
               <Text style={styles.companyName}>{companyName}</Text>
               {tagline ? <Text style={styles.tagline}>{tagline}</Text> : null}
             </View>
-            <View>
+            <View style={styles.headerMeta}>
               <Text style={styles.metaRow}>{domain}</Text>
               <Text style={styles.metaRow}>Generated {generatedAtLabel}</Text>
             </View>
@@ -308,18 +325,17 @@ export function CompanyIntelReportDocument({
 
         {overview ? (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Executive Overview</Text>
-            <Text style={styles.overviewText}>{overview}</Text>
+            <Text style={styles.sectionTitle}>Executive overview</Text>
+            <Text style={styles.sectionDescription}>AI-generated narrative from the latest run.</Text>
+            <View style={styles.sectionCardSoft}>
+              <Text style={styles.overviewText}>{overview}</Text>
+            </View>
           </View>
         ) : null}
 
-        <View style={styles.gridTwo}>
-          <View style={styles.gridColumn}>
-            {renderValueProps(valuePropsToDisplay)}
-            {renderPrimaryIndustries(industriesToDisplay)}
-          </View>
-          <View style={styles.gridColumn}>{renderKeyOfferings(offeringsToDisplay)}</View>
-        </View>
+        {renderPrimaryIndustries(industriesToDisplay)}
+        {renderKeyOfferings(offeringsToDisplay)}
+        {renderValueProps(valuePropsToDisplay)}
       </Page>
     </Document>
   );

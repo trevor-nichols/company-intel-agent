@@ -12,8 +12,8 @@ import {
   type SiteIntelResult,
   type SiteIntelScrapeOutcome,
   type SiteIntelScrapeExtractResult,
-} from '../tavily';
-import type { CollectSiteIntelDependencies } from '../tavily/collect';
+} from '../web-search';
+import type { CollectSiteIntelDependencies } from '../web-search/collect';
 import type {
   CompanyIntelRunStage,
   CompanyIntelStreamEvent,
@@ -189,17 +189,20 @@ export async function runCompanyIntelCollection(
       if (scrape.success && scrape.response) {
         successfulScrapes.push(scrape);
         const document = getPrimaryDocument(scrape);
-        const markdown = document?.markdown ?? null;
-        const html = document?.rawContent ?? null;
+        const markdown = document?.markdown ?? document?.rawContent ?? null;
         const textFallback = document?.text ?? null;
+        const html = markdown ? null : textFallback;
         const scrapedAt = new Date();
-        const metadata = buildPageMetadata(document, scrape.url);
-        const contentType: CompanyIntelPageInsert['contentType'] = markdown ? 'markdown' : html ? 'html' : 'markdown';
-        const normalizedMarkdown = markdown ?? (html ? null : textFallback ?? null);
+        const metadata: Record<string, unknown> = document
+          ? {
+              ...document,
+              ...(document.images ? { images: [...document.images] } : {}),
+            }
+          : { url: scrape.url };
         const pageRecord: CompanyIntelPageInsert = {
           url: scrape.url,
-          contentType,
-          markdown: normalizedMarkdown,
+          contentType: markdown ? 'markdown' : 'html',
+          markdown,
           html,
           metadata,
           wordCount: getWordCount(markdown ?? textFallback),
@@ -585,36 +588,6 @@ function getPrimaryDocument(scrape: SiteIntelScrapeOutcome): SiteIntelScrapeExtr
 
   const directMatch = scrape.response.results.find(result => result.url === scrape.url);
   return directMatch ?? scrape.response.results[0] ?? null;
-}
-
-function buildPageMetadata(document: SiteIntelScrapeExtractResult | null, url: string): Record<string, unknown> {
-  const metadata: Record<string, unknown> = { url };
-
-  if (!document) {
-    return metadata;
-  }
-
-  if (typeof document.title === 'string' && document.title.trim().length > 0) {
-    metadata.title = document.title;
-  }
-
-  if (typeof document.description === 'string' && document.description.trim().length > 0) {
-    metadata.description = document.description;
-  }
-
-  if (typeof document.favicon === 'string' && document.favicon.trim().length > 0) {
-    metadata.favicon = document.favicon;
-  }
-
-  if (Array.isArray(document.images) && document.images.length > 0) {
-    metadata.images = [...document.images];
-  }
-
-  if (document.metadata && typeof document.metadata === 'object' && !Array.isArray(document.metadata)) {
-    metadata.metadata = { ...(document.metadata as Record<string, unknown>) };
-  }
-
-  return metadata;
 }
 
 function buildStructuredProfileSummary(data: CompanyIntelStructuredOutput): {

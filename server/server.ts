@@ -16,7 +16,7 @@ import {
   type GenerateSnapshotPdfParams,
   type CompanyIntelSnapshotPdfResult,
 } from './services';
-import type { CollectSiteIntelOptions, SiteIntelResult } from './tavily';
+import type { CollectSiteIntelOptions, SiteIntelResult } from './web-search';
 import type { CompanyIntelServer, CompanyIntelServerConfig, RunCollectionOverrides } from './bridge';
 
 export function createCompanyIntelServer(config: CompanyIntelServerConfig): CompanyIntelServer {

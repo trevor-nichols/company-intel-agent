@@ -4,8 +4,8 @@
 
 import type { Logger } from '@agenai/logging';
 
-import type { CollectSiteIntelOptions, SiteIntelResult } from '../tavily';
-import type { CollectSiteIntelDependencies } from '../tavily/collect';
+import type { CollectSiteIntelOptions, SiteIntelResult } from '../web-search';
+import type { CollectSiteIntelDependencies } from '../web-search/collect';
 import type {
   RunCompanyIntelCollectionParams,
   RunCompanyIntelCollectionResult,

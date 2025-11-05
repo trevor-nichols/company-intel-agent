@@ -154,11 +154,10 @@ export async function generateSnapshotPdf(
   const valueProps = structuredProfile?.valueProps ?? profile?.valueProps ?? [];
   const primaryIndustries = structuredProfile?.primaryIndustries ?? profile?.primaryIndustries ?? [];
   const keyOfferings = structuredProfile?.keyOfferings ?? profile?.keyOfferings ?? [];
-  const selectedPageCount = Array.isArray(snapshot.selectedUrls) ? snapshot.selectedUrls.length : 0;
 
   const stats = [
     {
-      label: 'Value Props',
+      label: 'Value props',
       value: valueProps.length > 0 ? valueProps.length.toString() : '—',
     },
     {
@@ -166,12 +165,8 @@ export async function generateSnapshotPdf(
       value: primaryIndustries.length > 0 ? primaryIndustries.length.toString() : '—',
     },
     {
-      label: 'Key Offerings',
+      label: 'Key offerings',
       value: keyOfferings.length > 0 ? keyOfferings.length.toString() : '—',
-    },
-    {
-      label: 'Selected Pages',
-      value: selectedPageCount > 0 ? selectedPageCount.toString() : '—',
     },
   ] as const;
 

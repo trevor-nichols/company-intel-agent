@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { errorResponse, jsonResponse } from '@/server/handlers';
 import { getCompanyIntelEnvironment } from '@/server/bootstrap';
 import { PreviewCompanyIntelSchema } from '@/server/handlers/schemas';
-import type { CollectSiteIntelOptions } from '@/server/tavily';
+import type { CollectSiteIntelOptions } from '@/server/web-search';
 
 export const runtime = 'nodejs';
 

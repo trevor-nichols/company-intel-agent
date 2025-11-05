@@ -287,6 +287,7 @@ export class CompanyIntelRunCoordinator {
     session.cleanupTimer = setTimeout(() => {
       this.cleanupSession(session);
     }, CLEANUP_DELAY_MS);
+    session.cleanupTimer.unref?.();
   }
 
   private cleanupSession(session: RunSession): void {

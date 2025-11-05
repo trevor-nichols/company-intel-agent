@@ -8,10 +8,7 @@ import {
   generateStructuredCompanyProfile,
   DEFAULT_STRUCTURED_PROFILE_PROMPT,
 } from '../../../agents/structured-profile';
-import type {
-  CompanyIntelStructuredPromptConfig,
-  CompanyIntelStructuredOutput,
-} from '../../../agents/structured-profile';
+import type { CompanyIntelStructuredOutput } from '../../../agents/structured-profile';
 import type { RunContext } from '../context';
 import type {
   CompanyIntelSnapshotStructuredProfileSummary,

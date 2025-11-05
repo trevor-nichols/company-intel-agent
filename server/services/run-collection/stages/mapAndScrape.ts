@@ -6,6 +6,7 @@ import type { CollectSiteIntelOptions } from '../../../web-search';
 import {
   collectSiteIntel,
   type SiteIntelResult,
+  type SiteIntelScrapeExtractResult,
   type SiteIntelScrapeOutcome,
 } from '../../../web-search';
 import { formatPagesAsXml, extractFaviconUrl } from '../../../transformers';
@@ -14,6 +15,115 @@ import type { CompanyIntelPageContent } from '../types';
 import type { RunContext } from '../context';
 import type { RunCompanyIntelCollectionDependencies } from '../types';
 import { getPrimaryDocument, getWordCount } from '../helpers/scraping';
+
+export function stripHtml(content: string): string {
+  let working = content
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ');
+
+  working = working
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '\n- ')
+    .replace(/<\/(li)\s*>/gi, '\n')
+    .replace(/<\/(p|div|section|article|header|footer|aside|main|nav|blockquote)\s*>/gi, '\n\n')
+    .replace(/<(p|div|section|article|header|footer|aside|main|nav|blockquote)[^>]*>/gi, '\n')
+    .replace(/<\/(h[1-6]|tr)\s*>/gi, '\n')
+    .replace(/<(h[1-6]|tr)[^>]*>/gi, '\n')
+    .replace(/<\/(td|th)\s*>/gi, '\t')
+    .replace(/<(td|th)[^>]*>/gi, '\t')
+    .replace(/<\/(ul|ol|tbody|thead|tfoot|table)\s*>/gi, '\n')
+    .replace(/<(ul|ol|tbody|thead|tfoot|table)[^>]*>/gi, '\n');
+
+  working = working
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+
+  working = working.replace(/<[^>]+>/g, ' ');
+
+  return working
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+interface ResolvedPageContent {
+  readonly contentType: CompanyIntelPageInsert['contentType'];
+  readonly promptContent: string;
+  readonly markdownPayload: string | null;
+  readonly htmlPayload: string | null;
+  readonly wordCountSource: string | null;
+}
+
+function selectOptionalPayload(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  return value.trim().length > 0 ? value : null;
+}
+
+function extractMetadataDescription(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object') {
+    return null;
+  }
+
+  const record = metadata as Record<string, unknown>;
+  const candidate = record.description ?? record.summary ?? record['og:description'];
+  if (typeof candidate !== 'string') {
+    return null;
+  }
+
+  const trimmed = candidate.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function resolvePageContent(document: SiteIntelScrapeExtractResult | null): ResolvedPageContent {
+  const markdownContent = selectOptionalPayload(document?.markdown);
+  const textContent = selectOptionalPayload(document?.text);
+  const htmlPayload = selectOptionalPayload(document?.rawContent);
+  const sanitizedHtml = htmlPayload ? stripHtml(htmlPayload) : null;
+
+  const metaDescription = typeof document?.description === 'string'
+    ? document.description.trim()
+    : '';
+  const trimmedMetaDescription = metaDescription.length > 0 ? metaDescription : null;
+
+  const metadataDescription = extractMetadataDescription(document?.metadata);
+
+  const promptCandidate = markdownContent
+    ?? textContent
+    ?? (sanitizedHtml && sanitizedHtml.length > 0 ? sanitizedHtml : null)
+    ?? trimmedMetaDescription
+    ?? metadataDescription
+    ?? (htmlPayload ?? '');
+
+  const promptContent = promptCandidate.trim();
+
+  const contentType: CompanyIntelPageInsert['contentType'] =
+    markdownContent || textContent ? 'markdown' : 'html';
+  const markdownPayload = contentType === 'markdown'
+    ? (markdownContent ?? textContent ?? null)
+    : null;
+
+  const wordCountSource = markdownPayload
+    ?? textContent
+    ?? sanitizedHtml
+    ?? trimmedMetaDescription
+    ?? metadataDescription
+    ?? null;
+
+  return {
+    contentType,
+    promptContent,
+    markdownPayload,
+    htmlPayload: contentType === 'html' ? htmlPayload : null,
+    wordCountSource,
+  };
+}
 
 export interface MapAndScrapeResult {
   readonly intelResult: SiteIntelResult;
@@ -86,9 +196,7 @@ export async function mapAndScrape(
     if (scrape.success && scrape.response) {
       successfulScrapes.push(scrape);
       const document = getPrimaryDocument(scrape);
-      const markdown = document?.markdown ?? document?.rawContent ?? null;
-      const textFallback = document?.text ?? null;
-      const html = markdown ? null : textFallback;
+      const resolvedContent = resolvePageContent(document);
       const scrapedAt = new Date();
       const metadata: Record<string, unknown> = document
         ? {
@@ -98,18 +206,20 @@ export async function mapAndScrape(
         : { url: scrape.url };
       const pageRecord: CompanyIntelPageInsert = {
         url: scrape.url,
-        contentType: markdown ? 'markdown' : 'html',
-        markdown,
-        html,
+        contentType: resolvedContent.contentType,
+        markdown: resolvedContent.markdownPayload,
+        html: resolvedContent.htmlPayload,
         metadata,
-        wordCount: getWordCount(markdown ?? textFallback),
+        wordCount: getWordCount(
+          resolvedContent.wordCountSource,
+        ),
         scrapedAt,
         createdAt: scrapedAt,
       } satisfies CompanyIntelPageInsert;
 
       pageRecords.push(pageRecord);
 
-      const pageContent = (markdown ?? textFallback ?? '').trim();
+      const pageContent = resolvedContent.promptContent;
       if (pageContent.length > 0) {
         structuredPages.push({
           url: scrape.url,

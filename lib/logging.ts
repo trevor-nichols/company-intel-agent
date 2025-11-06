@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------------------------------
-//                logging.ts - Lightweight JSON-ish console logger used across the starter
+//                logging.ts - Lightweight JSON-ish console logger
 // ------------------------------------------------------------------------------------------------
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';

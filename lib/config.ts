@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------------------------------
-//                config.ts - Environment variable helpers used across the starter
+//                config.ts - Environment variable helpers
 // ------------------------------------------------------------------------------------------------
 
 export function getEnvVar(key: string): string | undefined {

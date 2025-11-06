@@ -2,7 +2,7 @@
 
 ## 1) Mission (what you exist to do)
 
-Build a public-ready **Company-Intel Starter** codebase that runs end-to-end:
+Build a public-ready **Company-Intel Agent** codebase that runs end-to-end:
 **map → scrape → structured outputs → overview → SSE → persist → export PDF**
 Deliver professional code (strict TS, tests, CI, docs) with **no private deps**.
 

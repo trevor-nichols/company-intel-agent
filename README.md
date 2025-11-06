@@ -1,6 +1,6 @@
-# Company-Intel Starter
+# Company-Intel Agent
 
-An end-to-end Next.js starter for building company-intelligence experiences. The app maps a target domain, scrapes high-signal pages, generates structured insights with GPT-5 via the OpenAI Responses API, streams progress over Server-Sent Events (SSE), persists the run, and exports a finished PDF. Everything ships with strict TypeScript, deterministic contracts, and public-only dependencies so you can drop it straight into your onboarding flow.
+An end-to-end Next.js agent for building company-intelligence experiences. The app maps a target domain, scrapes high-signal pages, generates structured insights with GPT-5 via the OpenAI Responses API, streams progress over Server-Sent Events (SSE), persists the run, and exports a finished PDF. Everything ships with strict TypeScript, deterministic contracts, and public-only dependencies so you can drop it straight into your onboarding flow.
 
 ## What You Get
 - **Full pipeline:** `map → scrape → structured outputs → overview → SSE stream → persist → export PDF` with a demo UI and API surface ready for production.

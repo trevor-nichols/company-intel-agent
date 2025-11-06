@@ -4,6 +4,13 @@ An end-to-end Next.js agent for building company-intelligence experiences. The a
 
 ![Company Intel Agent demo UI](docs/assets/media/demo.jpeg)
 
+**What the agent extracts**
+- Structured profile with companyName, tagline, up to 10 value props, key offerings (title + optional description), up to 6 primary industries, and page-level source citations so analysts can audit the output.
+- Narrative executive overview that streams token-by-token and powers the PDF, dashboard copy, and run summaries.
+- Model metadata for both GPT-5 runs (responseId, model id, token usage, raw text, reasoning headline/summary) to support observability and incident review.
+- Provenance bundle covering sitemap selections, mapped links, raw scrape payloads (markdown/text/media), and the XML snapshot of pages handed to the models.
+- Snapshot lifecycle data including run status, stage progress, favicon, timestamps, and counts of successful vs. failed pages for reporting and retries.
+
 ## What You Get
 - **Full pipeline:** `map → scrape → structured outputs → overview → SSE stream → persist → export PDF` with a demo UI and API surface ready for production.
 - **GPT-5 structured intelligence:** Dual GPT-5 models produce a normalized profile and a narrative overview, validated with Zod before anything is stored or emitted.

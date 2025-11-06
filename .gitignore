@@ -66,6 +66,3 @@ __pycache__/*
 
 # Snapshot files
 **/SNAPSHOT.md
-
-# Documentation directories
-**/docs/

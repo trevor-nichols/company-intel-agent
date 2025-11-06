@@ -2,6 +2,8 @@
 
 An end-to-end Next.js agent for building company-intelligence experiences. The app maps a target domain, scrapes high-signal pages, generates structured insights with GPT-5 via the OpenAI Responses API, streams progress over Server-Sent Events (SSE), persists the run, and exports a finished PDF. Everything ships with strict TypeScript, deterministic contracts, and public-only dependencies so you can drop it straight into your onboarding flow.
 
+![Company Intel Agent demo UI](docs/assets/media/demo.jpeg)
+
 ## What You Get
 - **Full pipeline:** `map → scrape → structured outputs → overview → SSE stream → persist → export PDF` with a demo UI and API surface ready for production.
 - **GPT-5 structured intelligence:** Dual GPT-5 models produce a normalized profile and a narrative overview, validated with Zod before anything is stored or emitted.

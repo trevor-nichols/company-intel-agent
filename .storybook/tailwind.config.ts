@@ -16,14 +16,14 @@ import reactAriaComponents from 'tailwindcss-react-aria-components';
 import tailwindAnimate from 'tailwindcss-animate';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(dirname, '..');
 
 const config: Config = {
   darkMode: ['class'],
   content: [
-    path.resolve(dirname, '../src/**/*.{ts,tsx}'),
-    path.resolve(dirname, '../../ui/src/**/*.{ts,tsx}'),
-    path.resolve(dirname, '../../ui/dist/**/*.{js,ts}'),
-    path.resolve(dirname, './**/*.{ts,tsx}'),
+    path.resolve(rootDir, 'components/**/*.{ts,tsx}'),
+    path.resolve(rootDir, '__mocks__/**/*.{ts,tsx}'),
+    path.resolve(rootDir, 'app/**/*.{ts,tsx}'),
   ],
   theme: {
     container: {

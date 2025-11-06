@@ -51,7 +51,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 .vscode
 
 # Docker
@@ -63,7 +62,7 @@ __pycache__/*
 .env.sentry-build-plugin
 
 .mcp.json
-.claude/scripts/
+.claude/
 
-# Documentation (local)
-docs/
+# Snapshot files
+**/SNAPSHOT.md

@@ -48,6 +48,7 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 | `TAVILY_EXTRACT_DEPTH` | Default Tavily Extract depth (`basic` or `advanced`). | `basic` |
 | `OPENAI_MODEL_STRUCTURED` | GPT-5 model id for structured profile output. | `gpt-5` |
 | `OPENAI_MODEL_OVERVIEW` | GPT-5 model id for narrative overview output. | `gpt-5` |
+| `OPENAI_MODEL_CHAT` | GPT-5 model id for the knowledge chat agent. | `gpt-5` |
 | `REDIS_URL` | Optional Redis connection string. When unset, memory persistence is used. | — |
 | `ALLOW_ORIGINS` | Comma-separated list of allowed origins for downstream clients. | `http://localhost:3000` |
 

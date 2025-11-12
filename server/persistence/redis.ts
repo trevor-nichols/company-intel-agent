@@ -186,6 +186,10 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
       summaries: null,
       rawScrapes: null,
       error: null,
+      vectorStoreId: null,
+      vectorStoreStatus: params.vectorStoreStatus ?? 'pending',
+      vectorStoreError: null,
+      vectorStoreFileCounts: null,
       progress: params.progress
         ? {
             stage: params.progress.stage,
@@ -233,6 +237,12 @@ export class RedisCompanyIntelPersistence implements CompanyIntelPersistence {
       summaries: updates.summaries ?? existing.summaries,
       rawScrapes: updates.rawScrapes ?? existing.rawScrapes,
       error: updates.error ?? existing.error,
+      vectorStoreId: updates.vectorStoreId === undefined ? existing.vectorStoreId ?? null : updates.vectorStoreId,
+      vectorStoreStatus: updates.vectorStoreStatus ?? existing.vectorStoreStatus ?? 'pending',
+      vectorStoreError: updates.vectorStoreError === undefined ? existing.vectorStoreError ?? null : updates.vectorStoreError,
+      vectorStoreFileCounts: updates.vectorStoreFileCounts === undefined
+        ? existing.vectorStoreFileCounts ?? null
+        : updates.vectorStoreFileCounts,
       progress: updates.progress === undefined
         ? existing.progress ?? null
         : updates.progress

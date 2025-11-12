@@ -4,12 +4,13 @@
 //                CompanyIntelPanel - Basic company intel management UI
 // ------------------------------------------------------------------------------------------------
 
-import React, { type ReactElement } from 'react';
+import React, { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { Card, CardContent } from '@agenai/ui/card';
 import { HeaderCard } from './components/HeaderCard';
 import { OverviewPanel } from './components/OverviewPanel';
 import { RunIntelForm } from './components/RunIntelForm';
 import { SnapshotsPanel } from './components/SnapshotsPanel';
+import { ChatPanel, SidebarSwitcher } from './components/Sidebar';
 import { useCompanyIntelWorkflow } from './hooks';
 
 interface CompanyIntelPanelProps {
@@ -28,6 +29,7 @@ export function CompanyIntelPanel({
     profileStatus,
     snapshots,
     latestSnapshot,
+    chatSnapshot,
     previewData,
     recommendedSelections,
     manualSelectedUrls,
@@ -65,6 +67,120 @@ export function CompanyIntelPanel({
   } = workflow;
 
   const domainLabel = profile?.domain ?? (trimmedDomain.length > 0 ? trimmedDomain : null);
+
+  const sidebarPanes = useMemo(() => {
+    const panes: Array<{ id: string; label: string; disabled?: boolean; render: () => ReactElement }> = [];
+
+    panes.push({
+      id: 'run',
+      label: 'Run & history',
+      render: () => (
+        <div className="space-y-6">
+          <RunIntelForm
+            domain={domain}
+            trimmedDomain={trimmedDomain}
+            onDomainChange={onDomainChange}
+            submit={submit}
+            startOver={startOver}
+            isBusy={isBusy}
+            isPreviewing={isPreviewing}
+            isScraping={isScraping}
+            isResuming={isResuming}
+            isStreaming={isStreaming}
+            isCancelling={isCancelling}
+            hasActiveRun={hasActiveRun}
+            cancelActiveRun={cancelActiveRun}
+            hasPreview={hasPreview}
+            errorMessage={errorMessage}
+            manualError={manualError}
+            statusMessages={statusMessages}
+            manualUrl={manualUrl}
+            onManualUrlChange={onManualUrlChange}
+            addManualUrl={addManualUrl}
+            removeManualUrl={removeManualUrl}
+            toggleSelection={toggleSelection}
+            selectedUrls={selectedUrls}
+            recommendedSelections={recommendedSelections}
+            manualSelectedUrls={manualSelectedUrls}
+            previewData={previewData}
+          />
+
+          {displayRunHistory ? (
+            <SnapshotsPanel
+              snapshots={snapshots}
+              isLoading={isLoading}
+              isError={isError}
+            />
+          ) : null}
+        </div>
+      ),
+    });
+
+    panes.push({
+      id: 'chat',
+      label: 'Snapshot chat',
+      disabled: !chatSnapshot,
+      render: () => (
+        chatSnapshot ? (
+          <ChatPanel
+            key="company-intel-chat"
+            snapshotId={chatSnapshot.snapshotId}
+            domain={chatSnapshot.domain}
+            vectorStoreStatus={chatSnapshot.vectorStoreStatus}
+            vectorStoreError={chatSnapshot.vectorStoreError}
+            completedAt={chatSnapshot.completedAt}
+            isRunInProgress={isScraping || hasActiveRun}
+          />
+        ) : (
+          <div className="rounded-lg border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
+            Complete a run to unlock the chat interface.
+          </div>
+        )
+      ),
+    });
+
+    return panes;
+  }, [
+    addManualUrl,
+    cancelActiveRun,
+    chatSnapshot,
+    displayRunHistory,
+    domain,
+    errorMessage,
+    hasActiveRun,
+    hasPreview,
+    isBusy,
+    isCancelling,
+    isError,
+    isLoading,
+    isPreviewing,
+    isResuming,
+    isScraping,
+    isStreaming,
+    manualError,
+    manualSelectedUrls,
+    manualUrl,
+    onDomainChange,
+    onManualUrlChange,
+    previewData,
+    recommendedSelections,
+    removeManualUrl,
+    snapshots,
+    startOver,
+    statusMessages,
+    submit,
+    toggleSelection,
+    trimmedDomain,
+    selectedUrls,
+  ]);
+
+  const [sidebarTab, setSidebarTab] = useState<string>(chatSnapshot ? 'chat' : 'run');
+
+  useEffect(() => {
+    if (!chatSnapshot && sidebarTab === 'chat') {
+      setSidebarTab('run');
+    }
+  }, [chatSnapshot, sidebarTab]);
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-8 px-4 lg:px-0 lg:space-y-10">
@@ -108,42 +224,11 @@ export function CompanyIntelPanel({
         </div>
 
         <div className="flex flex-col space-y-6">
-          <RunIntelForm
-            domain={domain}
-            trimmedDomain={trimmedDomain}
-            onDomainChange={onDomainChange}
-            submit={submit}
-            startOver={startOver}
-            isBusy={isBusy}
-            isPreviewing={isPreviewing}
-            isScraping={isScraping}
-            isResuming={isResuming}
-            isStreaming={isStreaming}
-            isCancelling={isCancelling}
-            hasActiveRun={hasActiveRun}
-            cancelActiveRun={cancelActiveRun}
-            hasPreview={hasPreview}
-            errorMessage={errorMessage}
-            manualError={manualError}
-            statusMessages={statusMessages}
-            manualUrl={manualUrl}
-            onManualUrlChange={onManualUrlChange}
-            addManualUrl={addManualUrl}
-            removeManualUrl={removeManualUrl}
-            toggleSelection={toggleSelection}
-            selectedUrls={selectedUrls}
-            recommendedSelections={recommendedSelections}
-            manualSelectedUrls={manualSelectedUrls}
-            previewData={previewData}
+          <SidebarSwitcher
+            panes={sidebarPanes}
+            value={sidebarTab}
+            onChange={setSidebarTab}
           />
-
-          {displayRunHistory ? (
-            <SnapshotsPanel
-              snapshots={snapshots}
-              isLoading={isLoading}
-              isError={isError}
-            />
-          ) : null}
         </div>
       </div>
     </div>

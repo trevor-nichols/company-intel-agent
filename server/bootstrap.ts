@@ -18,6 +18,7 @@ import { CompanyIntelRunCoordinator } from './runtime/runCoordinator';
 const DEFAULT_STRUCTURED_MODEL = 'gpt-5';
 const DEFAULT_OVERVIEW_MODEL = 'gpt-5';
 const DEFAULT_TAVILY_EXTRACT_DEPTH: TavilyExtractDepth = 'basic';
+const DEFAULT_CHAT_MODEL = 'gpt-5';
 
 export interface CompanyIntelBootstrapOverrides {
   readonly persistence?: CompanyIntelPersistence;
@@ -28,12 +29,15 @@ export interface CompanyIntelBootstrapOverrides {
   readonly logger?: typeof defaultLogger;
   readonly structuredOutputModel?: string;
   readonly overviewModel?: string;
+  readonly chatModel?: string;
 }
 
 export interface CompanyIntelEnvironment {
   readonly server: CompanyIntelServer;
   readonly persistence: CompanyIntelPersistence;
   readonly runtime: CompanyIntelRunCoordinator;
+  readonly openAI: OpenAIClientLike;
+  readonly chatModel: string;
 }
 
 declare global {
@@ -123,6 +127,10 @@ function resolveOverviewModel(overrides: CompanyIntelBootstrapOverrides): string
   return overrides.overviewModel ?? getEnvVar('OPENAI_MODEL_OVERVIEW') ?? DEFAULT_OVERVIEW_MODEL;
 }
 
+function resolveChatModel(overrides: CompanyIntelBootstrapOverrides): string {
+  return overrides.chatModel ?? getEnvVar('OPENAI_MODEL_CHAT') ?? DEFAULT_CHAT_MODEL;
+}
+
 export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
   const log = overrides.logger ?? defaultLogger;
   const persistence = resolvePersistence(overrides, log);
@@ -131,6 +139,7 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
   const tavilyExtractDepth = resolveTavilyExtractDepth(overrides);
   const structuredOutputModel = resolveStructuredModel(overrides);
   const overviewModel = resolveOverviewModel(overrides);
+  const chatModel = resolveChatModel(overrides);
 
   const server = createCompanyIntelServer({
     tavily,
@@ -140,6 +149,7 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
     structuredOutputModel,
     overviewModel,
     tavilyExtractDepth,
+    chatModel,
   });
 
   const runtime = new CompanyIntelRunCoordinator({
@@ -147,7 +157,7 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
     logger: log,
   });
 
-  return { server, persistence, runtime } satisfies CompanyIntelEnvironment;
+  return { server, persistence, runtime, openAI, chatModel } satisfies CompanyIntelEnvironment;
 }
 
 export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {

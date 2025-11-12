@@ -7,7 +7,11 @@ import type {
   CompanyProfileKeyOffering,
   CompanyProfileStatus,
   CompanyProfileSnapshotStatus,
+  CompanyIntelVectorStoreStatus,
+  CompanyIntelVectorStoreFileCounts,
 } from '@/shared/company-intel/types';
+
+export type CompanyIntelSnapshotVectorStoreFileCounts = CompanyIntelVectorStoreFileCounts;
 
 export interface CompanyIntelSnapshotRecord {
   readonly id: number;
@@ -18,6 +22,10 @@ export interface CompanyIntelSnapshotRecord {
   readonly summaries?: unknown;
   readonly rawScrapes?: unknown;
   readonly error?: string | null;
+  readonly vectorStoreId?: string | null;
+  readonly vectorStoreStatus?: CompanyIntelVectorStoreStatus;
+  readonly vectorStoreError?: string | null;
+  readonly vectorStoreFileCounts?: CompanyIntelSnapshotVectorStoreFileCounts | null;
   readonly progress?: {
     readonly stage: CompanyIntelRunStage;
     readonly completed?: number;
@@ -56,6 +64,7 @@ export interface CompanyIntelSnapshotCreateParams {
     readonly completed?: number;
     readonly total?: number;
   } | null;
+  readonly vectorStoreStatus?: CompanyIntelVectorStoreStatus;
 }
 
 export interface CompanyIntelSnapshotUpdate {
@@ -66,6 +75,10 @@ export interface CompanyIntelSnapshotUpdate {
   readonly summaries?: unknown;
   readonly rawScrapes?: unknown;
   readonly error?: string | null;
+  readonly vectorStoreId?: string | null;
+  readonly vectorStoreStatus?: CompanyIntelVectorStoreStatus;
+  readonly vectorStoreError?: string | null;
+  readonly vectorStoreFileCounts?: CompanyIntelSnapshotVectorStoreFileCounts | null;
   readonly progress?: {
     readonly stage: CompanyIntelRunStage;
     readonly completed?: number;

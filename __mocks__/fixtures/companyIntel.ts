@@ -183,6 +183,16 @@ export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
   ],
   error: null,
   progress: null,
+  vectorStoreId: 'vs_acmeintel_3421',
+  vectorStoreStatus: 'ready',
+  vectorStoreError: null,
+  vectorStoreFileCounts: {
+    inProgress: 0,
+    completed: 1,
+    failed: 0,
+    cancelled: 0,
+    total: 1,
+  },
   createdAt: new Date('2024-10-14T10:57:00.000Z'),
   completedAt: new Date('2024-10-14T11:15:00.000Z'),
 };
@@ -207,6 +217,10 @@ export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
   ],
   error: 'Upstream source rejected all requests (429).',
   progress: null,
+  vectorStoreId: null,
+  vectorStoreStatus: 'failed',
+  vectorStoreError: 'Vector store publishing skipped due to upstream error.',
+  vectorStoreFileCounts: null,
   createdAt: new Date('2024-09-02T15:12:00.000Z'),
   completedAt: null,
 };

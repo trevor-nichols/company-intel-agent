@@ -85,6 +85,10 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
       summaries: null,
       rawScrapes: null,
       error: null,
+      vectorStoreId: null,
+      vectorStoreStatus: params.vectorStoreStatus ?? 'pending',
+      vectorStoreError: null,
+      vectorStoreFileCounts: null,
       progress: params.progress
         ? {
             stage: params.progress.stage,
@@ -125,6 +129,12 @@ export class InMemoryCompanyIntelPersistence implements CompanyIntelPersistence 
       summaries: updates.summaries ?? record.summaries,
       rawScrapes: updates.rawScrapes ?? record.rawScrapes,
       error: updates.error ?? record.error,
+      vectorStoreId: updates.vectorStoreId === undefined ? record.vectorStoreId ?? null : updates.vectorStoreId,
+      vectorStoreStatus: updates.vectorStoreStatus ?? record.vectorStoreStatus ?? 'pending',
+      vectorStoreError: updates.vectorStoreError === undefined ? record.vectorStoreError ?? null : updates.vectorStoreError,
+      vectorStoreFileCounts: updates.vectorStoreFileCounts === undefined
+        ? record.vectorStoreFileCounts ?? null
+        : updates.vectorStoreFileCounts,
       progress: updates.progress === undefined
         ? record.progress ?? null
         : updates.progress

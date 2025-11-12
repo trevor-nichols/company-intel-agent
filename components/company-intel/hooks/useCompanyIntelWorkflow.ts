@@ -14,6 +14,7 @@ import type {
   CompanyProfile,
   CompanyProfileKeyOffering,
   CompanyProfileSnapshot,
+  CompanyIntelVectorStoreStatus,
 } from '../types';
 import { useCompanyIntel } from './useCompanyIntel';
 import { useCompanyIntelPreview } from './useCompanyIntelPreview';
@@ -41,6 +42,13 @@ export interface UseCompanyIntelWorkflowResult {
   readonly hasActiveRun: boolean;
   readonly snapshots: readonly CompanyProfileSnapshot[];
   readonly latestSnapshot: CompanyProfileSnapshot | null;
+  readonly chatSnapshot: {
+    readonly snapshotId: number;
+    readonly domain: string | null;
+    readonly vectorStoreStatus: CompanyIntelVectorStoreStatus;
+    readonly vectorStoreError: string | null;
+    readonly completedAt: Date | null;
+  } | null;
   readonly previewData: CompanyIntelPreviewResult | null;
   readonly recommendedSelections: readonly CompanyIntelSelection[];
   readonly manualSelectedUrls: readonly string[];
@@ -249,6 +257,19 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
 
   const snapshots = useMemo<readonly CompanyProfileSnapshot[]>(() => companyIntelData?.snapshots ?? [], [companyIntelData?.snapshots]);
   const latestSnapshot = useMemo(() => snapshots[0] ?? null, [snapshots]);
+  const chatSnapshot = useMemo(() => {
+    if (!latestSnapshot || latestSnapshot.status !== 'complete') {
+      return null;
+    }
+
+    return {
+      snapshotId: latestSnapshot.id,
+      domain: latestSnapshot.domain ?? null,
+      vectorStoreStatus: latestSnapshot.vectorStoreStatus ?? 'pending',
+      vectorStoreError: latestSnapshot.vectorStoreError ?? null,
+      completedAt: latestSnapshot.completedAt ?? null,
+    };
+  }, [latestSnapshot]);
   const structuredReasoningHeadline = useMemo(
     () => structuredReasoningHeadlineDraft ?? latestSnapshot?.summaries?.metadata?.structuredProfile?.headline ?? null,
     [structuredReasoningHeadlineDraft, latestSnapshot],
@@ -672,6 +693,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     hasActiveRun,
     snapshots,
     latestSnapshot,
+    chatSnapshot,
     previewData,
     recommendedSelections,
     manualSelectedUrls,

@@ -4,6 +4,15 @@
 
 export type CompanyProfileStatus = 'not_configured' | 'refreshing' | 'ready' | 'failed';
 export type CompanyProfileSnapshotStatus = 'running' | 'complete' | 'failed' | 'cancelled';
+export type CompanyIntelVectorStoreStatus = 'pending' | 'publishing' | 'ready' | 'failed';
+
+export interface CompanyIntelVectorStoreFileCounts {
+  readonly inProgress: number;
+  readonly completed: number;
+  readonly failed: number;
+  readonly cancelled: number;
+  readonly total: number;
+}
 
 export interface CompanyProfileKeyOffering {
   readonly title: string;
@@ -88,6 +97,10 @@ export interface CompanyProfileSnapshot {
   readonly rawScrapes: readonly CompanyIntelScrapeRecord[];
   readonly error: string | null;
   readonly progress: CompanyIntelSnapshotProgress | null;
+  readonly vectorStoreId: string | null;
+  readonly vectorStoreStatus: CompanyIntelVectorStoreStatus;
+  readonly vectorStoreError: string | null;
+  readonly vectorStoreFileCounts: CompanyIntelVectorStoreFileCounts | null;
   readonly createdAt: Date;
   readonly completedAt: Date | null;
 }

@@ -14,6 +14,8 @@ import type {
   CompanyIntelSnapshotStructuredProfileSummary,
   CompanyIntelSnapshotSummaries,
   CompanyIntelRunStage,
+  CompanyIntelVectorStoreStatus,
+  CompanyIntelVectorStoreFileCounts,
   CompanyProfile,
   CompanyProfileKeyOffering,
   CompanyProfileSnapshot,
@@ -81,6 +83,48 @@ function normaliseAgentSources(value: unknown): CompanyIntelAgentSource[] {
   }
 
   return sources;
+}
+
+function normaliseVectorStoreStatus(value: unknown): CompanyIntelVectorStoreStatus {
+  const valid: CompanyIntelVectorStoreStatus[] = ['pending', 'publishing', 'ready', 'failed'];
+  if (typeof value === 'string' && (valid as readonly string[]).includes(value)) {
+    return value as CompanyIntelVectorStoreStatus;
+  }
+  return 'pending';
+}
+
+function normaliseVectorStoreFileCounts(value: unknown): CompanyIntelVectorStoreFileCounts | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const total = typeof record.total === 'number' ? record.total : undefined;
+  const completed = typeof record.completed === 'number' ? record.completed : undefined;
+  const inProgress = typeof record.inProgress === 'number'
+    ? record.inProgress
+    : typeof record.in_progress === 'number'
+      ? record.in_progress
+      : undefined;
+  const failed = typeof record.failed === 'number' ? record.failed : undefined;
+  const cancelled = typeof record.cancelled === 'number' ? record.cancelled : undefined;
+
+  if (
+    total === undefined &&
+    completed === undefined &&
+    inProgress === undefined &&
+    failed === undefined &&
+    cancelled === undefined
+  ) {
+    return null;
+  }
+
+  return {
+    total: total ?? 0,
+    completed: completed ?? 0,
+    inProgress: inProgress ?? 0,
+    failed: failed ?? 0,
+    cancelled: cancelled ?? 0,
+  } satisfies CompanyIntelVectorStoreFileCounts;
 }
 
 function normaliseAgentMetadata(value: unknown): CompanyIntelSnapshotAgentMetadata | undefined {
@@ -427,6 +471,18 @@ function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
     rawScrapes: toScrapeRecords(rawScrapesInput),
     error: typeof record.error === 'string' ? record.error : null,
     progress,
+    vectorStoreId: typeof record.vectorStoreId === 'string'
+      ? record.vectorStoreId
+      : typeof record.vector_store_id === 'string'
+        ? record.vector_store_id
+        : null,
+    vectorStoreStatus: normaliseVectorStoreStatus(record.vectorStoreStatus ?? record.vector_store_status),
+    vectorStoreError: typeof record.vectorStoreError === 'string'
+      ? record.vectorStoreError
+      : typeof record.vector_store_error === 'string'
+        ? record.vector_store_error
+        : null,
+    vectorStoreFileCounts: normaliseVectorStoreFileCounts(record.vectorStoreFileCounts ?? record.vector_store_file_counts),
     createdAt,
     completedAt,
   };

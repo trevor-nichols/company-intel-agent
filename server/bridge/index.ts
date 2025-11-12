@@ -41,6 +41,7 @@ export interface CompanyIntelServerConfig {
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
   readonly tavilyExtractDepth?: TavilyExtractDepth;
+  readonly chatModel?: string;
 }
 
 export interface CompanyIntelServer {

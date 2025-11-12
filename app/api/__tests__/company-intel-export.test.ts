@@ -10,6 +10,20 @@ vi.mock('@/server/bootstrap', () => ({
     server: {
       generateSnapshotPdf: generateSnapshotPdfMock,
     } satisfies Pick<CompanyIntelServer, 'generateSnapshotPdf'>,
+    runtime: {
+      runToCompletion: vi.fn(),
+      getActiveRunForDomain: () => null,
+    },
+    persistence: {
+      getProfile: vi.fn(),
+      listSnapshots: vi.fn(),
+    },
+    openAI: {
+      responses: {
+        create: vi.fn(),
+      },
+    },
+    chatModel: 'gpt-5',
   }),
 }));
 

@@ -14,6 +14,16 @@ vi.mock('@/server/bootstrap', () => ({
       runToCompletion: runToCompletionMock,
       getActiveRunForDomain: () => null,
     },
+    persistence: {
+      getProfile: vi.fn(),
+      listSnapshots: vi.fn(),
+    },
+    openAI: {
+      responses: {
+        create: vi.fn(),
+      },
+    },
+    chatModel: 'gpt-5',
   }),
 }));
 

@@ -97,6 +97,11 @@ export interface UseCompanyIntelWorkflowResult {
   };
 }
 
+interface VectorStoreOverride {
+  readonly status: CompanyIntelVectorStoreStatus;
+  readonly error: string | null;
+}
+
 export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const companyIntelQuery = useCompanyIntel();
   const {
@@ -152,6 +157,25 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setOverviewDraft(event.overview);
         setOverviewReasoningHeadlineDraft(event.headline ?? null);
         break;
+      case 'vector-store-status':
+        setVectorStoreOverrides(prev => {
+          const current = prev[event.snapshotId];
+          const nextOverride: VectorStoreOverride = {
+            status: event.status,
+            error: event.error ?? null,
+          };
+          if (current && current.status === nextOverride.status && current.error === nextOverride.error) {
+            return prev;
+          }
+          return {
+            ...prev,
+            [event.snapshotId]: nextOverride,
+          };
+        });
+        if (event.status === 'ready' || event.status === 'failed') {
+          void refetch();
+        }
+        break;
       case 'structured-delta':
         setStructuredTextDraft(previous => {
           const next = `${previous ?? ''}${event.delta}`;
@@ -190,6 +214,14 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         lastResumeSnapshotIdRef.current = event.snapshotId;
         void refetch();
         setProfileStatusOverride('ready');
+        setVectorStoreOverrides(previous => {
+          if (previous[event.snapshotId]) {
+            const rest = { ...previous };
+            delete rest[event.snapshotId];
+            return rest;
+          }
+          return previous;
+        });
         break;
       case 'run-error':
         setStreamActive(false);
@@ -205,6 +237,14 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         lastResumeSnapshotIdRef.current = event.snapshotId;
         void refetch();
         setProfileStatusOverride('failed');
+        setVectorStoreOverrides(previous => {
+          if (previous[event.snapshotId]) {
+            const rest = { ...previous };
+            delete rest[event.snapshotId];
+            return rest;
+          }
+          return previous;
+        });
         break;
       case 'run-cancelled':
         setStreamActive(false);
@@ -253,6 +293,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const [structuredReasoningHeadlineDraft, setStructuredReasoningHeadlineDraft] = useState<string | null>(null);
   const [overviewReasoningHeadlineDraft, setOverviewReasoningHeadlineDraft] = useState<string | null>(null);
   const [faviconDraft, setFaviconDraft] = useState<string | null>(null);
+  const [vectorStoreOverrides, setVectorStoreOverrides] = useState<Record<number, VectorStoreOverride>>({});
   const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
 
   const snapshots = useMemo<readonly CompanyProfileSnapshot[]>(() => companyIntelData?.snapshots ?? [], [companyIntelData?.snapshots]);
@@ -262,14 +303,18 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       return null;
     }
 
+    const override = vectorStoreOverrides[latestSnapshot.id];
+    const vectorStoreStatus = override?.status ?? latestSnapshot.vectorStoreStatus ?? 'pending';
+    const vectorStoreError = override ? override.error : latestSnapshot.vectorStoreError ?? null;
+
     return {
       snapshotId: latestSnapshot.id,
       domain: latestSnapshot.domain ?? null,
-      vectorStoreStatus: latestSnapshot.vectorStoreStatus ?? 'pending',
-      vectorStoreError: latestSnapshot.vectorStoreError ?? null,
+      vectorStoreStatus,
+      vectorStoreError,
       completedAt: latestSnapshot.completedAt ?? null,
     };
-  }, [latestSnapshot]);
+  }, [latestSnapshot, vectorStoreOverrides]);
   const structuredReasoningHeadline = useMemo(
     () => structuredReasoningHeadlineDraft ?? latestSnapshot?.summaries?.metadata?.structuredProfile?.headline ?? null,
     [structuredReasoningHeadlineDraft, latestSnapshot],
@@ -358,6 +403,28 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       setProfileStatusOverride(null);
     }
   }, [profileStatusOverride, queryProfileStatus]);
+
+  useEffect(() => {
+    if (!latestSnapshot) {
+      if (Object.keys(vectorStoreOverrides).length > 0) {
+        setVectorStoreOverrides({});
+      }
+      return;
+    }
+    const override = vectorStoreOverrides[latestSnapshot.id];
+    if (!override) {
+      return;
+    }
+    const status = latestSnapshot.vectorStoreStatus ?? 'pending';
+    const error = latestSnapshot.vectorStoreError ?? null;
+    if (override.status === status && override.error === error) {
+      setVectorStoreOverrides(prev => {
+        const rest = { ...prev };
+        delete rest[latestSnapshot.id];
+        return rest;
+      });
+    }
+  }, [latestSnapshot, vectorStoreOverrides]);
 
   const previewData: CompanyIntelPreviewResult | null = useMemo(() => {
     if (!previewMutation.data) {

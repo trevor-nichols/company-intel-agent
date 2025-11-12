@@ -139,12 +139,21 @@ async function publishSnapshotKnowledgeBase(params: PublishKnowledgeBaseParams):
       vectorStoreFileCounts: null,
       vectorStoreId: null,
     });
+    context.emitEvent({
+      type: 'vector-store-status',
+      status: 'failed',
+      error: 'No readable pages were indexed for this snapshot.',
+    });
     return;
   }
 
   await context.updateSnapshot({
     vectorStoreStatus: 'publishing',
     vectorStoreError: null,
+  });
+  context.emitEvent({
+    type: 'vector-store-status',
+    status: 'publishing',
   });
 
   try {
@@ -161,6 +170,12 @@ async function publishSnapshotKnowledgeBase(params: PublishKnowledgeBaseParams):
       vectorStoreStatus: 'ready',
       vectorStoreFileCounts: result.fileCounts,
     });
+    context.emitEvent({
+      type: 'vector-store-status',
+      status: 'ready',
+      vectorStoreId: result.vectorStoreId,
+      fileCounts: result.fileCounts,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Vector store publishing failed';
     logger.error('vector-store:publish:error', {
@@ -170,6 +185,11 @@ async function publishSnapshotKnowledgeBase(params: PublishKnowledgeBaseParams):
     await context.updateSnapshot({
       vectorStoreStatus: 'failed',
       vectorStoreError: message,
+    });
+    context.emitEvent({
+      type: 'vector-store-status',
+      status: 'failed',
+      error: message,
     });
   }
 }

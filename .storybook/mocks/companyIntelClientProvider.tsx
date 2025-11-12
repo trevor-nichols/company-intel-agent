@@ -6,7 +6,7 @@ export interface MockCompanyIntelProviderProps extends Omit<CompanyIntelClientPr
   readonly children: ReactNode;
 }
 
-const mockRequest: CompanyIntelClientProviderProps['request'] = async (path, init) =>
+const mockRequest: CompanyIntelClientProviderProps['request'] = async () =>
   new Response(JSON.stringify({ data: null }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },

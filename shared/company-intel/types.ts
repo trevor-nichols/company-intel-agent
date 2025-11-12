@@ -256,6 +256,13 @@ export type CompanyIntelStreamEvent =
       readonly headline?: string | null;
     })
   | (CompanyIntelStreamBaseEvent & {
+      readonly type: 'vector-store-status';
+      readonly status: CompanyIntelVectorStoreStatus;
+      readonly error?: string | null;
+      readonly vectorStoreId?: string | null;
+      readonly fileCounts?: CompanyIntelVectorStoreFileCounts | null;
+    })
+  | (CompanyIntelStreamBaseEvent & {
       readonly type: 'run-complete';
       readonly result: TriggerCompanyIntelResult;
     })

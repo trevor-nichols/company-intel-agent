@@ -13,7 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@agen
 import { ScrollArea } from '@agenai/ui/scroll-area';
 import { Textarea } from '@agenai/ui/textarea';
 import { MinimalMarkdown } from '@agenai/ui/minimal-markdown';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@agenai/ui/tooltip';
 import { cn } from '@/lib/utils/cn';
+import type { Components } from 'react-markdown';
 import type { CompanyIntelVectorStoreStatus } from '../../../types';
 import {
   useCompanyIntelChat,
@@ -248,55 +250,34 @@ export function ChatPanel(props: ChatPanelProps): ReactElement {
 
 function ChatMessageBubble({ message }: { readonly message: TranscriptMessage }): ReactElement {
   const isUser = message.role === 'user';
-  return (
-    <div className={cn('flex flex-col gap-2 text-sm', isUser ? 'items-end text-right' : 'items-start text-left')}>
-      <div
-        className={cn(
-          'max-w-full rounded-lg border px-3 py-2 shadow-sm md:max-w-[85%]',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-foreground',
-        )}
-      >
-        {isUser ? (
-          <span>{message.content}</span>
-        ) : (
-          <MinimalMarkdown content={message.content} className="text-sm" />
-        )}
-      </div>
-      {!isUser && message.citations && message.citations.length > 0 ? (
-        <div className="w-full rounded-md border border-dashed bg-background/80 p-3 text-xs text-muted-foreground">
-          <p className="mb-2 font-medium text-foreground">Sources</p>
-          <div className="space-y-2">
-            {message.citations.map(citation => (
-              <CitationItem key={`${citation.fileId}-${citation.filename ?? 'source'}`} citation={citation} />
-            ))}
-          </div>
-        </div>
-      ) : null}
+  const { content, markerMap } = useMemo(
+    () => prepareCitationRendering(message.content, message.citations),
+    [message.content, message.citations],
+  );
+  const markdownComponents = useMemo(() => buildCitationComponents(markerMap), [markerMap]);
+
+  const bubble = (
+    <div
+      className={cn(
+        'max-w-full rounded-lg border px-3 py-2 shadow-sm md:max-w-[85%]',
+        isUser ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-foreground',
+      )}
+    >
+      {isUser ? (
+        <span>{message.content}</span>
+      ) : (
+        <MinimalMarkdown content={content} className="text-sm" components={markdownComponents} />
+      )}
     </div>
   );
-}
 
-function CitationItem({ citation }: { readonly citation: CompanyIntelChatCitation }): ReactElement {
-  const label = citation.filename ?? citation.fileId;
   return (
-    <div className="space-y-1">
-      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-foreground">
-        <span>{label}</span>
-        {typeof citation.score === 'number' ? (
-          <Badge variant="outline" className="text-[10px]">
-            {Math.round(citation.score * 100) / 100}
-          </Badge>
-        ) : null}
-      </div>
-      {citation.chunks && citation.chunks.length > 0 ? (
-        <div className="rounded bg-muted/60 p-2 text-xs leading-relaxed text-muted-foreground">
-          {citation.chunks.slice(0, 2).map((chunk, index) => (
-            <p key={`${citation.fileId}-chunk-${index}`} className={cn(index > 0 ? 'mt-1' : undefined)}>
-              “{chunk.text.trim()}”
-            </p>
-          ))}
-        </div>
-      ) : null}
+    <div className={cn('flex flex-col gap-2 text-sm', isUser ? 'items-end text-right' : 'items-start text-left')}>
+      {isUser ? bubble : (
+        <TooltipProvider delayDuration={120} skipDelayDuration={0}>
+          {bubble}
+        </TooltipProvider>
+      )}
     </div>
   );
 }
@@ -307,4 +288,168 @@ function toChatMessages(history: readonly TranscriptMessage[]): CompanyIntelChat
 
 function createMessageId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+interface CitationMarkerDescriptor {
+  readonly href: string;
+  readonly ordinal: number;
+  readonly superscript: string;
+  readonly citation: CompanyIntelChatCitation;
+}
+
+type CitationMarkerMap = Record<string, CitationMarkerDescriptor>;
+
+function prepareCitationRendering(content: string, citations?: readonly CompanyIntelChatCitation[]): {
+  readonly content: string;
+  readonly markerMap: CitationMarkerMap;
+} {
+  if (!content || !citations || citations.length === 0) {
+    return { content, markerMap: {} };
+  }
+
+  const resolved = citations
+    .map(citation => ({
+      citation,
+      resolvedIndex: resolveInsertionIndex(content, citation),
+    }))
+    .filter((entry): entry is { citation: CompanyIntelChatCitation; resolvedIndex: number } =>
+      typeof entry.resolvedIndex === 'number',
+    )
+    .sort((a, b) => a.resolvedIndex - b.resolvedIndex)
+    .map((entry, index) => ({
+      ...entry,
+      ordinal: index + 1,
+    }));
+
+  if (resolved.length === 0) {
+    return { content, markerMap: {} };
+  }
+
+  let nextContent = content;
+  const markerMap: CitationMarkerMap = {};
+
+  const descending = [...resolved].sort((a, b) => b.resolvedIndex - a.resolvedIndex);
+
+  for (const entry of descending) {
+    const ordinal = entry.ordinal;
+    const key = `c${ordinal}`;
+    const href = `citation:${key}`;
+    const superscript = toSuperscript(ordinal);
+    const insertionIndex = clamp(entry.resolvedIndex, 0, nextContent.length);
+    nextContent = `${nextContent.slice(0, insertionIndex)}[${superscript}](${href})${nextContent.slice(insertionIndex)}`;
+    markerMap[href] = {
+      href,
+      ordinal,
+      superscript,
+      citation: entry.citation,
+    } satisfies CitationMarkerDescriptor;
+  }
+
+  return { content: nextContent, markerMap };
+}
+
+function buildCitationComponents(markerMap: CitationMarkerMap): Components | undefined {
+  const hasMarkers = Object.keys(markerMap).length > 0;
+  if (!hasMarkers) {
+    return undefined;
+  }
+
+  const defaultAnchor = ({ children, href, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="font-medium text-primary underline-offset-4 hover:underline"
+      {...rest}
+    >
+      {children}
+    </a>
+  );
+
+  return {
+    a: props => {
+      const { href } = props;
+      if (href && markerMap[href]) {
+        return <CitationMarker marker={markerMap[href]} />;
+      }
+      return defaultAnchor(props);
+    },
+  } satisfies Components;
+}
+
+function CitationMarker({ marker }: { readonly marker: CitationMarkerDescriptor }): ReactElement {
+  const label = marker.citation.filename ?? marker.citation.fileId;
+  const snippet = marker.citation.quote
+    ?? marker.citation.chunks?.[0]?.text
+    ?? undefined;
+  const score = typeof marker.citation.score === 'number' ? marker.citation.score : undefined;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label={`View source ${marker.ordinal}`}
+          className="cursor-help px-0.5 text-sm font-semibold text-primary align-super"
+        >
+          {marker.superscript}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="center" sideOffset={8} className="max-w-xs text-xs">
+        <div className="space-y-1 text-left">
+          <p className="font-medium text-foreground">{label}</p>
+          {typeof score === 'number' ? (
+            <p className="text-muted-foreground">Score: {Math.round(score * 100) / 100}</p>
+          ) : null}
+          {snippet ? (
+            <p className="text-muted-foreground">“{snippet.trim()}”</p>
+          ) : null}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function resolveInsertionIndex(content: string, citation: CompanyIntelChatCitation): number | undefined {
+  const quote = citation.quote ?? citation.chunks?.[0]?.text ?? '';
+  if (typeof citation.index === 'number') {
+    const offset = clamp(citation.index, 0, content.length);
+    const width = quote.length > 0 ? quote.length : 0;
+    return clamp(offset + width, 0, content.length);
+  }
+
+  if (quote.length > 0) {
+    const location = content.indexOf(quote);
+    if (location >= 0) {
+      return clamp(location + quote.length, 0, content.length);
+    }
+  }
+
+  return content.length;
+}
+
+function toSuperscript(value: number): string {
+  const SUPERSCRIPT_DIGITS: Record<string, string> = {
+    '0': '⁰',
+    '1': '¹',
+    '2': '²',
+    '3': '³',
+    '4': '⁴',
+    '5': '⁵',
+    '6': '⁶',
+    '7': '⁷',
+    '8': '⁸',
+    '9': '⁹',
+  };
+
+  return value
+    .toString()
+    .split('')
+    .map(char => SUPERSCRIPT_DIGITS[char] ?? char)
+    .join('');
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }

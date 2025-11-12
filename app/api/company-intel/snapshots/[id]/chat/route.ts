@@ -23,6 +23,8 @@ interface ChatCitation {
   readonly filename?: string;
   readonly score?: number;
   readonly chunks?: readonly { readonly text: string }[];
+  readonly index?: number;
+  readonly quote?: string;
 }
 
 const MAX_MESSAGES = 20;
@@ -260,10 +262,16 @@ function toCitationFromAnnotation(annotation: unknown): ChatCitation | null {
     : typeof record.quoted_text === 'string'
       ? record.quoted_text
       : undefined;
+  const index = typeof record.index === 'number'
+    ? record.index
+    : typeof record.start_index === 'number'
+      ? record.start_index
+      : undefined;
 
   return {
     fileId,
     filename,
-    ...(quote ? { chunks: [{ text: quote }] } : {}),
+    ...(quote ? { quote, chunks: [{ text: quote }] } : {}),
+    ...(typeof index === 'number' ? { index } : {}),
   } satisfies ChatCitation;
 }

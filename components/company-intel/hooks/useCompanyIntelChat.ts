@@ -25,6 +25,8 @@ export interface CompanyIntelChatCitation {
   readonly filename?: string;
   readonly score?: number;
   readonly chunks?: readonly CompanyIntelChatCitationChunk[];
+  readonly index?: number;
+  readonly quote?: string;
 }
 
 export interface CompanyIntelChatResult {

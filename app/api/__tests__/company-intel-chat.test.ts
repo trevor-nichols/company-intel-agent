@@ -147,6 +147,7 @@ describe('Company intel chat route', () => {
                   file_id: 'file-2',
                   filename: 'two.pdf',
                   quote: 'Snippet from file 2',
+                  index: 128,
                 },
               ],
             },
@@ -174,6 +175,8 @@ describe('Company intel chat route', () => {
       {
         fileId: 'file-2',
         filename: 'two.pdf',
+        quote: 'Snippet from file 2',
+        index: 128,
         chunks: [
           {
             text: 'Snippet from file 2',

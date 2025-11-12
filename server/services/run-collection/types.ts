@@ -4,7 +4,13 @@
 
 import type { Logger } from '@agenai/logging';
 
-import type { CollectSiteIntelOptions, SiteIntelResult, SiteIntelScrapeOutcome, SiteIntelScrapeExtractResult } from '../../web-search';
+import type {
+  CollectSiteIntelOptions,
+  SiteIntelResult,
+  SiteIntelScrapeOutcome,
+  SiteIntelScrapeExtractResult,
+  TavilyExtractDepth,
+} from '../../web-search';
 import type { CollectSiteIntelDependencies } from '../../web-search/collect';
 import type {
   CompanyIntelRunStage,
@@ -38,6 +44,7 @@ export interface RunCompanyIntelCollectionDependencies {
   readonly persistence: CompanyIntelPersistence;
   readonly emit?: (event: CompanyIntelStreamEvent) => void;
   readonly abortSignal?: AbortSignal;
+  readonly defaultExtractDepth?: TavilyExtractDepth;
 }
 
 export interface RunCompanyIntelCollectionResult {

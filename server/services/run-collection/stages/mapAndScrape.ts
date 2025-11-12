@@ -138,17 +138,21 @@ export async function mapAndScrape(
   context: RunContext,
   domain: string,
   options: CollectSiteIntelOptions | undefined,
-  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'tavily' | 'logger'>,
+  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'tavily' | 'logger' | 'defaultExtractDepth'>,
 ): Promise<MapAndScrapeResult> {
   const log = dependencies.logger ?? context.logger;
 
   context.emitStage('mapping');
 
+  const resolvedExtractDepth = options?.extractDepth ?? dependencies.defaultExtractDepth;
+  const effectiveOptions: CollectSiteIntelOptions = {
+    ...(options ?? {}),
+    ...(resolvedExtractDepth ? { extractDepth: resolvedExtractDepth } : {}),
+  };
+
   const intelResult = await collectSiteIntel(
     domain,
-    {
-      ...options,
-    },
+    effectiveOptions,
     {
       tavily: dependencies.tavily,
       logger: log,

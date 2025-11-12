@@ -10,15 +10,19 @@ import type { RunCompanyIntelCollectionDependencies } from './types';
 export async function previewCompanyIntel(
   domain: string,
   options: CollectSiteIntelOptions = {},
-  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'tavily' | 'logger'>,
+  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'tavily' | 'logger' | 'defaultExtractDepth'>,
 ): Promise<SiteIntelResult> {
   const log = dependencies.logger ?? defaultLogger;
 
+  const resolvedExtractDepth = options.extractDepth ?? dependencies.defaultExtractDepth;
+  const effectiveOptions: CollectSiteIntelOptions = {
+    ...options,
+    ...(resolvedExtractDepth ? { extractDepth: resolvedExtractDepth } : {}),
+  };
+
   const result = await previewSiteIntel(
     domain,
-    {
-      ...options,
-    },
+    effectiveOptions,
     {
       tavily: dependencies.tavily,
       logger: log,

@@ -38,6 +38,9 @@ lib/core/**/*.d.ts.map
 tmp/
 **/tmp/
 
+# internal documentation
+internal-docs/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

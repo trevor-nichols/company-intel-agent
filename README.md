@@ -45,6 +45,7 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 | --- | --- | --- |
 | `OPENAI_API_KEY` | OpenAI Responses API key used for both structured profile and overview runs. | — |
 | `TAVILY_API_KEY` | Tavily site-mapping and extraction key. | — |
+| `TAVILY_EXTRACT_DEPTH` | Default Tavily Extract depth (`basic` or `advanced`). | `basic` |
 | `OPENAI_MODEL_STRUCTURED` | GPT-5 model id for structured profile output. | `gpt-5` |
 | `OPENAI_MODEL_OVERVIEW` | GPT-5 model id for narrative overview output. | `gpt-5` |
 | `REDIS_URL` | Optional Redis connection string. When unset, memory persistence is used. | — |

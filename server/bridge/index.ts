@@ -17,6 +17,7 @@ import type { CompanyIntelStructuredPromptConfig } from '../agents/structured-pr
 import type { CompanyOverviewPromptConfig } from '../agents/overview';
 import type { UpdateCompanyIntelProfileParams } from '../services/profileUpdates';
 import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
+import type { TavilyExtractDepth } from '../integrations/tavily/types';
 
 export interface RunCollectionOverrides {
   readonly logger?: Logger;
@@ -25,6 +26,7 @@ export interface RunCollectionOverrides {
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
   readonly openAIClient?: OpenAIClientLike;
+  readonly defaultExtractDepth?: TavilyExtractDepth;
   readonly onEvent?: (event: CompanyIntelStreamEvent) => void;
   readonly abortSignal?: AbortSignal;
 }
@@ -38,6 +40,7 @@ export interface CompanyIntelServerConfig {
   readonly structuredOutputModel?: string;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
+  readonly tavilyExtractDepth?: TavilyExtractDepth;
 }
 
 export interface CompanyIntelServer {

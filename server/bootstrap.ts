@@ -10,18 +10,21 @@ import type { CompanyIntelServer } from './bridge';
 import type { CompanyIntelPersistence } from './services/persistence';
 import { createOpenAIClient } from './integrations/openai/client';
 import { createTavilyClient, type TavilyClient } from './integrations/tavily/client';
+import type { TavilyExtractDepth } from './integrations/tavily/types';
 import type { OpenAIClientLike } from './agents/shared/openai';
 import { createMemoryPersistence, createRedisPersistence } from './persistence';
 import { CompanyIntelRunCoordinator } from './runtime/runCoordinator';
 
 const DEFAULT_STRUCTURED_MODEL = 'gpt-5';
 const DEFAULT_OVERVIEW_MODEL = 'gpt-5';
+const DEFAULT_TAVILY_EXTRACT_DEPTH: TavilyExtractDepth = 'basic';
 
 export interface CompanyIntelBootstrapOverrides {
   readonly persistence?: CompanyIntelPersistence;
   readonly redisUrl?: string | null;
   readonly openAIClient?: OpenAIClientLike;
   readonly tavilyClient?: TavilyClient;
+  readonly tavilyExtractDepth?: TavilyExtractDepth;
   readonly logger?: typeof defaultLogger;
   readonly structuredOutputModel?: string;
   readonly overviewModel?: string;
@@ -92,6 +95,26 @@ function resolveTavily(overrides: CompanyIntelBootstrapOverrides, log: typeof de
   return createTavilyClient({ logger: log });
 }
 
+function resolveTavilyExtractDepth(overrides: CompanyIntelBootstrapOverrides): TavilyExtractDepth {
+  if (overrides.tavilyExtractDepth) {
+    return overrides.tavilyExtractDepth;
+  }
+
+  const candidate = getEnvVar('TAVILY_EXTRACT_DEPTH');
+  if (!candidate) {
+    return DEFAULT_TAVILY_EXTRACT_DEPTH;
+  }
+
+  const normalized = candidate.trim().toLowerCase();
+  if (normalized === 'basic' || normalized === 'advanced') {
+    return normalized as TavilyExtractDepth;
+  }
+
+  throw new Error(
+    `Invalid TAVILY_EXTRACT_DEPTH value "${candidate}". Expected "basic" or "advanced".`,
+  );
+}
+
 function resolveStructuredModel(overrides: CompanyIntelBootstrapOverrides): string {
   return overrides.structuredOutputModel ?? getEnvVar('OPENAI_MODEL_STRUCTURED') ?? DEFAULT_STRUCTURED_MODEL;
 }
@@ -105,6 +128,7 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
   const persistence = resolvePersistence(overrides, log);
   const openAI = resolveOpenAI(overrides);
   const tavily = resolveTavily(overrides, log);
+  const tavilyExtractDepth = resolveTavilyExtractDepth(overrides);
   const structuredOutputModel = resolveStructuredModel(overrides);
   const overviewModel = resolveOverviewModel(overrides);
 
@@ -115,6 +139,7 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
     logger: log,
     structuredOutputModel,
     overviewModel,
+    tavilyExtractDepth,
   });
 
   const runtime = new CompanyIntelRunCoordinator({

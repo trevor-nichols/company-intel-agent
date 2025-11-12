@@ -7,4 +7,5 @@ export type {
   SiteIntelScrapeOutcome,
   SiteIntelScrapeExtractResult,
   SiteIntelScrapeResponse,
+  TavilyExtractDepth,
 } from './types';

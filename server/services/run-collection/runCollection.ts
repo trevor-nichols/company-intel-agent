@@ -37,6 +37,7 @@ export async function runCompanyIntelCollection(
       {
         tavily: dependencies.tavily,
         logger: log,
+        defaultExtractDepth: dependencies.defaultExtractDepth,
       },
     );
 

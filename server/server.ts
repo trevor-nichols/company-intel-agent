@@ -29,6 +29,7 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
     structuredOutputModel,
     overviewPrompt,
     overviewModel,
+    tavilyExtractDepth,
   } = config;
 
   return {
@@ -44,6 +45,7 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
         {
           tavily,
           logger,
+          defaultExtractDepth: tavilyExtractDepth,
         },
       );
     },
@@ -63,6 +65,7 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
         overviewModel: overrides.overviewModel ?? overviewModel,
         emit: overrides.onEvent,
         abortSignal: overrides.abortSignal,
+        defaultExtractDepth: overrides.defaultExtractDepth ?? tavilyExtractDepth,
       });
     },
 

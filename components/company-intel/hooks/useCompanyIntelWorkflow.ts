@@ -296,6 +296,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const [overviewReasoningHeadlinesDraft, setOverviewReasoningHeadlinesDraft] = useState<readonly string[]>([]);
   const [faviconDraft, setFaviconDraft] = useState<string | null>(null);
   const [vectorStoreOverrides, setVectorStoreOverrides] = useState<Record<number, VectorStoreOverride>>({});
+  const isRunRefreshing = triggerMutation.isPending || resumeMutation.isPending || isStreamActive;
   const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
 
   const snapshots = useMemo<readonly CompanyProfileSnapshot[]>(() => companyIntelData?.snapshots ?? [], [companyIntelData?.snapshots]);
@@ -321,14 +322,20 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     if (structuredReasoningHeadlinesDraft.length > 0) {
       return structuredReasoningHeadlinesDraft;
     }
+    if (isRunRefreshing) {
+      return [];
+    }
     return latestSnapshot?.summaries?.metadata?.structuredProfile?.headlines ?? [];
-  }, [structuredReasoningHeadlinesDraft, latestSnapshot]);
+  }, [structuredReasoningHeadlinesDraft, isRunRefreshing, latestSnapshot]);
   const overviewReasoningHeadlines = useMemo<readonly string[]>(() => {
     if (overviewReasoningHeadlinesDraft.length > 0) {
       return overviewReasoningHeadlinesDraft;
     }
+    if (isRunRefreshing) {
+      return [];
+    }
     return latestSnapshot?.summaries?.metadata?.overview?.headlines ?? [];
-  }, [overviewReasoningHeadlinesDraft, latestSnapshot]);
+  }, [overviewReasoningHeadlinesDraft, isRunRefreshing, latestSnapshot]);
   const structuredReasoningHeadline = structuredReasoningHeadlines[0] ?? null;
   const overviewReasoningHeadline = overviewReasoningHeadlines[0] ?? null;
 
@@ -386,7 +393,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const isPreviewing = previewMutation.isPending;
   const isCancelling = cancelRunMutation.isPending;
   const isResumeConnecting = resumeMutation.isPending && !isStreamActive;
-  const isScraping = triggerMutation.isPending || resumeMutation.isPending || isStreamActive;
+  const isScraping = isRunRefreshing;
   const isResuming = isResumeConnecting;
   const isBusy = isPreviewing || isScraping || isCancelling;
 

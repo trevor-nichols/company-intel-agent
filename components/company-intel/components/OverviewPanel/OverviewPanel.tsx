@@ -59,9 +59,12 @@ export function OverviewPanel({
   }
 
   const isRefreshing = isScraping || isStreaming;
-  const effectiveIndustries = structuredProfile?.primaryIndustries ?? profile?.primaryIndustries ?? [];
-  const effectiveOfferings = structuredProfile?.keyOfferings ?? profile?.keyOfferings ?? [];
-  const effectiveValueProps = structuredProfile?.valueProps ?? profile?.valueProps ?? [];
+  const persistedIndustries = profile?.primaryIndustries ?? [];
+  const persistedOfferings = profile?.keyOfferings ?? [];
+  const persistedValueProps = profile?.valueProps ?? [];
+  const effectiveIndustries = structuredProfile?.primaryIndustries ?? (isRefreshing ? [] : persistedIndustries);
+  const effectiveOfferings = structuredProfile?.keyOfferings ?? (isRefreshing ? [] : persistedOfferings);
+  const effectiveValueProps = structuredProfile?.valueProps ?? (isRefreshing ? [] : persistedValueProps);
   const displayOverviewHeadline = (() => {
     const headline = overviewHeadlines?.[0];
     return headline && headline.trim().length ? headline.trim() : null;

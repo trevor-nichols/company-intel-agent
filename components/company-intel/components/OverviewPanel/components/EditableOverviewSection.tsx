@@ -85,7 +85,7 @@ export function EditableOverviewSection({
     return streamingDraft.trim();
   }, [streamingDraft]);
 
-  const displayNarrative = streamingNarrative ?? overview;
+  const displayNarrative = streamingNarrative ?? (isStreaming ? null : overview);
   const hasNarrative = Boolean(displayNarrative && displayNarrative.trim().length > 0);
   const placeholderText = headline?.trim().length ? headline.trim() : null;
   const editTooltip = isEditingLocked

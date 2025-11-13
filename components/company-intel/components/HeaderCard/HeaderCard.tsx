@@ -52,9 +52,10 @@ export function HeaderCard({
   const avatarInitials = deriveInitials(effectiveCompanyName ?? domainDisplay ?? null);
   const lastRefreshedLabel = profile?.lastRefreshedAt ? formatDate(profile.lastRefreshedAt) : null;
   const latestSnapshotLabel = profile?.lastSnapshotId ? `Snapshot #${profile.lastSnapshotId}` : null;
-  const valuePropCount = structuredProfile?.valueProps.length ?? profile?.valueProps.length ?? 0;
-  const industryCount = structuredProfile?.primaryIndustries.length ?? profile?.primaryIndustries.length ?? 0;
-  const offeringsCount = structuredProfile?.keyOfferings.length ?? profile?.keyOfferings.length ?? 0;
+  const isRefreshing = isScraping || isStreaming;
+  const valuePropCount = structuredProfile?.valueProps.length ?? (isRefreshing ? 0 : (profile?.valueProps.length ?? 0));
+  const industryCount = structuredProfile?.primaryIndustries.length ?? (isRefreshing ? 0 : (profile?.primaryIndustries.length ?? 0));
+  const offeringsCount = structuredProfile?.keyOfferings.length ?? (isRefreshing ? 0 : (profile?.keyOfferings.length ?? 0));
   const showLiveIndicator = isStreaming && (structuredProfile !== null || isScraping);
   const latestSnapshotIsComplete = latestSnapshot?.status === 'complete';
   const showStatusBadge =

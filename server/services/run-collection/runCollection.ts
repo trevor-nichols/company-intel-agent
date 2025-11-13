@@ -16,6 +16,7 @@ import type {
   RunCompanyIntelCollectionDependencies,
   RunCompanyIntelCollectionResult,
   CompanyIntelPageContent,
+  TriggerCompanyIntelResult,
 } from './types';
 import type { RunContext } from './context';
 
@@ -90,6 +91,20 @@ export async function runCompanyIntelCollection(
       domain: mapping.intelResult.domain,
       openAIClient: dependencies.openAIClient,
       logger: log,
+    });
+
+    const completionPayload: TriggerCompanyIntelResult = {
+      snapshotId: result.snapshotId,
+      status: result.status,
+      selections: result.selections,
+      totalLinksMapped: result.totalLinksMapped,
+      successfulPages: result.successfulPages,
+      failedPages: result.failedPages,
+    } satisfies TriggerCompanyIntelResult;
+
+    context.emitEvent({
+      type: 'run-complete',
+      result: completionPayload,
     });
 
     return result;

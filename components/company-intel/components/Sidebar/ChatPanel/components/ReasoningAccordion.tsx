@@ -40,7 +40,7 @@ export function ReasoningAccordion({
   return (
     <div
       className={cn(
-        'rounded-md border border-muted bg-muted/40 text-sm text-muted-foreground',
+        'w-full rounded-md border border-muted bg-muted/40 text-sm text-muted-foreground',
         className,
       )}
     >

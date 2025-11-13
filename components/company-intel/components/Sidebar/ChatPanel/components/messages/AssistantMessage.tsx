@@ -31,6 +31,11 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
         .map(([, text]) => text),
     [message.reasoning.segments],
   );
+  const reasoningVisible = summarySegments.length > 0 || message.reasoning.isStreaming;
+  const toolVisible = Boolean(message.tool);
+  const shouldShowPlaceholder =
+    !message.content && message.status !== 'failed' && !reasoningVisible && !toolVisible;
+  const shouldRenderContentBubble = shouldShowPlaceholder || Boolean(message.content) || message.status === 'failed';
 
   const timelineSections = useMemo(() => {
     type Section = { key: string; order: number; element: React.ReactElement; fallbackIndex: number };
@@ -38,21 +43,6 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
     const baseOrder = message.createdAt ?? Date.now();
     let fallbackIndex = 0;
 
-    const bubble = (
-      <div className="max-w-full rounded-lg border bg-muted/60 px-3 py-2 text-foreground shadow-sm md:max-w-[85%]">
-        {message.content ? (
-          <TooltipProvider delayDuration={120} skipDelayDuration={0}>
-            <Markdown content={content} className="text-sm" components={markdownComponents} />
-          </TooltipProvider>
-        ) : message.status === 'failed' ? (
-          <span className="text-sm text-destructive">Response interrupted.</span>
-        ) : (
-          <ShimmeringText text="Generating answer…" className="text-sm" />
-        )}
-      </div>
-    );
-
-    const reasoningVisible = summarySegments.length > 0 || message.reasoning.isStreaming;
     if (reasoningVisible) {
       sections.push({
         key: `${message.id}-reasoning`,
@@ -79,14 +69,30 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
       fallbackIndex += 1;
     }
 
-    sections.push({
-      key: `${message.id}-content`,
-      order:
-        message.contentStartedAt ??
-        (message.reasoning.startedAt ?? message.tool?.startedAt ?? Number.MAX_SAFE_INTEGER),
-      fallbackIndex: fallbackIndex,
-      element: bubble,
-    });
+    if (shouldRenderContentBubble) {
+      const bubble = (
+        <div className="max-w-full rounded-lg border bg-muted/60 px-3 py-2 text-foreground shadow-sm md:max-w-[85%]">
+          {message.content ? (
+            <TooltipProvider delayDuration={120} skipDelayDuration={0}>
+              <Markdown content={content} className="text-sm" components={markdownComponents} />
+            </TooltipProvider>
+          ) : message.status === 'failed' ? (
+            <span className="text-sm text-destructive">Response interrupted.</span>
+          ) : (
+            <ShimmeringText text="Generating answer…" className="text-sm" />
+          )}
+        </div>
+      );
+
+      sections.push({
+        key: `${message.id}-content`,
+        order:
+          message.contentStartedAt ??
+          (message.reasoning.startedAt ?? message.tool?.startedAt ?? Number.MAX_SAFE_INTEGER),
+        fallbackIndex: fallbackIndex,
+        element: bubble,
+      });
+    }
 
     return sections.sort((a, b) => {
       if (a.order === b.order) {
@@ -104,6 +110,8 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
     message.reasoning,
     message.status,
     message.tool,
+    reasoningVisible,
+    shouldRenderContentBubble,
     summarySegments,
   ]);
 

@@ -25,7 +25,7 @@ interface OverviewAnalysisInputs {
 export async function runOverviewAnalysis(
   context: RunContext,
   inputs: OverviewAnalysisInputs,
-  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'overviewPrompt' | 'overviewModel'>,
+  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'overviewPrompt' | 'overviewModel' | 'overviewReasoningEffort'>,
 ): Promise<OverviewAnalysisResult> {
   const log: Logger = dependencies.logger ?? context.logger;
 
@@ -109,6 +109,7 @@ export async function runOverviewAnalysis(
       pages: inputs.pages,
       prompt: dependencies.overviewPrompt ?? DEFAULT_COMPANY_OVERVIEW_PROMPT,
       model: dependencies.overviewModel,
+      reasoningEffort: dependencies.overviewReasoningEffort,
     },
     {
       openAIClient: dependencies.openAIClient,

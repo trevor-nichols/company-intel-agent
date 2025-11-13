@@ -40,7 +40,7 @@ export async function POST(request: NextRequest, context: { params: { id: string
   }
 
   try {
-    const { persistence, openAI, chatModel } = getCompanyIntelEnvironment();
+    const { persistence, openAI, chatModel, chatReasoningEffort } = getCompanyIntelEnvironment();
     const snapshot = await persistence.getSnapshotById(snapshotId);
     if (!snapshot) {
       return new Response(JSON.stringify({ error: 'Snapshot not found' }), {
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest, context: { params: { id: string
         systemPrompt,
         messages: validation.messages,
         metadata: { snapshot_id: String(snapshotId) },
+        reasoningEffort: chatReasoningEffort,
       },
       {
         openAIClient: openAI,

@@ -7,6 +7,7 @@ import { zodTextFormat } from 'openai/helpers/zod';
 import type { ResponseCreateParams } from 'openai/resources/responses/responses';
 
 import { resolveOpenAIResponses, type OpenAIClientLike } from '../shared/openai';
+import type { ReasoningEffortLevel } from '../shared/reasoning';
 
 import {
   CompanyIntelStructuredOutputSchema,
@@ -24,6 +25,7 @@ export interface GenerateStructuredProfileParams {
   readonly pages: readonly CompanyIntelPageContent[];
   readonly prompt?: CompanyIntelStructuredPromptConfig;
   readonly model?: string;
+  readonly reasoningEffort?: ReasoningEffortLevel;
 }
 
 export interface GenerateStructuredProfileDependencies {
@@ -57,6 +59,7 @@ export async function generateStructuredCompanyProfile(
   const log = dependencies.logger ?? defaultLogger;
   const responsesClient = resolveOpenAIResponses(dependencies.openAIClient);
   const prompt = params.prompt ?? DEFAULT_STRUCTURED_PROFILE_PROMPT;
+  const reasoningEffort = params.reasoningEffort ?? 'medium';
 
   const contentPayload = formatPagesAsXml(params.pages);
   const instructions = prompt.instructions?.trim() ??
@@ -64,7 +67,7 @@ export async function generateStructuredCompanyProfile(
 
   const userMessage = `Domain: ${params.domain}\n\n${instructions}\n\n<pages>\n${contentPayload}\n</pages>`;
 
-  const model = params.model ?? 'gpt-5';
+  const model = params.model ?? 'gpt-5.1';
 
   const requestPayload: ResponseCreateParams = {
     model,
@@ -82,7 +85,7 @@ export async function generateStructuredCompanyProfile(
       format: zodTextFormat(CompanyIntelStructuredOutputSchema, 'company_profile_structured_output'),
     },
     reasoning: {
-      effort: 'medium',
+      effort: reasoningEffort,
       summary: 'auto',
     },
   };

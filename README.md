@@ -1,19 +1,19 @@
 # Company-Intel Agent
 
-An end-to-end Next.js agent for building company-intelligence experiences. The app maps a target domain, scrapes high-signal pages, generates structured insights with GPT-5 via the OpenAI Responses API, streams progress over Server-Sent Events (SSE), persists the run, and exports a finished PDF. Everything ships with strict TypeScript, deterministic contracts, and public-only dependencies so you can drop it straight into your onboarding flow.
+An end-to-end Next.js agent for building company-intelligence experiences. The app maps a target domain, scrapes high-signal pages, generates structured insights with GPT-5.1 via the OpenAI Responses API, streams progress over Server-Sent Events (SSE), persists the run, and exports a finished PDF. Everything ships with strict TypeScript, deterministic contracts, and public-only dependencies so you can drop it straight into your onboarding flow.
 
 ![Company Intel Agent demo UI](docs/assets/media/demo.jpeg)
 
 **What the agent extracts**
 - Structured profile with companyName, tagline, up to 10 value props, key offerings (title + optional description), up to 6 primary industries, and page-level source citations so analysts can audit the output.
 - Narrative executive overview that streams token-by-token and powers the PDF, dashboard copy, and run summaries.
-- Model metadata for both GPT-5 runs (responseId, model id, token usage, raw text, reasoning headline/summary) to support observability and incident review.
+- Model metadata for both GPT-5.1 runs (responseId, model id, token usage, raw text, reasoning headline/summary) to support observability and incident review.
 - Provenance bundle covering sitemap selections, mapped links, raw scrape payloads (markdown/text/media), and the XML snapshot of pages handed to the models.
 - Snapshot lifecycle data including run status, stage progress, favicon, timestamps, and counts of successful vs. failed pages for reporting and retries.
 
 ## What You Get
 - **Full pipeline:** `map → scrape → structured outputs → overview → SSE stream → persist → export PDF` with a demo UI and API surface ready for production.
-- **GPT-5 structured intelligence:** Dual GPT-5 models produce a normalized profile and a narrative overview, validated with Zod before anything is stored or emitted.
+- **GPT-5.1 structured intelligence:** Dual GPT-5.1 models produce a normalized profile and a narrative overview, validated with Zod before anything is stored or emitted.
 - **Streaming UX:** Deterministic SSE frames (`text/event-stream`) let the front end surface deltas, reasoning, and completion status in real time—even if the client reconnects mid-run.
 - **Durable runs:** Active collections survive refreshes via a runtime coordinator backed by Redis. Clients can resume a stream or cancel the run with dedicated APIs.
 - **Swappable persistence:** In-memory storage for quick starts with a Redis implementation that satisfies the same `CompanyIntelPersistence` interface.
@@ -46,9 +46,12 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 | `OPENAI_API_KEY` | OpenAI Responses API key used for both structured profile and overview runs. | — |
 | `TAVILY_API_KEY` | Tavily site-mapping and extraction key. | — |
 | `TAVILY_EXTRACT_DEPTH` | Default Tavily Extract depth (`basic` or `advanced`). | `basic` |
-| `OPENAI_MODEL_STRUCTURED` | GPT-5 model id for structured profile output. | `gpt-5` |
-| `OPENAI_MODEL_OVERVIEW` | GPT-5 model id for narrative overview output. | `gpt-5` |
-| `OPENAI_MODEL_CHAT` | GPT-5 model id for the knowledge chat agent. | `gpt-5` |
+| `OPENAI_MODEL_STRUCTURED` | GPT-5.1 model id for structured profile output. | `gpt-5.1` |
+| `OPENAI_MODEL_OVERVIEW` | GPT-5.1 model id for narrative overview output. | `gpt-5.1` |
+| `OPENAI_MODEL_CHAT` | GPT-5.1 model id for the knowledge chat agent. | `gpt-5.1` |
+| `STRUCTURED_REASONING_EFFORT` | Default reasoning effort (`low`/`medium`/`high`) for the structured profile agent. | `medium` |
+| `OVERVIEW_REASONING_EFFORT` | Default reasoning effort (`low`/`medium`/`high`) for the overview agent. | `medium` |
+| `CHAT_REASONING_EFFORT` | Default reasoning effort (`low`/`medium`/`high`) for the snapshot chat agent. | `low` |
 | `REDIS_URL` | Optional Redis connection string. When unset, memory persistence is used. | — |
 | `ALLOW_ORIGINS` | Comma-separated list of allowed origins for downstream clients. | `http://localhost:3000` |
 
@@ -57,8 +60,8 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 ### Flow
 1. **Mapping:** Tavily collects candidate URLs for the target domain and ranks them.
 2. **Scraping:** High-signal pages are fetched and normalized for downstream processing.
-3. **Structured profile:** GPT-5 (Responses API) generates a typed company profile using the `CompanyIntelStructuredOutputSchema` and streams partial deltas.
-4. **Narrative overview:** A second GPT-5 run produces long-form narrative context with reasoning summaries.
+3. **Structured profile:** GPT-5.1 (Responses API) generates a typed company profile using the `CompanyIntelStructuredOutputSchema` and streams partial deltas.
+4. **Narrative overview:** A second GPT-5.1 run produces long-form narrative context with reasoning summaries.
 5. **Persistence:** Final payloads, snapshots, and page excerpts are stored via the configured `CompanyIntelPersistence` implementation.
 6. **Export:** A PDF renderer (React-PDF) builds a branded deliverable available at `/api/company-intel/snapshots/:id/export`.
 7. **Durability:** The runtime coordinator keeps the active snapshot id and progress in Redis so clients can resume streaming or cancel mid-run.
@@ -72,8 +75,8 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 - **Bootstrap (`server/bootstrap.ts`):** `getCompanyIntelEnvironment()` resolves config, logging, persistence, Tavily, and OpenAI clients once per process and caches the singleton.
 - **Logging & metrics:** `lib/logging.ts` emits JSON-friendly logs for stage transitions, including model ids, response ids, and usage metadata when available.
 
-### GPT-5 Structured Outputs
-- Both runs use the OpenAI Responses API with GPT-5 models configured through environment variables.
+### GPT-5.1 Structured Outputs
+- Both runs use the OpenAI Responses API with GPT-5.1 models configured through environment variables.
 - Structured profile responses stream token-level deltas (`response.output_text.delta`), which are accumulated and validated against the `CompanyIntelStructuredOutputSchema` before persistence or emission.
 - Overview responses stream `delta` and `reasoning_summary_text.delta` events; handlers emit `overview-delta` and `overview-reasoning-delta` frames so the UI can present long-form copy and short headlines.
 - On any validation failure the run aborts fast, emits a `run-error` SSE event, and the snapshot is marked `failed`.

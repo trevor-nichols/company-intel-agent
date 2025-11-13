@@ -46,8 +46,12 @@ Deliver professional code (strict TS, tests, CI, docs) with **no private deps**.
 ```
 OPENAI_API_KEY=
 TAVILY_API_KEY=
-OPENAI_MODEL_STRUCTURED=gpt-5
-OPENAI_MODEL_OVERVIEW=gpt-5
+OPENAI_MODEL_STRUCTURED=gpt-5.1
+OPENAI_MODEL_OVERVIEW=gpt-5.1
+OPENAI_MODEL_CHAT=gpt-5.1
+STRUCTURED_REASONING_EFFORT=medium # low|medium|high
+OVERVIEW_REASONING_EFFORT=medium # low|medium|high
+CHAT_REASONING_EFFORT=low # low|medium|high
 REDIS_URL=
 ALLOW_ORIGINS=http://localhost:3000
 ```

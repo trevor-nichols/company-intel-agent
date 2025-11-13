@@ -94,7 +94,7 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
     'The platform ingests public web pages, filings, and call transcripts, automatically surfacing actionable trends.',
   metadata: {
     structuredProfile: {
-      model: 'gpt-5',
+      model: 'gpt-5.1',
       responseId: 'resp_6f54b2d8b2',
       usage: { input_tokens: 13842, output_tokens: 1256 },
       headlines: ['Framing differentiators for revenue intelligence'],
@@ -102,7 +102,7 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
         'Highlight how Acme positions its intel stack against manual research and emphasize the executive-ready brief workflow.',
     },
     overview: {
-      model: 'gpt-5',
+      model: 'gpt-5.1',
       usage: { input_tokens: 9782, output_tokens: 842 },
       headlines: ['Summarising why Acme accelerates GTM teams'],
       summary:

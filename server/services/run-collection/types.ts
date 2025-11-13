@@ -27,6 +27,7 @@ import type {
 } from '../../agents/structured-profile';
 import type { CompanyOverviewPromptConfig } from '../../agents/overview';
 import type { OpenAIClientLike } from '../../agents/shared/openai';
+import type { ReasoningEffortLevel } from '../../agents/shared/reasoning';
 
 export interface RunCompanyIntelCollectionParams {
   readonly domain: string;
@@ -39,8 +40,10 @@ export interface RunCompanyIntelCollectionDependencies {
   readonly openAIClient: OpenAIClientLike;
   readonly structuredOutputPrompt?: CompanyIntelStructuredPromptConfig;
   readonly structuredOutputModel?: string;
+  readonly structuredReasoningEffort?: ReasoningEffortLevel;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
+  readonly overviewReasoningEffort?: ReasoningEffortLevel;
   readonly persistence: CompanyIntelPersistence;
   readonly emit?: (event: CompanyIntelStreamEvent) => void;
   readonly abortSignal?: AbortSignal;

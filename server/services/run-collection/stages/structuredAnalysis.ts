@@ -28,7 +28,7 @@ interface StructuredAnalysisInputs {
 export async function runStructuredAnalysis(
   context: RunContext,
   inputs: StructuredAnalysisInputs,
-  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'structuredOutputPrompt' | 'structuredOutputModel'>,
+  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'structuredOutputPrompt' | 'structuredOutputModel' | 'structuredReasoningEffort'>,
 ): Promise<StructuredAnalysisResult> {
   const log: Logger = dependencies.logger ?? context.logger;
 
@@ -97,6 +97,7 @@ export async function runStructuredAnalysis(
       pages: inputs.pages,
       prompt: dependencies.structuredOutputPrompt ?? DEFAULT_STRUCTURED_PROFILE_PROMPT,
       model: dependencies.structuredOutputModel,
+      reasoningEffort: dependencies.structuredReasoningEffort,
     },
     {
       openAIClient: dependencies.openAIClient,

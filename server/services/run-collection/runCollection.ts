@@ -57,6 +57,7 @@ export async function runCompanyIntelCollection(
         logger: log,
         structuredOutputPrompt: dependencies.structuredOutputPrompt,
         structuredOutputModel: dependencies.structuredOutputModel,
+        structuredReasoningEffort: dependencies.structuredReasoningEffort,
       },
     );
 
@@ -71,6 +72,7 @@ export async function runCompanyIntelCollection(
         logger: log,
         overviewPrompt: dependencies.overviewPrompt,
         overviewModel: dependencies.overviewModel,
+        overviewReasoningEffort: dependencies.overviewReasoningEffort,
       },
     );
 

@@ -18,13 +18,16 @@ import type { CompanyOverviewPromptConfig } from '../agents/overview';
 import type { UpdateCompanyIntelProfileParams } from '../services/profileUpdates';
 import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
 import type { TavilyExtractDepth } from '../integrations/tavily/types';
+import type { ReasoningEffortLevel } from '../agents/shared/reasoning';
 
 export interface RunCollectionOverrides {
   readonly logger?: Logger;
   readonly structuredOutputPrompt?: CompanyIntelStructuredPromptConfig;
   readonly structuredOutputModel?: string;
+  readonly structuredReasoningEffort?: ReasoningEffortLevel;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
+  readonly overviewReasoningEffort?: ReasoningEffortLevel;
   readonly openAIClient?: OpenAIClientLike;
   readonly defaultExtractDepth?: TavilyExtractDepth;
   readonly onEvent?: (event: CompanyIntelStreamEvent) => void;
@@ -38,8 +41,10 @@ export interface CompanyIntelServerConfig {
   readonly logger?: Logger;
   readonly structuredOutputPrompt?: CompanyIntelStructuredPromptConfig;
   readonly structuredOutputModel?: string;
+  readonly structuredReasoningEffort?: ReasoningEffortLevel;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
+  readonly overviewReasoningEffort?: ReasoningEffortLevel;
   readonly tavilyExtractDepth?: TavilyExtractDepth;
   readonly chatModel?: string;
 }

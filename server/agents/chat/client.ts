@@ -11,6 +11,7 @@ import { extractChatCitations } from './citations';
 import type { OpenAIClientLike } from '../shared/openai';
 import { resolveOpenAIClient } from '../shared/openai';
 import { extractResponseText, extractUsageMetadata } from '../shared/response';
+import type { ReasoningEffortLevel } from '../shared/reasoning';
 
 const DEFAULT_VECTOR_RESULTS = 6;
 
@@ -18,7 +19,7 @@ export interface RunChatAgentParams {
   readonly vectorStoreId: string;
   readonly systemPrompt: string;
   readonly messages: readonly CompanyIntelChatMessage[];
-  readonly reasoningEffort?: 'low' | 'medium' | 'high';
+  readonly reasoningEffort?: ReasoningEffortLevel;
   readonly maxVectorResults?: number;
   readonly metadata?: Record<string, string>;
 }
@@ -62,7 +63,7 @@ export async function runChatAgent(
   }
 
   const openAI = resolveOpenAIClient(dependencies.openAIClient);
-  const reasoningEffort = params.reasoningEffort ?? 'low';
+  const reasoningEffort: ReasoningEffortLevel = params.reasoningEffort ?? 'low';
   const input: ResponseCreateParams['input'] = buildInput(params.systemPrompt, params.messages);
 
   const requestPayload: ResponseCreateParams = {

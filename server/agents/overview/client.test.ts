@@ -43,7 +43,7 @@ describe('generateCompanyOverview streaming', () => {
           dispatch();
           return {
             id: 'resp_test',
-            model: 'gpt-5',
+            model: 'gpt-5.1',
             output_parsed: { overview: overviewText },
             output: [{ content: overviewText }],
           } satisfies { id: string; model: string; output_parsed: { overview: string }; output: Array<{ content: string }> };

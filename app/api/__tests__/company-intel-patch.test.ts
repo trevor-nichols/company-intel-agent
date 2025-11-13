@@ -22,7 +22,8 @@ vi.mock('@/server/bootstrap', () => ({
         create: vi.fn(),
       },
     },
-    chatModel: 'gpt-5',
+    chatModel: 'gpt-5.1',
+    chatReasoningEffort: 'low',
   }),
 }));
 

@@ -8,7 +8,7 @@ import * as React from 'react';
 import { motion, useInView, type UseInViewOptions, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
-export interface ShimmeringTextProps extends Omit<HTMLMotionProps<'span'>, 'ref'> {
+interface ShimmeringTextProps extends Omit<HTMLMotionProps<'span'>, 'ref'> {
   readonly shimmer?: boolean;
   readonly text?: string;
   readonly children?: React.ReactNode;

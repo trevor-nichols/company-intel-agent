@@ -15,6 +15,7 @@ import { ThemeProvider } from 'next-themes';
 import '@/app/globals.css';
 import './storybook.css';
 import { defaultHandlers } from '@/__mocks__/msw/handlers';
+import { MockCompanyIntelProvider } from './mocks/companyIntelClientProvider';
 
 initialize({
   onUnhandledRequest: 'bypass',
@@ -30,6 +31,12 @@ const withSurfacePadding: Decorator = (Story) => (
   <div className="min-h-screen bg-background text-foreground antialiased font-sans p-8">
     <Story />
   </div>
+);
+
+const withCompanyIntelProviders: Decorator = (Story) => (
+  <MockCompanyIntelProvider>
+    <Story />
+  </MockCompanyIntelProvider>
 );
 
 const preview: Preview = {
@@ -60,6 +67,7 @@ const preview: Preview = {
 
   decorators: [
     mswDecorator,
+    withCompanyIntelProviders,
     withNextThemes,
     withThemeByClassName({
       themes: {

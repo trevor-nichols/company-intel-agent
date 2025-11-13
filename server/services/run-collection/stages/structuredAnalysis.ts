@@ -17,7 +17,7 @@ import type {
   RunCompanyIntelCollectionDependencies,
   CompanyIntelPageContent,
 } from '../types';
-import { extractReasoningHeadline, normalizeReasoningSummary, deriveReasoningHeadline } from '../helpers/reasoning';
+import { extractReasoningHeadlines, normalizeReasoningSummary } from '../helpers/reasoning';
 
 interface StructuredAnalysisInputs {
   readonly domain: string;
@@ -28,7 +28,7 @@ interface StructuredAnalysisInputs {
 export async function runStructuredAnalysis(
   context: RunContext,
   inputs: StructuredAnalysisInputs,
-  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'structuredOutputPrompt' | 'structuredOutputModel'>,
+  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'structuredOutputPrompt' | 'structuredOutputModel' | 'structuredReasoningEffort'>,
 ): Promise<StructuredAnalysisResult> {
   const log: Logger = dependencies.logger ?? context.logger;
 
@@ -37,7 +37,7 @@ export async function runStructuredAnalysis(
 
   let structuredDeltaBuffer = '';
   let structuredReasoningSummaryBuffer = '';
-  let structuredReasoningHeadline: string | null = null;
+  let structuredReasoningHeadlines: readonly string[] = [];
   let structuredSummaryDraft: CompanyIntelSnapshotStructuredProfileSummary | null = null;
   let emittedStructuredReasoningDelta = false;
 
@@ -80,18 +80,13 @@ export async function runStructuredAnalysis(
     }
 
     structuredReasoningSummaryBuffer += delta;
-    const headlineCandidate = extractReasoningHeadline(structuredReasoningSummaryBuffer);
-    structuredReasoningHeadline = deriveReasoningHeadline(
-      structuredReasoningSummaryBuffer,
-      headlineCandidate,
-      structuredReasoningHeadline,
-    );
+    structuredReasoningHeadlines = extractReasoningHeadlines(structuredReasoningSummaryBuffer);
     emittedStructuredReasoningDelta = true;
 
     context.emitEvent({
       type: 'structured-reasoning-delta',
       delta,
-      headline: structuredReasoningHeadline,
+      headlines: structuredReasoningHeadlines,
       snapshot: snapshot ?? null,
     });
   };
@@ -102,6 +97,7 @@ export async function runStructuredAnalysis(
       pages: inputs.pages,
       prompt: dependencies.structuredOutputPrompt ?? DEFAULT_STRUCTURED_PROFILE_PROMPT,
       model: dependencies.structuredOutputModel,
+      reasoningEffort: dependencies.structuredReasoningEffort,
     },
     {
       openAIClient: dependencies.openAIClient,
@@ -115,34 +111,26 @@ export async function runStructuredAnalysis(
 
   if (!emittedStructuredReasoningDelta && result.reasoningSummary) {
     structuredReasoningSummaryBuffer = result.reasoningSummary;
-    const headlineCandidate = extractReasoningHeadline(structuredReasoningSummaryBuffer);
-    structuredReasoningHeadline = deriveReasoningHeadline(
-      structuredReasoningSummaryBuffer,
-      headlineCandidate,
-      structuredReasoningHeadline,
-    );
+    structuredReasoningHeadlines = extractReasoningHeadlines(structuredReasoningSummaryBuffer);
     if (!context.isRunTerminated() && structuredReasoningSummaryBuffer.length > 0) {
       context.emitEvent({
         type: 'structured-reasoning-delta',
         delta: structuredReasoningSummaryBuffer,
-        headline: structuredReasoningHeadline,
+        headlines: structuredReasoningHeadlines,
         snapshot: null,
       });
     }
   }
 
-  structuredReasoningHeadline = deriveReasoningHeadline(
-    result.reasoningSummary ?? null,
-    result.reasoningSummary ? extractReasoningHeadline(result.reasoningSummary) : null,
-    structuredReasoningHeadline,
-  );
-
   const { summary, normalizedTagline } = buildStructuredProfileSummary(result.data);
 
   const structuredReasoningSummaryRaw = structuredReasoningSummaryBuffer || result.reasoningSummary || null;
+  if (structuredReasoningHeadlines.length === 0 && structuredReasoningSummaryRaw) {
+    structuredReasoningHeadlines = extractReasoningHeadlines(structuredReasoningSummaryRaw);
+  }
   const structuredReasoningSummary = normalizeReasoningSummary(
     structuredReasoningSummaryRaw,
-    structuredReasoningHeadline,
+    structuredReasoningHeadlines,
   );
 
   const metadata = {
@@ -161,18 +149,18 @@ export async function runStructuredAnalysis(
         model: metadata.model,
         usage: metadata.usage,
         rawText: metadata.rawText,
-        headline: structuredReasoningHeadline,
+        headlines: structuredReasoningHeadlines,
         summary: structuredReasoningSummary,
       },
       faviconUrl: inputs.faviconUrl,
-      reasoningHeadline: structuredReasoningHeadline,
+      reasoningHeadlines: structuredReasoningHeadlines,
     },
   });
 
   return {
     summary,
     normalizedTagline,
-    reasoningHeadline: structuredReasoningHeadline,
+    reasoningHeadlines: structuredReasoningHeadlines,
     reasoningSummary: structuredReasoningSummary,
     metadata,
     faviconUrl: inputs.faviconUrl,

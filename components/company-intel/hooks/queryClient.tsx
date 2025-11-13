@@ -38,7 +38,7 @@ export function createCompanyIntelQueryClient(customDefaults?: DefaultOptions): 
   });
 }
 
-export interface CompanyIntelProvidersProps
+interface CompanyIntelProvidersProps
   extends Omit<CompanyIntelClientProviderProps, 'children'> {
   readonly children: ReactNode;
   readonly queryClient?: QueryClient;

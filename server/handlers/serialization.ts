@@ -58,6 +58,18 @@ export function serializeSnapshot(record: CompanyIntelSnapshotRecord): Record<st
           updatedAt: record.progress.updatedAt.toISOString(),
         }
       : null,
+    vectorStoreId: record.vectorStoreId ?? null,
+    vectorStoreStatus: record.vectorStoreStatus ?? 'pending',
+    vectorStoreError: record.vectorStoreError ?? null,
+    vectorStoreFileCounts: record.vectorStoreFileCounts
+      ? {
+          inProgress: record.vectorStoreFileCounts.inProgress,
+          completed: record.vectorStoreFileCounts.completed,
+          failed: record.vectorStoreFileCounts.failed,
+          cancelled: record.vectorStoreFileCounts.cancelled,
+          total: record.vectorStoreFileCounts.total,
+        }
+      : null,
     createdAt: record.createdAt ? record.createdAt.toISOString() : new Date().toISOString(),
     completedAt: record.completedAt ? record.completedAt.toISOString() : null,
   } satisfies Record<string, unknown>;

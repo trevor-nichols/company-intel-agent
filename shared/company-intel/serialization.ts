@@ -5,7 +5,6 @@
 import type {
   CompanyIntelAgentSource,
   CompanyIntelData,
-  CompanyIntelSelection,
   CompanyIntelScrapeRecord,
   CompanyIntelScrapeResponse,
   CompanyIntelScrapeResponseFailure,
@@ -14,6 +13,8 @@ import type {
   CompanyIntelSnapshotStructuredProfileSummary,
   CompanyIntelSnapshotSummaries,
   CompanyIntelRunStage,
+  CompanyIntelVectorStoreStatus,
+  CompanyIntelVectorStoreFileCounts,
   CompanyProfile,
   CompanyProfileKeyOffering,
   CompanyProfileSnapshot,
@@ -83,6 +84,48 @@ function normaliseAgentSources(value: unknown): CompanyIntelAgentSource[] {
   return sources;
 }
 
+function normaliseVectorStoreStatus(value: unknown): CompanyIntelVectorStoreStatus {
+  const valid: CompanyIntelVectorStoreStatus[] = ['pending', 'publishing', 'ready', 'failed'];
+  if (typeof value === 'string' && (valid as readonly string[]).includes(value)) {
+    return value as CompanyIntelVectorStoreStatus;
+  }
+  return 'pending';
+}
+
+function normaliseVectorStoreFileCounts(value: unknown): CompanyIntelVectorStoreFileCounts | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const total = typeof record.total === 'number' ? record.total : undefined;
+  const completed = typeof record.completed === 'number' ? record.completed : undefined;
+  const inProgress = typeof record.inProgress === 'number'
+    ? record.inProgress
+    : typeof record.in_progress === 'number'
+      ? record.in_progress
+      : undefined;
+  const failed = typeof record.failed === 'number' ? record.failed : undefined;
+  const cancelled = typeof record.cancelled === 'number' ? record.cancelled : undefined;
+
+  if (
+    total === undefined &&
+    completed === undefined &&
+    inProgress === undefined &&
+    failed === undefined &&
+    cancelled === undefined
+  ) {
+    return null;
+  }
+
+  return {
+    total: total ?? 0,
+    completed: completed ?? 0,
+    inProgress: inProgress ?? 0,
+    failed: failed ?? 0,
+    cancelled: cancelled ?? 0,
+  } satisfies CompanyIntelVectorStoreFileCounts;
+}
+
 function normaliseAgentMetadata(value: unknown): CompanyIntelSnapshotAgentMetadata | undefined {
   if (!value || typeof value !== 'object') {
     return undefined;
@@ -96,19 +139,33 @@ function normaliseAgentMetadata(value: unknown): CompanyIntelSnapshotAgentMetada
     typeof record.raw_text === 'string' ||
     typeof record.usage === 'object' ||
     typeof record.headline === 'string' ||
-    typeof record.reasoning_headline === 'string';
+    typeof record.reasoning_headline === 'string' ||
+    Array.isArray(record.headlines) ||
+    Array.isArray(record.reasoning_headlines);
 
   if (!hasAny) {
     return undefined;
   }
 
-  const headlineCandidate =
-    typeof record.headline === 'string'
-      ? record.headline
-      : typeof record.reasoning_headline === 'string'
-        ? record.reasoning_headline
-        : undefined;
-  const headline = headlineCandidate?.trim();
+  const normalizedHeadlines = (() => {
+    if (Array.isArray(record.headlines)) {
+      return record.headlines.filter(value => typeof value === 'string').map(value => value.trim()).filter(Boolean);
+    }
+    if (Array.isArray(record.reasoning_headlines)) {
+      return record.reasoning_headlines
+        .filter(value => typeof value === 'string')
+        .map(value => value.trim())
+        .filter(Boolean);
+    }
+    const headlineCandidate =
+      typeof record.headline === 'string'
+        ? record.headline
+        : typeof record.reasoning_headline === 'string'
+          ? record.reasoning_headline
+          : undefined;
+    const headline = headlineCandidate?.trim();
+    return headline ? [headline] : undefined;
+  })();
 
   return {
     responseId:
@@ -125,7 +182,7 @@ function normaliseAgentMetadata(value: unknown): CompanyIntelSnapshotAgentMetada
         : typeof record.raw_text === 'string'
           ? record.raw_text
           : undefined,
-    headline: headline && headline.length > 0 ? headline : undefined,
+    headlines: normalizedHeadlines && normalizedHeadlines.length > 0 ? normalizedHeadlines : undefined,
   } satisfies CompanyIntelSnapshotAgentMetadata;
 }
 
@@ -427,6 +484,18 @@ function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
     rawScrapes: toScrapeRecords(rawScrapesInput),
     error: typeof record.error === 'string' ? record.error : null,
     progress,
+    vectorStoreId: typeof record.vectorStoreId === 'string'
+      ? record.vectorStoreId
+      : typeof record.vector_store_id === 'string'
+        ? record.vector_store_id
+        : null,
+    vectorStoreStatus: normaliseVectorStoreStatus(record.vectorStoreStatus ?? record.vector_store_status),
+    vectorStoreError: typeof record.vectorStoreError === 'string'
+      ? record.vectorStoreError
+      : typeof record.vector_store_error === 'string'
+        ? record.vector_store_error
+        : null,
+    vectorStoreFileCounts: normaliseVectorStoreFileCounts(record.vectorStoreFileCounts ?? record.vector_store_file_counts),
     createdAt,
     completedAt,
   };
@@ -440,56 +509,5 @@ export function toCompanyIntelData(payload: unknown): CompanyIntelData {
   return {
     profile: profileRaw ? toCompanyProfile(profileRaw) : null,
     snapshots: snapshotsArray.map(toCompanyProfileSnapshot),
-  };
-}
-
-function toSelections(raw: unknown): CompanyIntelSelection[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  const selections: CompanyIntelSelection[] = [];
-
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') {
-      continue;
-    }
-
-    const record = item as Record<string, unknown>;
-    const url = typeof record.url === 'string' ? record.url : '';
-    if (!url) {
-      continue;
-    }
-
-    const matchedSignalsSource = Array.isArray(record.matchedSignals)
-      ? record.matchedSignals
-      : Array.isArray(record.matched_signals)
-        ? record.matched_signals
-        : [];
-
-    const matchedSignals = matchedSignalsSource.filter(
-      (value): value is string => typeof value === 'string',
-    );
-
-    selections.push({
-      url,
-      score: typeof record.score === 'number' ? record.score : 1,
-      matchedSignals,
-    });
-  }
-
-  return selections;
-}
-
-export function toTriggerResult(payload: unknown) {
-  const record = asRecord(payload);
-  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'running';
-  return {
-    snapshotId: Number(record.snapshotId),
-    status,
-    selections: toSelections(record.selections),
-    totalLinksMapped: Number(record.totalLinksMapped ?? 0),
-    successfulPages: Number(record.successfulPages ?? 0),
-    failedPages: Number(record.failedPages ?? 0),
   };
 }

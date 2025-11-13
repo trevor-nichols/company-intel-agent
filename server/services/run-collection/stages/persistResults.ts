@@ -9,7 +9,6 @@ import type {
   OverviewAnalysisResult,
   StructuredAnalysisResult,
   RunCompanyIntelCollectionResult,
-  TriggerCompanyIntelResult,
   SiteIntelResult,
   SiteIntelScrapeOutcome,
 } from '../types';
@@ -41,7 +40,7 @@ export async function persistResults(params: PersistResultsParams): Promise<RunC
           model: structured.metadata.model,
           usage: structured.metadata.usage ?? null,
           rawText: structured.metadata.rawText ?? null,
-          headline: structured.reasoningHeadline,
+          headlines: structured.reasoningHeadlines,
           summary: structured.reasoningSummary,
         },
         overview: {
@@ -49,7 +48,7 @@ export async function persistResults(params: PersistResultsParams): Promise<RunC
           model: overview.metadata.model,
           usage: overview.metadata.usage ?? null,
           rawText: overview.metadata.rawText ?? null,
-          headline: overview.reasoningHeadline,
+          headlines: overview.reasoningHeadlines,
           summary: overview.reasoningSummary,
         },
       },
@@ -88,7 +87,7 @@ export async function persistResults(params: PersistResultsParams): Promise<RunC
     failures: intelResult.scrapes.length - successfulScrapes.length,
   });
 
-  const finalResult: RunCompanyIntelCollectionResult = {
+  return {
     snapshotId: context.snapshot,
     status: 'complete',
     selections: intelResult.selections,
@@ -96,20 +95,4 @@ export async function persistResults(params: PersistResultsParams): Promise<RunC
     successfulPages: successfulScrapes.length,
     failedPages: intelResult.scrapes.length - successfulScrapes.length,
   } satisfies RunCompanyIntelCollectionResult;
-
-  const streamResult: TriggerCompanyIntelResult = {
-    snapshotId: finalResult.snapshotId,
-    status: finalResult.status,
-    selections: finalResult.selections,
-    totalLinksMapped: finalResult.totalLinksMapped,
-    successfulPages: finalResult.successfulPages,
-    failedPages: finalResult.failedPages,
-  } satisfies TriggerCompanyIntelResult;
-
-  context.emitEvent({
-    type: 'run-complete',
-    result: streamResult,
-  });
-
-  return finalResult;
 }

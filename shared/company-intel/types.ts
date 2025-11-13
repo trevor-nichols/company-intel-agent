@@ -4,6 +4,15 @@
 
 export type CompanyProfileStatus = 'not_configured' | 'refreshing' | 'ready' | 'failed';
 export type CompanyProfileSnapshotStatus = 'running' | 'complete' | 'failed' | 'cancelled';
+export type CompanyIntelVectorStoreStatus = 'pending' | 'publishing' | 'ready' | 'failed';
+
+export interface CompanyIntelVectorStoreFileCounts {
+  readonly inProgress: number;
+  readonly completed: number;
+  readonly failed: number;
+  readonly cancelled: number;
+  readonly total: number;
+}
 
 export interface CompanyProfileKeyOffering {
   readonly title: string;
@@ -41,7 +50,7 @@ export interface CompanyIntelSnapshotAgentMetadata {
   readonly model?: string | null;
   readonly usage?: Record<string, unknown> | null;
   readonly rawText?: string | null;
-  readonly headline?: string | null;
+  readonly headlines?: readonly string[] | null;
   readonly summary?: string | null;
 }
 
@@ -68,7 +77,7 @@ export interface CompanyIntelStreamStructuredPayload {
   readonly structuredProfile: CompanyIntelSnapshotStructuredProfileSummary;
   readonly metadata?: CompanyIntelSnapshotAgentMetadata;
   readonly faviconUrl?: string | null;
-  readonly reasoningHeadline?: string | null;
+  readonly reasoningHeadlines?: readonly string[] | null;
 }
 
 export interface CompanyIntelSnapshotProgress {
@@ -88,6 +97,10 @@ export interface CompanyProfileSnapshot {
   readonly rawScrapes: readonly CompanyIntelScrapeRecord[];
   readonly error: string | null;
   readonly progress: CompanyIntelSnapshotProgress | null;
+  readonly vectorStoreId: string | null;
+  readonly vectorStoreStatus: CompanyIntelVectorStoreStatus;
+  readonly vectorStoreError: string | null;
+  readonly vectorStoreFileCounts: CompanyIntelVectorStoreFileCounts | null;
   readonly createdAt: Date;
   readonly completedAt: Date | null;
 }
@@ -218,7 +231,7 @@ export type CompanyIntelStreamEvent =
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'structured-reasoning-delta';
       readonly delta: string;
-      readonly headline: string | null;
+      readonly headlines: readonly string[];
       readonly snapshot?: string | null;
     })
   | (CompanyIntelStreamBaseEvent & {
@@ -234,13 +247,20 @@ export type CompanyIntelStreamEvent =
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'overview-reasoning-delta';
       readonly delta: string;
-      readonly headline: string | null;
+      readonly headlines: readonly string[];
       readonly snapshot?: string | null;
     })
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'overview-complete';
       readonly overview: string;
-      readonly headline?: string | null;
+      readonly headlines?: readonly string[] | null;
+    })
+  | (CompanyIntelStreamBaseEvent & {
+      readonly type: 'vector-store-status';
+      readonly status: CompanyIntelVectorStoreStatus;
+      readonly error?: string | null;
+      readonly vectorStoreId?: string | null;
+      readonly fileCounts?: CompanyIntelVectorStoreFileCounts | null;
     })
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'run-complete';
@@ -254,8 +274,3 @@ export type CompanyIntelStreamEvent =
       readonly type: 'run-cancelled';
       readonly reason?: string | null;
     });
-
-export interface CompanyIntelStreamErrorEvent extends CompanyIntelStreamBaseEvent {
-  readonly type: 'run-error';
-  readonly message: string;
-}

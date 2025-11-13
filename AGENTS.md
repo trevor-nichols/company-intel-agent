@@ -46,8 +46,12 @@ Deliver professional code (strict TS, tests, CI, docs) with **no private deps**.
 ```
 OPENAI_API_KEY=
 TAVILY_API_KEY=
-OPENAI_MODEL_STRUCTURED=gpt-5
-OPENAI_MODEL_OVERVIEW=gpt-5
+OPENAI_MODEL_STRUCTURED=gpt-5.1
+OPENAI_MODEL_OVERVIEW=gpt-5.1
+OPENAI_MODEL_CHAT=gpt-5.1
+STRUCTURED_REASONING_EFFORT=medium # low|medium|high
+OVERVIEW_REASONING_EFFORT=medium # low|medium|high
+CHAT_REASONING_EFFORT=low # low|medium|high
 REDIS_URL=
 ALLOW_ORIGINS=http://localhost:3000
 ```
@@ -62,8 +66,12 @@ ALLOW_ORIGINS=http://localhost:3000
   → `{ data: preview }`
 * `POST /api/company-intel`
 
-  * `Accept: text/event-stream` → **SSE stream** (see §8) + final `[DONE]`
-  * else `{ data: result }`
+  * Requires `Accept: text/event-stream`; responds with **SSE stream** (see §8) and final `[DONE]`
+  * Missing header → `406`
+* `POST /api/company-intel/snapshots/:id/chat/stream`
+
+  * Requires `Accept: text/event-stream`; emits chat-specific SSE events ending with `[DONE]`
+  * The legacy `/chat` route responds with `426` to signal streaming-only access
 * `GET /api/company-intel/snapshots/:id/export` → `application/pdf`
 
 ## 8) SSE contract (strict)
@@ -83,11 +91,11 @@ Events (in practice you’ll see a subset, in this order):
 * `snapshot-created` `{ status }`
 * `status` `{ stage: 'mapping'|'scraping'|'analysis_structured'|'analysis_overview'|'persisting', completed?, total? }`
 * `structured-delta` `{ delta, accumulated, summary? }`
-* `structured-reasoning-delta` `{ delta, headline? }`
-* `structured-complete` `{ payload: { structuredProfile, metadata, faviconUrl?, reasoningHeadline? } }`
+* `structured-reasoning-delta` `{ delta, headlines? }`
+* `structured-complete` `{ payload: { structuredProfile, metadata, faviconUrl?, reasoningHeadlines? } }`
 * `overview-delta` `{ delta, displayText? }`
-* `overview-reasoning-delta` `{ delta, headline? }`
-* `overview-complete` `{ overview, headline? }`
+* `overview-reasoning-delta` `{ delta, headlines? }`
+* `overview-complete` `{ overview, headlines? }`
 * `run-complete` `{ result }`
 * `run-error` `{ message }`
 * **Terminal:** send `data: [DONE]` and close.
@@ -143,7 +151,7 @@ Redis keys (optional):
 
 * `lib/logging.ts` → `logger.info|warn|error|debug` to `console`
 * `lib/config.ts` → `getEnvVar(key) | requireEnvVar(key)`
-* `components/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `MinimalMarkdown` (`react-markdown`) and `ShimmeringText` (CSS).
+* `components/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `Markdown` (`react-markdown`) and `ShimmeringText` (CSS).
 
 ## 15) Command cheat-sheet
 
@@ -157,6 +165,7 @@ pnpm lint
 pnpm typecheck
 pnpm scan       # gitleaks detect --redact
 ```
+Note: Run pnpm lint and pnpm typecheck after all edits to ensure no errors exist
 
 ## 16) Task handoff protocol (how you work)
 

@@ -10,11 +10,15 @@ import { runStructuredAnalysis } from './stages/structuredAnalysis';
 import { runOverviewAnalysis } from './stages/overviewAnalysis';
 import { persistResults } from './stages/persistResults';
 import { CompanyIntelRunCancelledError } from './errors';
+import { publishVectorStoreKnowledge } from '../vectorStorePublisher';
 import type {
   RunCompanyIntelCollectionParams,
   RunCompanyIntelCollectionDependencies,
   RunCompanyIntelCollectionResult,
+  CompanyIntelPageContent,
+  TriggerCompanyIntelResult,
 } from './types';
+import type { RunContext } from './context';
 
 export async function runCompanyIntelCollection(
   params: RunCompanyIntelCollectionParams,
@@ -53,6 +57,7 @@ export async function runCompanyIntelCollection(
         logger: log,
         structuredOutputPrompt: dependencies.structuredOutputPrompt,
         structuredOutputModel: dependencies.structuredOutputModel,
+        structuredReasoningEffort: dependencies.structuredReasoningEffort,
       },
     );
 
@@ -67,6 +72,7 @@ export async function runCompanyIntelCollection(
         logger: log,
         overviewPrompt: dependencies.overviewPrompt,
         overviewModel: dependencies.overviewModel,
+        overviewReasoningEffort: dependencies.overviewReasoningEffort,
       },
     );
 
@@ -79,6 +85,28 @@ export async function runCompanyIntelCollection(
       successfulScrapes: mapping.successfulScrapes,
       pagesXml: mapping.pagesXml,
       logger: log,
+    });
+
+    await publishSnapshotKnowledgeBase({
+      context,
+      pages: mapping.structuredPages,
+      domain: mapping.intelResult.domain,
+      openAIClient: dependencies.openAIClient,
+      logger: log,
+    });
+
+    const completionPayload: TriggerCompanyIntelResult = {
+      snapshotId: result.snapshotId,
+      status: result.status,
+      selections: result.selections,
+      totalLinksMapped: result.totalLinksMapped,
+      successfulPages: result.successfulPages,
+      failedPages: result.failedPages,
+    } satisfies TriggerCompanyIntelResult;
+
+    context.emitEvent({
+      type: 'run-complete',
+      result: completionPayload,
     });
 
     return result;
@@ -104,6 +132,82 @@ export async function runCompanyIntelCollection(
     });
 
     throw handledError;
+  }
+}
+
+interface PublishKnowledgeBaseParams {
+  readonly context: RunContext;
+  readonly pages: readonly CompanyIntelPageContent[];
+  readonly domain: string;
+  readonly openAIClient: RunCompanyIntelCollectionDependencies['openAIClient'];
+  readonly logger: typeof defaultLogger;
+}
+
+async function publishSnapshotKnowledgeBase(params: PublishKnowledgeBaseParams): Promise<void> {
+  const { context, pages, domain, openAIClient, logger } = params;
+  if (pages.length === 0) {
+    logger.warn('vector-store:publish:skipped', {
+      snapshotId: context.snapshot,
+      reason: 'no_pages',
+    });
+    await context.updateSnapshot({
+      vectorStoreStatus: 'failed',
+      vectorStoreError: 'No readable pages were indexed for this snapshot.',
+      vectorStoreFileCounts: null,
+      vectorStoreId: null,
+    });
+    context.emitEvent({
+      type: 'vector-store-status',
+      status: 'failed',
+      error: 'No readable pages were indexed for this snapshot.',
+    });
+    return;
+  }
+
+  await context.updateSnapshot({
+    vectorStoreStatus: 'publishing',
+    vectorStoreError: null,
+  });
+  context.emitEvent({
+    type: 'vector-store-status',
+    status: 'publishing',
+  });
+
+  try {
+    const result = await publishVectorStoreKnowledge({
+      snapshotId: context.snapshot,
+      domain,
+      pages,
+      openAIClient,
+      logger,
+    });
+
+    await context.updateSnapshot({
+      vectorStoreId: result.vectorStoreId,
+      vectorStoreStatus: 'ready',
+      vectorStoreFileCounts: result.fileCounts,
+    });
+    context.emitEvent({
+      type: 'vector-store-status',
+      status: 'ready',
+      vectorStoreId: result.vectorStoreId,
+      fileCounts: result.fileCounts,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Vector store publishing failed';
+    logger.error('vector-store:publish:error', {
+      snapshotId: context.snapshot,
+      error: error instanceof Error ? { name: error.name, message: error.message } : error ?? null,
+    });
+    await context.updateSnapshot({
+      vectorStoreStatus: 'failed',
+      vectorStoreError: message,
+    });
+    context.emitEvent({
+      type: 'vector-store-status',
+      status: 'failed',
+      error: message,
+    });
   }
 }
 

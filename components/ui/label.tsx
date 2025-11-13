@@ -5,7 +5,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils/cn';
 
-export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   readonly requiredIndicator?: React.ReactNode;
 }
 

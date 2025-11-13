@@ -72,6 +72,7 @@ export async function initialiseRun(
   const snapshot = await persistence.createSnapshot({
     domain: normalizedDomain,
     status: 'running',
+    vectorStoreStatus: 'pending',
   });
 
   const context = new RunContext({

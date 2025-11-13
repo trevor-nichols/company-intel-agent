@@ -23,8 +23,8 @@ interface OverviewPanelProps {
   readonly isLoading: boolean;
   readonly isStreaming?: boolean;
   readonly isScraping: boolean;
-  readonly overviewHeadline?: string | null;
-  readonly structuredHeadline?: string | null;
+  readonly overviewHeadlines?: readonly string[];
+  readonly structuredHeadlines?: readonly string[];
   readonly overviewDraft?: string | null;
   readonly onSaveOverview: (value: string | null) => Promise<void>;
   readonly onSavePrimaryIndustries: (values: readonly string[]) => Promise<void>;
@@ -42,8 +42,8 @@ export function OverviewPanel({
   structuredProfile,
   isLoading,
   isScraping,
-  overviewHeadline,
-  structuredHeadline,
+  overviewHeadlines,
+  structuredHeadlines,
   overviewDraft,
   onSaveOverview,
   onSavePrimaryIndustries,
@@ -59,11 +59,20 @@ export function OverviewPanel({
   }
 
   const isRefreshing = isScraping || isStreaming;
-  const effectiveIndustries = structuredProfile?.primaryIndustries ?? profile?.primaryIndustries ?? [];
-  const effectiveOfferings = structuredProfile?.keyOfferings ?? profile?.keyOfferings ?? [];
-  const effectiveValueProps = structuredProfile?.valueProps ?? profile?.valueProps ?? [];
-  const displayOverviewHeadline = overviewHeadline?.trim().length ? overviewHeadline.trim() : null;
-  const displayStructuredHeadline = structuredHeadline?.trim().length ? structuredHeadline.trim() : null;
+  const persistedIndustries = profile?.primaryIndustries ?? [];
+  const persistedOfferings = profile?.keyOfferings ?? [];
+  const persistedValueProps = profile?.valueProps ?? [];
+  const effectiveIndustries = structuredProfile?.primaryIndustries ?? (isRefreshing ? [] : persistedIndustries);
+  const effectiveOfferings = structuredProfile?.keyOfferings ?? (isRefreshing ? [] : persistedOfferings);
+  const effectiveValueProps = structuredProfile?.valueProps ?? (isRefreshing ? [] : persistedValueProps);
+  const displayOverviewHeadline = (() => {
+    const headline = overviewHeadlines?.[0];
+    return headline && headline.trim().length ? headline.trim() : null;
+  })();
+  const displayStructuredHeadline = (() => {
+    const headline = structuredHeadlines?.[0];
+    return headline && headline.trim().length ? headline.trim() : null;
+  })();
   const hasStreamingOverview = Boolean(overviewDraft && overviewDraft.trim().length > 0);
   const showOverviewThinking = isRefreshing && !hasStreamingOverview;
   const showStructuredThinking = isRefreshing && !structuredProfile;

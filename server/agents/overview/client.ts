@@ -7,6 +7,7 @@ import { zodTextFormat } from 'openai/helpers/zod';
 import type { ResponseCreateParams } from 'openai/resources/responses/responses';
 
 import { resolveOpenAIResponses, type OpenAIClientLike } from '../shared/openai';
+import type { ReasoningEffortLevel } from '../shared/reasoning';
 
 import { CompanyOverviewSchema, type CompanyOverviewStructuredOutput } from './schema';
 import {
@@ -21,6 +22,7 @@ export interface GenerateCompanyOverviewParams {
   readonly pages: readonly CompanyIntelPageContent[];
   readonly prompt?: CompanyOverviewPromptConfig;
   readonly model?: string;
+  readonly reasoningEffort?: ReasoningEffortLevel;
 }
 
 export interface GenerateCompanyOverviewDependencies {
@@ -56,6 +58,7 @@ export async function generateCompanyOverview(
   const debugStream = process.env.COMPANY_INTEL_DEBUG_STREAM === 'true';
   const responsesClient = resolveOpenAIResponses(dependencies.openAIClient);
   const prompt = params.prompt ?? DEFAULT_COMPANY_OVERVIEW_PROMPT;
+  const reasoningEffort = params.reasoningEffort ?? 'medium';
 
   const contentPayload = formatPagesAsXml(params.pages);
   const instructions = prompt.instructions?.trim() ??
@@ -63,7 +66,7 @@ export async function generateCompanyOverview(
 
   const userMessage = `Domain: ${params.domain}\n\n${instructions}\n\n<pages>\n${contentPayload}\n</pages>`;
 
-  const model = params.model ?? 'gpt-5';
+  const model = params.model ?? 'gpt-5.1';
 
   const requestPayload: ResponseCreateParams = {
     model,
@@ -81,7 +84,7 @@ export async function generateCompanyOverview(
       format: zodTextFormat(CompanyOverviewSchema, 'company_overview'),
     },
     reasoning: {
-      effort: 'medium',
+      effort: reasoningEffort,
       summary: 'auto',
     },
   };

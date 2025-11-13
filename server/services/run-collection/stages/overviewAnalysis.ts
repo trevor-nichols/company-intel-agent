@@ -15,7 +15,7 @@ import type {
   RunCompanyIntelCollectionDependencies,
   CompanyIntelPageContent,
 } from '../types';
-import { extractReasoningHeadline, normalizeReasoningSummary, deriveReasoningHeadline } from '../helpers/reasoning';
+import { extractReasoningHeadlines, normalizeReasoningSummary } from '../helpers/reasoning';
 
 interface OverviewAnalysisInputs {
   readonly domain: string;
@@ -25,7 +25,7 @@ interface OverviewAnalysisInputs {
 export async function runOverviewAnalysis(
   context: RunContext,
   inputs: OverviewAnalysisInputs,
-  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'overviewPrompt' | 'overviewModel'>,
+  dependencies: Pick<RunCompanyIntelCollectionDependencies, 'openAIClient' | 'logger' | 'overviewPrompt' | 'overviewModel' | 'overviewReasoningEffort'>,
 ): Promise<OverviewAnalysisResult> {
   const log: Logger = dependencies.logger ?? context.logger;
 
@@ -33,7 +33,7 @@ export async function runOverviewAnalysis(
   context.throwIfCancelled('analysis_overview');
 
   let overviewReasoningSummaryBuffer = '';
-  let overviewReasoningHeadline: string | null = null;
+  let overviewReasoningHeadlines: readonly string[] = [];
   let emittedOverviewReasoningDelta = false;
   let overviewDraft: string | null = null;
 
@@ -92,18 +92,13 @@ export async function runOverviewAnalysis(
     }
 
     overviewReasoningSummaryBuffer += delta;
-    const headlineCandidate = extractReasoningHeadline(overviewReasoningSummaryBuffer);
-    overviewReasoningHeadline = deriveReasoningHeadline(
-      overviewReasoningSummaryBuffer,
-      headlineCandidate,
-      overviewReasoningHeadline,
-    );
+    overviewReasoningHeadlines = extractReasoningHeadlines(overviewReasoningSummaryBuffer);
     emittedOverviewReasoningDelta = true;
 
     context.emitEvent({
       type: 'overview-reasoning-delta',
       delta,
-      headline: overviewReasoningHeadline,
+      headlines: overviewReasoningHeadlines,
       snapshot: snapshot ?? null,
     });
   };
@@ -114,6 +109,7 @@ export async function runOverviewAnalysis(
       pages: inputs.pages,
       prompt: dependencies.overviewPrompt ?? DEFAULT_COMPANY_OVERVIEW_PROMPT,
       model: dependencies.overviewModel,
+      reasoningEffort: dependencies.overviewReasoningEffort,
     },
     {
       openAIClient: dependencies.openAIClient,
@@ -127,32 +123,24 @@ export async function runOverviewAnalysis(
 
   if (!emittedOverviewReasoningDelta && result.reasoningSummary) {
     overviewReasoningSummaryBuffer = result.reasoningSummary;
-    const headlineCandidate = extractReasoningHeadline(overviewReasoningSummaryBuffer);
-    overviewReasoningHeadline = deriveReasoningHeadline(
-      overviewReasoningSummaryBuffer,
-      headlineCandidate,
-      overviewReasoningHeadline,
-    );
+    overviewReasoningHeadlines = extractReasoningHeadlines(overviewReasoningSummaryBuffer);
     if (!context.isRunTerminated() && overviewReasoningSummaryBuffer.length > 0) {
       context.emitEvent({
         type: 'overview-reasoning-delta',
         delta: overviewReasoningSummaryBuffer,
-        headline: overviewReasoningHeadline,
+        headlines: overviewReasoningHeadlines,
         snapshot: null,
       });
     }
   }
 
-  overviewReasoningHeadline = deriveReasoningHeadline(
-    result.reasoningSummary ?? null,
-    result.reasoningSummary ? extractReasoningHeadline(result.reasoningSummary) : null,
-    overviewReasoningHeadline,
-  );
-
   const overviewReasoningSummaryRaw = overviewReasoningSummaryBuffer || result.reasoningSummary || null;
+  if (overviewReasoningHeadlines.length === 0 && overviewReasoningSummaryRaw) {
+    overviewReasoningHeadlines = extractReasoningHeadlines(overviewReasoningSummaryRaw);
+  }
   const overviewReasoningSummary = normalizeReasoningSummary(
     overviewReasoningSummaryRaw,
-    overviewReasoningHeadline,
+    overviewReasoningHeadlines,
   );
 
   const overviewContent = result.data.overview.trim();
@@ -160,7 +148,7 @@ export async function runOverviewAnalysis(
   context.emitEvent({
     type: 'overview-complete',
     overview: overviewContent,
-    headline: overviewReasoningHeadline,
+    headlines: overviewReasoningHeadlines,
   });
 
   const metadata = {
@@ -172,7 +160,7 @@ export async function runOverviewAnalysis(
 
   return {
     overview: overviewContent,
-    reasoningHeadline: overviewReasoningHeadline,
+    reasoningHeadlines: overviewReasoningHeadlines,
     reasoningSummary: overviewReasoningSummary,
     metadata,
   } satisfies OverviewAnalysisResult;

@@ -65,7 +65,7 @@ const structuredProfileSummary: CompanyIntelSnapshotStructuredProfileSummary = {
   sources: structuredSources,
 };
 
-export const companyIntelProfileFixture: CompanyProfile = {
+const companyIntelProfileFixture: CompanyProfile = {
   id: 71,
   domain: 'https://acmeintel.ai',
   status: 'ready',
@@ -94,17 +94,17 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
     'The platform ingests public web pages, filings, and call transcripts, automatically surfacing actionable trends.',
   metadata: {
     structuredProfile: {
-      model: 'gpt-5',
+      model: 'gpt-5.1',
       responseId: 'resp_6f54b2d8b2',
       usage: { input_tokens: 13842, output_tokens: 1256 },
-      headline: 'Framing differentiators for revenue intelligence',
+      headlines: ['Framing differentiators for revenue intelligence'],
       summary:
         'Highlight how Acme positions its intel stack against manual research and emphasize the executive-ready brief workflow.',
     },
     overview: {
-      model: 'gpt-5',
+      model: 'gpt-5.1',
       usage: { input_tokens: 9782, output_tokens: 842 },
-      headline: 'Summarising why Acme accelerates GTM teams',
+      headlines: ['Summarising why Acme accelerates GTM teams'],
       summary:
         'Lead with the latency advantage and connect it to outcomes for sales, marketing, and customer leadership.',
     },
@@ -116,7 +116,7 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
 </pages>`,
 };
 
-export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
+const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
   id: 3421,
   domain: 'https://acmeintel.ai',
   status: 'complete',
@@ -183,11 +183,21 @@ export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
   ],
   error: null,
   progress: null,
+  vectorStoreId: 'vs_acmeintel_3421',
+  vectorStoreStatus: 'ready',
+  vectorStoreError: null,
+  vectorStoreFileCounts: {
+    inProgress: 0,
+    completed: 1,
+    failed: 0,
+    cancelled: 0,
+    total: 1,
+  },
   createdAt: new Date('2024-10-14T10:57:00.000Z'),
   completedAt: new Date('2024-10-14T11:15:00.000Z'),
 };
 
-export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
+const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
   id: 3174,
   domain: 'https://acmeintel.ai',
   status: 'failed',
@@ -207,6 +217,10 @@ export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
   ],
   error: 'Upstream source rejected all requests (429).',
   progress: null,
+  vectorStoreId: null,
+  vectorStoreStatus: 'failed',
+  vectorStoreError: 'Vector store publishing skipped due to upstream error.',
+  vectorStoreFileCounts: null,
   createdAt: new Date('2024-09-02T15:12:00.000Z'),
   completedAt: null,
 };
@@ -225,12 +239,12 @@ const reasoningHeadlineSnapshot: CompanyProfileSnapshot = {
           ...companyIntelSuccessfulSnapshotFixture.summaries.metadata,
           structuredProfile: {
             ...companyIntelSuccessfulSnapshotFixture.summaries.metadata?.structuredProfile,
-            headline: 'Key revenue levers to spotlight',
+            headlines: ['Key revenue levers to spotlight'],
             summary: 'Focus on pipeline velocity, sales cycle compression, and cross-sell activation in the next brief.',
           },
           overview: {
             ...companyIntelSuccessfulSnapshotFixture.summaries.metadata?.overview,
-            headline: 'Executive takeaway for GTM leadership',
+            headlines: ['Executive takeaway for GTM leadership'],
             summary: 'Lead with how automated briefs surface risks earlier and free ops teams to intervene faster.',
           },
         },

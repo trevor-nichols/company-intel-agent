@@ -27,8 +27,10 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
     logger: baseLogger = defaultLogger,
     structuredOutputPrompt,
     structuredOutputModel,
+    structuredReasoningEffort,
     overviewPrompt,
     overviewModel,
+    overviewReasoningEffort,
     tavilyExtractDepth,
   } = config;
 
@@ -61,8 +63,10 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
         logger: overrides.logger ?? baseLogger,
         structuredOutputPrompt: overrides.structuredOutputPrompt ?? structuredOutputPrompt,
         structuredOutputModel: overrides.structuredOutputModel ?? structuredOutputModel,
+        structuredReasoningEffort: overrides.structuredReasoningEffort ?? structuredReasoningEffort,
         overviewPrompt: overrides.overviewPrompt ?? overviewPrompt,
         overviewModel: overrides.overviewModel ?? overviewModel,
+        overviewReasoningEffort: overrides.overviewReasoningEffort ?? overviewReasoningEffort,
         emit: overrides.onEvent,
         abortSignal: overrides.abortSignal,
         defaultExtractDepth: overrides.defaultExtractDepth ?? tavilyExtractDepth,

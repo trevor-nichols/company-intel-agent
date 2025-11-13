@@ -81,5 +81,3 @@ ${payload}
     })
     .join('\n\n');
 }
-
-export type { CompanyIntelPageContent as StructuredPageContent };

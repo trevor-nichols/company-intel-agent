@@ -7,6 +7,7 @@ export { Avatar, AvatarFallback, AvatarImage } from './avatar';
 export { Badge } from './badge';
 export { Button, buttonVariants } from './button';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
+export { ChatInput } from './chat-input';
 export { Checkbox } from './checkbox';
 export {
   Dialog,
@@ -25,7 +26,9 @@ export { Label } from './label';
 export { ScrollArea, ScrollBar } from './scroll-area';
 export { Separator } from './separator';
 export { Skeleton } from './skeleton';
+export { Spinner } from './spinner';
 export { Textarea } from './textarea';
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
-export { MinimalMarkdown } from './minimal-markdown';
+export { Markdown } from './markdown';
 export { ShimmeringText } from './shimmering-text';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';

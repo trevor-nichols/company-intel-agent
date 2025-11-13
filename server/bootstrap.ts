@@ -14,10 +14,15 @@ import type { TavilyExtractDepth } from './integrations/tavily/types';
 import type { OpenAIClientLike } from './agents/shared/openai';
 import { createMemoryPersistence, createRedisPersistence } from './persistence';
 import { CompanyIntelRunCoordinator } from './runtime/runCoordinator';
+import { isReasoningEffortLevel, type ReasoningEffortLevel } from './agents/shared/reasoning';
 
-const DEFAULT_STRUCTURED_MODEL = 'gpt-5';
-const DEFAULT_OVERVIEW_MODEL = 'gpt-5';
+const DEFAULT_STRUCTURED_MODEL = 'gpt-5.1';
+const DEFAULT_OVERVIEW_MODEL = 'gpt-5.1';
 const DEFAULT_TAVILY_EXTRACT_DEPTH: TavilyExtractDepth = 'basic';
+const DEFAULT_CHAT_MODEL = 'gpt-5.1';
+const DEFAULT_STRUCTURED_REASONING_EFFORT: ReasoningEffortLevel = 'medium';
+const DEFAULT_OVERVIEW_REASONING_EFFORT: ReasoningEffortLevel = 'medium';
+const DEFAULT_CHAT_REASONING_EFFORT: ReasoningEffortLevel = 'low';
 
 export interface CompanyIntelBootstrapOverrides {
   readonly persistence?: CompanyIntelPersistence;
@@ -28,12 +33,19 @@ export interface CompanyIntelBootstrapOverrides {
   readonly logger?: typeof defaultLogger;
   readonly structuredOutputModel?: string;
   readonly overviewModel?: string;
+  readonly chatModel?: string;
+  readonly structuredReasoningEffort?: ReasoningEffortLevel;
+  readonly overviewReasoningEffort?: ReasoningEffortLevel;
+  readonly chatReasoningEffort?: ReasoningEffortLevel;
 }
 
 export interface CompanyIntelEnvironment {
   readonly server: CompanyIntelServer;
   readonly persistence: CompanyIntelPersistence;
   readonly runtime: CompanyIntelRunCoordinator;
+  readonly openAI: OpenAIClientLike;
+  readonly chatModel: string;
+  readonly chatReasoningEffort: ReasoningEffortLevel;
 }
 
 declare global {
@@ -44,28 +56,6 @@ declare global {
 const isProduction = process.env.NODE_ENV === 'production';
 
 let cachedEnvironment: CompanyIntelEnvironment | null = globalThis.__companyIntelEnvironment ?? null;
-
-async function disposeEnvironment(environment: CompanyIntelEnvironment | null): Promise<void> {
-  if (!environment) {
-    return;
-  }
-
-  const persistenceWithLifecycle = environment.persistence as {
-    disconnect?: () => Promise<void> | void;
-  };
-
-  const disconnect = persistenceWithLifecycle.disconnect;
-  if (typeof disconnect === 'function') {
-    try {
-      await disconnect.call(environment.persistence);
-    } catch (error) {
-      const err = error instanceof Error ? { name: error.name, message: error.message } : error ?? null;
-      defaultLogger.warn('company-intel:bootstrap:persistence-disconnect-error', {
-        error: err,
-      });
-    }
-  }
-}
 
 function resolvePersistence(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): CompanyIntelPersistence {
   if (overrides.persistence) {
@@ -123,6 +113,58 @@ function resolveOverviewModel(overrides: CompanyIntelBootstrapOverrides): string
   return overrides.overviewModel ?? getEnvVar('OPENAI_MODEL_OVERVIEW') ?? DEFAULT_OVERVIEW_MODEL;
 }
 
+function resolveChatModel(overrides: CompanyIntelBootstrapOverrides): string {
+  return overrides.chatModel ?? getEnvVar('OPENAI_MODEL_CHAT') ?? DEFAULT_CHAT_MODEL;
+}
+
+function resolveReasoningEffort(
+  override: ReasoningEffortLevel | undefined,
+  envKey: string,
+  defaultValue: ReasoningEffortLevel,
+): ReasoningEffortLevel {
+  if (override) {
+    return override;
+  }
+
+  const candidate = getEnvVar(envKey);
+  if (!candidate) {
+    return defaultValue;
+  }
+
+  const normalized = candidate.trim().toLowerCase();
+  if (isReasoningEffortLevel(normalized)) {
+    return normalized;
+  }
+
+  throw new Error(
+    `Invalid ${envKey} value "${candidate}". Expected "low", "medium", or "high".`,
+  );
+}
+
+function resolveStructuredReasoningEffort(overrides: CompanyIntelBootstrapOverrides): ReasoningEffortLevel {
+  return resolveReasoningEffort(
+    overrides.structuredReasoningEffort,
+    'STRUCTURED_REASONING_EFFORT',
+    DEFAULT_STRUCTURED_REASONING_EFFORT,
+  );
+}
+
+function resolveOverviewReasoningEffort(overrides: CompanyIntelBootstrapOverrides): ReasoningEffortLevel {
+  return resolveReasoningEffort(
+    overrides.overviewReasoningEffort,
+    'OVERVIEW_REASONING_EFFORT',
+    DEFAULT_OVERVIEW_REASONING_EFFORT,
+  );
+}
+
+function resolveChatReasoningEffort(overrides: CompanyIntelBootstrapOverrides): ReasoningEffortLevel {
+  return resolveReasoningEffort(
+    overrides.chatReasoningEffort,
+    'CHAT_REASONING_EFFORT',
+    DEFAULT_CHAT_REASONING_EFFORT,
+  );
+}
+
 export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
   const log = overrides.logger ?? defaultLogger;
   const persistence = resolvePersistence(overrides, log);
@@ -131,6 +173,10 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
   const tavilyExtractDepth = resolveTavilyExtractDepth(overrides);
   const structuredOutputModel = resolveStructuredModel(overrides);
   const overviewModel = resolveOverviewModel(overrides);
+  const chatModel = resolveChatModel(overrides);
+  const structuredReasoningEffort = resolveStructuredReasoningEffort(overrides);
+  const overviewReasoningEffort = resolveOverviewReasoningEffort(overrides);
+  const chatReasoningEffort = resolveChatReasoningEffort(overrides);
 
   const server = createCompanyIntelServer({
     tavily,
@@ -138,8 +184,11 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
     persistence,
     logger: log,
     structuredOutputModel,
+    structuredReasoningEffort,
     overviewModel,
+    overviewReasoningEffort,
     tavilyExtractDepth,
+    chatModel,
   });
 
   const runtime = new CompanyIntelRunCoordinator({
@@ -147,7 +196,7 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
     logger: log,
   });
 
-  return { server, persistence, runtime } satisfies CompanyIntelEnvironment;
+  return { server, persistence, runtime, openAI, chatModel, chatReasoningEffort } satisfies CompanyIntelEnvironment;
 }
 
 export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
@@ -170,13 +219,4 @@ export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverr
     cachedEnvironment = environment;
   }
   return environment;
-}
-
-export function resetCompanyIntelEnvironment(): void {
-  const previous = cachedEnvironment;
-  cachedEnvironment = null;
-  if (!isProduction) {
-    globalThis.__companyIntelEnvironment = null;
-  }
-  void disposeEnvironment(previous);
 }

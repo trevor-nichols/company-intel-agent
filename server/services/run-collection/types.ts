@@ -27,6 +27,7 @@ import type {
 } from '../../agents/structured-profile';
 import type { CompanyOverviewPromptConfig } from '../../agents/overview';
 import type { OpenAIClientLike } from '../../agents/shared/openai';
+import type { ReasoningEffortLevel } from '../../agents/shared/reasoning';
 
 export interface RunCompanyIntelCollectionParams {
   readonly domain: string;
@@ -39,8 +40,10 @@ export interface RunCompanyIntelCollectionDependencies {
   readonly openAIClient: OpenAIClientLike;
   readonly structuredOutputPrompt?: CompanyIntelStructuredPromptConfig;
   readonly structuredOutputModel?: string;
+  readonly structuredReasoningEffort?: ReasoningEffortLevel;
   readonly overviewPrompt?: CompanyOverviewPromptConfig;
   readonly overviewModel?: string;
+  readonly overviewReasoningEffort?: ReasoningEffortLevel;
   readonly persistence: CompanyIntelPersistence;
   readonly emit?: (event: CompanyIntelStreamEvent) => void;
   readonly abortSignal?: AbortSignal;
@@ -56,14 +59,6 @@ export interface RunCompanyIntelCollectionResult {
   readonly failedPages: number;
 }
 
-export interface MappingOutcome {
-  readonly intelResult: SiteIntelResult;
-  readonly structuredPages: CompanyIntelPageContent[];
-  readonly pageRecords: CompanyIntelPageInsert[];
-  readonly successfulScrapes: SiteIntelScrapeOutcome[];
-  readonly selectedUrls: string[];
-}
-
 export interface CompanyIntelPageContent {
   readonly url: string;
   readonly content: string;
@@ -73,7 +68,7 @@ export interface CompanyIntelPageContent {
 export interface StructuredAnalysisResult {
   readonly summary: CompanyIntelSnapshotStructuredProfileSummary;
   readonly normalizedTagline: string | null;
-  readonly reasoningHeadline: string | null;
+  readonly reasoningHeadlines: readonly string[];
   readonly reasoningSummary: string | null;
   readonly metadata: {
     readonly responseId: string | null;
@@ -87,7 +82,7 @@ export interface StructuredAnalysisResult {
 
 export interface OverviewAnalysisResult {
   readonly overview: string;
-  readonly reasoningHeadline: string | null;
+  readonly reasoningHeadlines: readonly string[];
   readonly reasoningSummary: string | null;
   readonly metadata: {
     readonly responseId: string | null;

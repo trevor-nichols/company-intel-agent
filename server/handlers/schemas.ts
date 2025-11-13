@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 
-export const CompanyIntelOptionsSchema = z
+const CompanyIntelOptionsSchema = z
   .object({
     maxPages: z.number().int().min(1).max(25).optional(),
     includeSubdomains: z.boolean().optional(),

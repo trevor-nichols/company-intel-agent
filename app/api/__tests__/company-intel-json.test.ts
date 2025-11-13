@@ -1,41 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-
+import { describe, expect, it } from 'vitest';
 import { NextRequest } from 'next/server';
-import type { RunCompanyIntelCollectionResult } from '@/server/services/run-collection';
-
-const runToCompletionMock = vi.fn();
-
-vi.mock('@/server/bootstrap', () => ({
-  getCompanyIntelEnvironment: () => ({
-    server: {
-      runCollection: vi.fn(),
-    },
-    runtime: {
-      runToCompletion: runToCompletionMock,
-      getActiveRunForDomain: () => null,
-    },
-  }),
-}));
 
 import { POST } from '../company-intel/route';
 
-describe('Company intel JSON route', () => {
-  afterEach(() => {
-    runToCompletionMock.mockReset();
-  });
-
-  it('routes non-streaming requests through the runtime coordinator', async () => {
-    const result: RunCompanyIntelCollectionResult = {
-      snapshotId: 42,
-      status: 'complete',
-      selections: [],
-      totalLinksMapped: 10,
-      successfulPages: 9,
-      failedPages: 1,
-    };
-
-    runToCompletionMock.mockResolvedValueOnce(result);
-
+describe('Company intel run route (stream enforcement)', () => {
+  it('returns 406 when the Accept header does not request an event stream', async () => {
     const request = new NextRequest('http://localhost/api/company-intel', {
       method: 'POST',
       headers: {
@@ -45,11 +14,8 @@ describe('Company intel JSON route', () => {
     });
 
     const response = await POST(request);
+    expect(response.status).toBe(406);
     const payload = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(payload).toEqual({ data: result });
-    expect(runToCompletionMock).toHaveBeenCalledTimes(1);
-    expect(runToCompletionMock).toHaveBeenCalledWith({ domain: 'example.com' });
+    expect(payload.error).toMatch(/streaming only/i);
   });
 });

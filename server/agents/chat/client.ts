@@ -266,11 +266,15 @@ function deriveHeadline(text: string | null | undefined): string | null {
   if (!trimmed) {
     return null;
   }
-  const [firstLine] = trimmed.split('\n');
-  if (!firstLine) {
+  const [firstLineRaw] = trimmed.split('\n');
+  if (!firstLineRaw) {
     return null;
   }
-  return firstLine.replace(/^[#*\s]+/, '').trim() || null;
+  const maybeBold = firstLineRaw.trim();
+  const boldMatch = maybeBold.match(/^\*\*(.+?)\*\*$/);
+  const normalizedLine = boldMatch ? boldMatch[1] : firstLineRaw;
+  const cleaned = normalizedLine.replace(/^[#*\s-]+/, '').replace(/\*\*$/g, '').trim();
+  return cleaned.length > 0 ? cleaned : null;
 }
 
 export { DEFAULT_VECTOR_RESULTS };

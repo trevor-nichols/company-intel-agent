@@ -151,7 +151,7 @@ describe('useChatStreaming', () => {
     expect(assistant.citations).toEqual(citations);
     expect(assistant.reasoning.headline).toBe('Validate differentiation');
     expect(assistant.reasoning.segments[0]).toBe('Plan finalized');
-    expect(assistant.tool).toEqual({ tool: 'file_search', status: 'completed' });
+    expect(assistant.tool).toEqual(expect.objectContaining({ tool: 'file_search', status: 'completed' }));
     expect(assistant.usage).toEqual({ total_tokens: 88 });
   });
 

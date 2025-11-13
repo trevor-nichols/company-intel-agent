@@ -46,17 +46,61 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
     </div>
   );
 
+  const timelineSections = useMemo(() => {
+    type Section = { key: string; order: number; element: React.ReactElement; fallbackIndex: number };
+    const sections: Section[] = [];
+    const baseOrder = message.createdAt ?? Date.now();
+    let fallbackIndex = 0;
+
+    const reasoningVisible = summarySegments.length > 0 || message.reasoning.isStreaming;
+    if (reasoningVisible) {
+      sections.push({
+        key: `${message.id}-reasoning`,
+        order: message.reasoning.startedAt ?? baseOrder,
+        fallbackIndex: fallbackIndex,
+        element: (
+          <ReasoningAccordion
+            headline={message.reasoning.headline}
+            summarySegments={summarySegments}
+            isStreaming={message.reasoning.isStreaming}
+          />
+        ),
+      });
+      fallbackIndex += 1;
+    }
+
+    if (message.tool) {
+      sections.push({
+        key: `${message.id}-tool`,
+        order: message.tool.startedAt ?? baseOrder,
+        fallbackIndex: fallbackIndex,
+        element: <ToolActivityIndicator tool={message.tool.tool} status={message.tool.status} />,
+      });
+      fallbackIndex += 1;
+    }
+
+    sections.push({
+      key: `${message.id}-content`,
+      order:
+        message.contentStartedAt ??
+        (message.reasoning.startedAt ?? message.tool?.startedAt ?? Number.MAX_SAFE_INTEGER),
+      fallbackIndex: fallbackIndex,
+      element: bubble,
+    });
+
+    return sections.sort((a, b) => {
+      if (a.order === b.order) {
+        return a.fallbackIndex - b.fallbackIndex;
+      }
+      return a.order - b.order;
+    });
+  }, [bubble, message.contentStartedAt, message.id, message.reasoning, message.tool, summarySegments]);
+
   return (
     <div className="flex flex-col items-start gap-3 text-left text-sm">
-      {(summarySegments.length > 0 || message.reasoning.isStreaming) && (
-        <ReasoningAccordion
-          headline={message.reasoning.headline}
-          summarySegments={summarySegments}
-          isStreaming={message.reasoning.isStreaming}
-        />
-      )}
-      {message.tool ? <ToolActivityIndicator tool={message.tool.tool} status={message.tool.status} /> : null}
-      {bubble}
+      {timelineSections.map(section => (
+        <React.Fragment key={section.key}>{section.element}</React.Fragment>
+      ))}
     </div>
   );
 }

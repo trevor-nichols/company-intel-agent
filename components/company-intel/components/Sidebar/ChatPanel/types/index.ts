@@ -19,17 +19,21 @@ export interface AssistantTranscriptMessage {
   readonly tool?: AssistantToolState | null;
   readonly responseId?: string | null;
   readonly usage?: Record<string, unknown> | null;
+  readonly createdAt: number;
+  readonly contentStartedAt: number | null;
 }
 
 export interface AssistantReasoningState {
   readonly headline: string | null;
   readonly segments: Record<number, string>;
   readonly isStreaming: boolean;
+  readonly startedAt: number | null;
 }
 
 export interface AssistantToolState {
   readonly tool: string;
   readonly status: CompanyIntelChatToolStatus;
+  readonly startedAt: number | null;
 }
 
 export type ChatMutationAdapter = Pick<UseCompanyIntelChatResult, 'mutateAsync' | 'isPending' | 'reset' | 'cancel'>;

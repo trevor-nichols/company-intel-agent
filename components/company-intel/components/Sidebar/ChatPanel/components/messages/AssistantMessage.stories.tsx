@@ -27,10 +27,13 @@ const completeMessage: AssistantTranscriptMessage = {
       1: '**Action** Surface live coverage + QA examples and cite the source.',
     },
     isStreaming: false,
+    startedAt: Date.now() - 2000,
   },
-  tool: { tool: 'file_search', status: 'completed' },
+  tool: { tool: 'file_search', status: 'completed', startedAt: Date.now() - 2500 },
   responseId: 'resp_complete',
   usage: { total_tokens: 180 },
+  createdAt: Date.now() - 3000,
+  contentStartedAt: Date.now() - 1500,
 };
 
 const streamingMessage: AssistantTranscriptMessage = {
@@ -45,10 +48,13 @@ const streamingMessage: AssistantTranscriptMessage = {
       0: 'Collecting differentiation claims from marketing site…',
     },
     isStreaming: true,
+    startedAt: Date.now() - 500,
   },
-  tool: { tool: 'file_search', status: 'in_progress' },
+  tool: { tool: 'file_search', status: 'in_progress', startedAt: Date.now() - 800 },
   responseId: undefined,
   usage: null,
+  createdAt: Date.now() - 1200,
+  contentStartedAt: null,
 };
 
 const failedMessage: AssistantTranscriptMessage = {
@@ -61,10 +67,13 @@ const failedMessage: AssistantTranscriptMessage = {
     headline: null,
     segments: {},
     isStreaming: false,
+    startedAt: null,
   },
   tool: null,
   responseId: 'resp_failed',
   usage: null,
+  createdAt: Date.now() - 600,
+  contentStartedAt: null,
 };
 
 const meta: Meta<typeof AssistantMessage> = {

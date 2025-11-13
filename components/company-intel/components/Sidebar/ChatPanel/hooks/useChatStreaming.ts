@@ -38,6 +38,7 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
             reasoning: {
               headline: message.reasoning.headline,
               isStreaming: true,
+              startedAt: message.reasoning.startedAt ?? Date.now(),
               segments: {
                 ...message.reasoning.segments,
                 [event.summaryIndex]: `${message.reasoning.segments[event.summaryIndex] ?? ''}${event.delta}`,
@@ -51,6 +52,7 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
             reasoning: {
               headline: event.headline ?? message.reasoning.headline,
               isStreaming: false,
+              startedAt: message.reasoning.startedAt ?? Date.now(),
               segments: {
                 ...message.reasoning.segments,
                 [event.summaryIndex]: event.text,
@@ -64,18 +66,21 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
             tool: {
               tool: event.tool,
               status: event.status,
+              startedAt: message.tool?.startedAt ?? Date.now(),
             },
           }));
           break;
         case 'chat-message-delta':
           transcript.updateActiveAssistant(message => ({
             ...message,
+            contentStartedAt: message.contentStartedAt ?? Date.now(),
             content: `${message.content}${event.delta}`,
           }));
           break;
         case 'chat-message-complete':
           transcript.updateActiveAssistant(message => ({
             ...message,
+            contentStartedAt: message.contentStartedAt ?? Date.now(),
             content: (event.message ?? message.content)?.trim() ?? '',
             citations: event.citations ?? message.citations,
             status: 'complete',

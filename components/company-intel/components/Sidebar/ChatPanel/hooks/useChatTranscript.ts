@@ -13,6 +13,7 @@ function createInitialReasoningState(): AssistantReasoningState {
     headline: null,
     segments: {},
     isStreaming: false,
+    startedAt: null,
   };
 }
 
@@ -87,6 +88,8 @@ export function useChatTranscript(options: UseChatTranscriptOptions): UseChatTra
         tool: null,
         responseId: null,
         usage: null,
+        createdAt: Date.now(),
+        contentStartedAt: null,
       };
 
       const historyBeforeAssistant: TranscriptMessage[] = [...messagesRef.current, userMessage];

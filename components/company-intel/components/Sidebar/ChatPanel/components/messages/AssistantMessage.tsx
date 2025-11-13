@@ -13,6 +13,7 @@ import {
   type CitationMarkerMap,
   prepareCitationRendering,
 } from '../../utils/citations';
+import { ConsultedDocumentChips } from '../ConsultedDocumentChips';
 
 interface AssistantMessageProps {
   readonly message: AssistantTranscriptMessage;
@@ -33,6 +34,7 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
   );
   const reasoningVisible = summarySegments.length > 0 || message.reasoning.isStreaming;
   const toolVisible = Boolean(message.tool);
+  const hasConsultedDocuments = (message.consultedDocuments?.length ?? 0) > 0;
   const shouldShowPlaceholder =
     !message.content && message.status !== 'failed' && !reasoningVisible && !toolVisible;
   const shouldRenderContentBubble = shouldShowPlaceholder || Boolean(message.content) || message.status === 'failed';
@@ -92,6 +94,17 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
         fallbackIndex: fallbackIndex,
         element: bubble,
       });
+      fallbackIndex += 1;
+    }
+
+    if (hasConsultedDocuments) {
+      sections.push({
+        key: `${message.id}-consulted-docs`,
+        order: (message.contentStartedAt ?? message.createdAt ?? baseOrder) + 1,
+        fallbackIndex: fallbackIndex,
+        element: <ConsultedDocumentChips documents={message.consultedDocuments ?? []} />,
+      });
+      fallbackIndex += 1;
     }
 
     return sections.sort((a, b) => {
@@ -102,7 +115,9 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
     });
   }, [
     content,
+    hasConsultedDocuments,
     markdownComponents,
+    message.consultedDocuments,
     message.content,
     message.contentStartedAt,
     message.createdAt,
@@ -130,7 +145,9 @@ function buildCitationComponents(markerMap: CitationMarkerMap): Components | und
     return undefined;
   }
 
-  const defaultAnchor = ({ children, href, title: _title, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+  const defaultAnchor = ({ children, href, title, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+    void title;
+    return (
     <a
       href={href}
       target="_blank"
@@ -140,7 +157,8 @@ function buildCitationComponents(markerMap: CitationMarkerMap): Components | und
     >
       {children}
     </a>
-  );
+    );
+  };
 
   return {
     a: props => {

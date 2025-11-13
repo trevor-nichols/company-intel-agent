@@ -20,6 +20,20 @@ const completeMessage: AssistantTranscriptMessage = {
   content: 'Acme differentiates with sub-15m signal freshness plus human QA on critical briefs.',
   status: 'complete',
   citations: baseCitations,
+  consultedDocuments: [
+    {
+      fileId: 'snapshot-file-1',
+      filename: 'landing-page.md',
+      score: 0.8,
+      chunks: [{ text: 'Signals refresh within 15 minutes of publication.' }],
+    },
+    {
+      fileId: 'snapshot-file-2',
+      filename: 'investor-note.md',
+      score: 0.72,
+      chunks: [{ text: 'Analysts cite QA loop as differentiator.' }],
+    },
+  ],
   reasoning: {
     headline: 'Cross-check differentiators',
     segments: {

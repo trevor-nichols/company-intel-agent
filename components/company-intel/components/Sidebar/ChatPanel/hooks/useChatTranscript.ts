@@ -84,6 +84,7 @@ export function useChatTranscript(options: UseChatTranscriptOptions): UseChatTra
         content: '',
         status: 'streaming',
         citations: undefined,
+        consultedDocuments: undefined,
         reasoning: createInitialReasoningState(),
         tool: null,
         responseId: null,

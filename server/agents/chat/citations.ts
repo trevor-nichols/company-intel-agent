@@ -5,15 +5,22 @@
 import type {
   CompanyIntelChatCitation,
   CompanyIntelChatCitationChunk,
+  CompanyIntelConsultedDocument,
 } from '@/shared/company-intel/chat';
 
-export function extractChatCitations(response: unknown): readonly CompanyIntelChatCitation[] | undefined {
+export interface ChatCitationExtractionResult {
+  readonly inlineCitations: readonly CompanyIntelChatCitation[];
+  readonly consultedDocuments: readonly CompanyIntelConsultedDocument[];
+}
+
+export function extractChatCitations(response: unknown): ChatCitationExtractionResult | undefined {
   const output = (response as { output?: unknown }).output;
   if (!Array.isArray(output)) {
     return undefined;
   }
 
-  const citations: CompanyIntelChatCitation[] = [];
+  const consultedDocuments: CompanyIntelConsultedDocument[] = [];
+  const inlineCitations: CompanyIntelChatCitation[] = [];
 
   for (const item of output) {
     if (!item || typeof item !== 'object') {
@@ -27,9 +34,9 @@ export function extractChatCitations(response: unknown): readonly CompanyIntelCh
     if (type === 'file_search_call' || isToolUseFileSearch) {
       const fileSearchResults = getFileSearchResults(record);
       for (const result of fileSearchResults) {
-        const citation = toCitationFromResult(result);
-        if (citation) {
-          citations.push(citation);
+        const doc = toConsultedDocument(result);
+        if (doc) {
+          consultedDocuments.push(doc);
         }
       }
       continue;
@@ -37,11 +44,39 @@ export function extractChatCitations(response: unknown): readonly CompanyIntelCh
 
     if (type === 'message') {
       const annotationCitations = getAnnotationCitations(record);
-      citations.push(...annotationCitations);
+      inlineCitations.push(...annotationCitations);
     }
   }
 
-  return citations.length > 0 ? citations : undefined;
+  if (inlineCitations.length === 0 && consultedDocuments.length === 0) {
+    return undefined;
+  }
+
+  const consultedByFile = new Map<string, CompanyIntelConsultedDocument>();
+  for (const doc of consultedDocuments) {
+    if (!consultedByFile.has(doc.fileId)) {
+      consultedByFile.set(doc.fileId, doc);
+    }
+  }
+
+  const enrichedInline = inlineCitations.map(citation => {
+    if (typeof citation.score === 'number') {
+      return citation;
+    }
+    const consulted = consultedByFile.get(citation.fileId);
+    if (consulted?.score !== undefined) {
+      return {
+        ...citation,
+        score: consulted.score,
+      } satisfies CompanyIntelChatCitation;
+    }
+    return citation;
+  });
+
+  return {
+    inlineCitations: enrichedInline,
+    consultedDocuments,
+  } satisfies ChatCitationExtractionResult;
 }
 
 function getFileSearchResults(record: Record<string, unknown>): unknown[] {
@@ -79,7 +114,7 @@ function getAnnotationCitations(record: Record<string, unknown>): CompanyIntelCh
   return annotations;
 }
 
-function toCitationFromResult(result: unknown): CompanyIntelChatCitation | null {
+function toConsultedDocument(result: unknown): CompanyIntelConsultedDocument | null {
   if (!result || typeof result !== 'object') {
     return null;
   }
@@ -104,7 +139,7 @@ function toCitationFromResult(result: unknown): CompanyIntelChatCitation | null 
     filename,
     score,
     ...(chunks ? { chunks } : {}),
-  };
+  } satisfies CompanyIntelConsultedDocument;
 }
 
 function normalizeCitationChunks(value: unknown): CompanyIntelChatCitation['chunks'] | undefined {

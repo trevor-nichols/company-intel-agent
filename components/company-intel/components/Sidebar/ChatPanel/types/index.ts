@@ -1,5 +1,5 @@
 import type { CompanyIntelChatCitation, UseCompanyIntelChatResult } from '../../../../hooks';
-import type { CompanyIntelChatToolStatus } from '@/shared/company-intel/chat';
+import type { CompanyIntelChatToolStatus, CompanyIntelConsultedDocument } from '@/shared/company-intel/chat';
 
 export type TranscriptMessage = UserTranscriptMessage | AssistantTranscriptMessage;
 
@@ -15,6 +15,7 @@ export interface AssistantTranscriptMessage {
   readonly content: string;
   readonly status: 'streaming' | 'complete' | 'failed';
   readonly citations?: readonly CompanyIntelChatCitation[];
+  readonly consultedDocuments?: readonly CompanyIntelConsultedDocument[];
   readonly reasoning: AssistantReasoningState;
   readonly tool?: AssistantToolState | null;
   readonly responseId?: string | null;

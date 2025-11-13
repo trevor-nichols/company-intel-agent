@@ -6,7 +6,12 @@ import { logger as defaultLogger } from '@agenai/logging';
 import type OpenAI from 'openai';
 import type { ResponseCreateParams, ResponseStreamEvent } from 'openai/resources/responses/responses';
 
-import type { CompanyIntelChatMessage, CompanyIntelChatCitation, CompanyIntelChatToolStatus } from '@/shared/company-intel/chat';
+import type {
+  CompanyIntelChatMessage,
+  CompanyIntelChatCitation,
+  CompanyIntelChatToolStatus,
+  CompanyIntelConsultedDocument,
+} from '@/shared/company-intel/chat';
 import { extractChatCitations } from './citations';
 import type { OpenAIClientLike } from '../shared/openai';
 import { resolveOpenAIClient } from '../shared/openai';
@@ -45,7 +50,7 @@ export type ChatAgentEvent =
   | ({ readonly type: 'reasoning-delta'; readonly summaryIndex: number; readonly delta: string } & ChatAgentEventBase)
   | ({ readonly type: 'reasoning-summary'; readonly summaryIndex: number; readonly text: string; readonly headline: string | null } & ChatAgentEventBase)
   | ({ readonly type: 'tool-status'; readonly tool: string; readonly status: CompanyIntelChatToolStatus } & ChatAgentEventBase)
-  | ({ readonly type: 'message-complete'; readonly responseId: string; readonly message: string | null; readonly citations?: readonly CompanyIntelChatCitation[] } & ChatAgentEventBase)
+  | ({ readonly type: 'message-complete'; readonly responseId: string; readonly message: string | null; readonly citations?: readonly CompanyIntelChatCitation[]; readonly consultedDocuments?: readonly CompanyIntelConsultedDocument[] } & ChatAgentEventBase)
   | ({ readonly type: 'usage'; readonly usage?: Record<string, unknown> | null } & ChatAgentEventBase)
   | ({ readonly type: 'complete' } & ChatAgentEventBase);
 
@@ -210,14 +215,15 @@ function buildStreamIterator(
               }
 
               const message = extractResponseText(response);
-              const citations = extractChatCitations(response);
+              const citationPayload = extractChatCitations(response);
               const usage = extractUsageMetadata(response);
 
               yield {
                 type: 'message-complete',
                 responseId,
                 message,
-                citations,
+                citations: citationPayload?.inlineCitations,
+                consultedDocuments: citationPayload?.consultedDocuments,
               } satisfies ChatAgentEvent;
 
               yield {

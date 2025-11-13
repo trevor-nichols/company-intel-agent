@@ -10,7 +10,7 @@ import type {
   CompanyIntelChatRequest,
   UseCompanyIntelChatResult,
 } from '../../../hooks';
-import type { CompanyIntelChatToolStatus } from '@/shared/company-intel/chat';
+import type { CompanyIntelChatToolStatus, CompanyIntelConsultedDocument } from '@/shared/company-intel/chat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@agenai/ui/card';
 import { ScrollArea } from '@agenai/ui/scroll-area';
 import { TooltipProvider } from '@agenai/ui/tooltip';
@@ -18,8 +18,28 @@ import { Markdown } from '@/components/ui/markdown';
 import { Badge } from '@agenai/ui/badge';
 import { CitationMarker } from './components/CitationMarker';
 import { type CitationMarkerMap, prepareCitationRendering } from './utils/citations';
+import { ConsultedDocumentChips } from './components/ConsultedDocumentChips';
 
 const citations: CompanyIntelChatCitation[] = [
+  {
+    fileId: 'file-123',
+    filename: 'homepage.txt',
+    score: 0.91,
+    chunks: [
+      { text: 'Apple emphasizes privacy and security built into every device.' },
+    ],
+  },
+  {
+    fileId: 'file-456',
+    filename: 'investors.txt',
+    score: 0.83,
+    chunks: [
+      { text: 'Services revenue grew double digits year-over-year.' },
+    ],
+  },
+];
+
+const consultedDocuments: CompanyIntelConsultedDocument[] = [
   {
     fileId: 'file-123',
     filename: 'homepage.txt',
@@ -46,6 +66,7 @@ const baseChatAdapter: Pick<UseCompanyIntelChatResult, 'mutateAsync' | 'isPendin
       responseId: 'resp_story',
       usage: null,
       citations,
+      consultedDocuments,
     };
   },
   isPending: false,
@@ -110,6 +131,7 @@ type FixtureMessage =
       readonly role: 'assistant';
       readonly content: string;
       readonly citations: readonly CompanyIntelChatCitation[];
+      readonly consultedDocuments?: readonly CompanyIntelConsultedDocument[];
       readonly reasoningHeadline: string;
       readonly reasoningSegments: readonly string[];
       readonly tool?: {
@@ -134,6 +156,14 @@ const transcriptFixture: readonly FixtureMessage[] = [
         fileId: 'snapshot-file-1',
         filename: 'investor-update.md',
         quote: 'Signals refresh within 15 minutes of publication.',
+      },
+    ],
+    consultedDocuments: [
+      {
+        fileId: 'snapshot-file-1',
+        filename: 'investor-update.md',
+        score: 0.78,
+        chunks: [{ text: 'Signals refresh within 15 minutes of publication.' }],
       },
     ],
     reasoningHeadline: 'Cross-check differentiators',
@@ -207,6 +237,9 @@ function FixtureAssistantBubble({ message }: { readonly message: Extract<Fixture
           <Markdown content={content} className="text-sm" components={markdownComponents} />
         </div>
       </TooltipProvider>
+      {message.consultedDocuments && message.consultedDocuments.length > 0 ? (
+        <ConsultedDocumentChips documents={message.consultedDocuments} />
+      ) : null}
     </div>
   );
 }

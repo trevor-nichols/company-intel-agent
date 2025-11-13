@@ -247,6 +247,7 @@ function forwardChatEvent(event: ChatAgentEvent, options: ForwardChatEventOption
         responseId: event.responseId,
         message: event.message,
         citations: event.citations,
+        consultedDocuments: event.consultedDocuments,
       });
       break;
     }

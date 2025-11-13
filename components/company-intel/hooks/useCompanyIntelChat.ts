@@ -166,6 +166,7 @@ async function consumeChatStream(
             message: event.message ?? null,
             responseId: resolvedResponseId,
             citations: event.citations,
+            consultedDocuments: event.consultedDocuments,
             usage: null,
           };
         } else if (event.type === 'chat-usage') {

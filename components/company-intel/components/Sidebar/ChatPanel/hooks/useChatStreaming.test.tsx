@@ -1,7 +1,11 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, beforeEach, expect, it, vi, type MockedFunction } from 'vitest';
 
-import type { CompanyIntelChatStreamEvent, CompanyIntelChatCitation } from '@/shared/company-intel/chat';
+import type {
+  CompanyIntelChatStreamEvent,
+  CompanyIntelChatCitation,
+  CompanyIntelConsultedDocument,
+} from '@/shared/company-intel/chat';
 import type { AssistantTranscriptMessage } from '../types';
 
 vi.mock('../../../../hooks', async () => {
@@ -33,10 +37,12 @@ describe('useChatStreaming', () => {
   let lastOnEvent: ((event: CompanyIntelChatStreamEvent) => void) | null = null;
 
   it('submits messages and marks assistant complete when adapter resolves', async () => {
+    const consulted: CompanyIntelConsultedDocument[] = [{ fileId: 'file-1', filename: 'source.pdf', score: 0.91 }];
     const adapter = createChatAdapter({
       mutateAsync: vi.fn().mockResolvedValue({
         message: 'Acme wins on data freshness.',
         citations: [{ fileId: 'file-1' } as CompanyIntelChatCitation],
+        consultedDocuments: consulted,
         usage: { total_tokens: 120 },
       }),
     });
@@ -65,6 +71,7 @@ describe('useChatStreaming', () => {
     expect(assistant.status).toBe('complete');
     expect(assistant.content).toBe('Acme wins on data freshness.');
     expect(assistant.citations).toHaveLength(1);
+    expect(assistant.consultedDocuments).toEqual(consulted);
     expect(assistant.usage).toEqual({ total_tokens: 120 });
   });
 
@@ -106,6 +113,10 @@ describe('useChatStreaming', () => {
 
   it('handles streaming events end-to-end', () => {
     const citations: CompanyIntelChatCitation[] = [{ fileId: 'file-42', quote: 'Live coverage < 15m.' }];
+    const consultedDocs: CompanyIntelConsultedDocument[] = [
+      { fileId: 'file-42', filename: 'memo', score: 0.77 },
+      { fileId: 'file-99', filename: 'roadmap', score: 0.65 },
+    ];
     const { result } = renderStreamingHook();
 
     act(() => {
@@ -140,6 +151,7 @@ describe('useChatStreaming', () => {
       type: 'chat-message-complete',
       message: 'Acme provides live signal coverage <15m, unlike legacy vendors.',
       citations,
+      consultedDocuments: consultedDocs,
       responseId: 'resp_1',
       snapshotId: 42,
     });
@@ -149,6 +161,7 @@ describe('useChatStreaming', () => {
     expect(assistant.content).toContain('live signal coverage');
     expect(assistant.status).toBe('complete');
     expect(assistant.citations).toEqual(citations);
+    expect(assistant.consultedDocuments).toEqual(consultedDocs);
     expect(assistant.reasoning.headline).toBe('Validate differentiation');
     expect(assistant.reasoning.segments[0]).toBe('Plan finalized');
     expect(assistant.tool).toEqual(expect.objectContaining({ tool: 'file_search', status: 'completed' }));

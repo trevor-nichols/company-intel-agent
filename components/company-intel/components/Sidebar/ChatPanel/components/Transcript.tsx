@@ -18,9 +18,9 @@ export function ChatTranscript({ messages, viewportRef, isPinned, onJumpToLatest
   return (
     <div className="relative">
       <ScrollArea className="h-72 rounded-md border bg-card" viewportRef={viewportRef}>
-        <div className="flex h-full flex-col gap-3 p-4">
+        <div className="flex h-full min-h-72 flex-col gap-3 p-4">
           {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
               <MessageCircle className="h-10 w-10 text-muted" aria-hidden />
               <p>Ask targeted questions about the latest snapshot.</p>
             </div>

@@ -83,6 +83,7 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
             contentStartedAt: message.contentStartedAt ?? Date.now(),
             content: (event.message ?? message.content)?.trim() ?? '',
             citations: event.citations ?? message.citations,
+            consultedDocuments: event.consultedDocuments ?? message.consultedDocuments,
             status: 'complete',
             reasoning: {
               ...message.reasoning,
@@ -153,6 +154,7 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
           ...message,
           content: result.message ?? message.content,
           citations: result.citations ?? message.citations,
+          consultedDocuments: result.consultedDocuments ?? message.consultedDocuments,
           usage: result.usage ?? message.usage ?? null,
           status: 'complete',
         }));

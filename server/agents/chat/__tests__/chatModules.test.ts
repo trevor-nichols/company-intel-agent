@@ -40,7 +40,7 @@ describe('chat validation', () => {
 });
 
 describe('chat citations', () => {
-  it('extracts citations from both file search and annotations', () => {
+  it('separates inline citations from consulted documents and backfills scores', () => {
     const response = {
       output: [
         {
@@ -51,6 +51,11 @@ describe('chat citations', () => {
               filename: 'source.pdf',
               score: 0.82,
               content: [{ text: 'snippet' }],
+            },
+            {
+              file_id: 'annotated-id',
+              filename: 'annotated.txt',
+              score: 0.77,
             },
           ],
         },
@@ -73,9 +78,11 @@ describe('chat citations', () => {
       ],
     } satisfies Record<string, unknown>;
 
-    const citations = extractChatCitations(response) ?? [];
-    expect(citations).toHaveLength(2);
-    expect(citations[0]).toMatchObject({ fileId: 'file-search-id', filename: 'source.pdf' });
-    expect(citations[1]).toMatchObject({ fileId: 'annotated-id', quote: 'Quoted text', index: 10 });
+    const result = extractChatCitations(response);
+    expect(result).toBeDefined();
+    expect(result?.consultedDocuments).toHaveLength(2);
+    expect(result?.consultedDocuments?.[0]).toMatchObject({ fileId: 'file-search-id', score: 0.82 });
+    expect(result?.inlineCitations).toHaveLength(1);
+    expect(result?.inlineCitations?.[0]).toMatchObject({ fileId: 'annotated-id', quote: 'Quoted text', index: 10, score: 0.77 });
   });
 });

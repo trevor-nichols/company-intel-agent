@@ -22,11 +22,19 @@ export interface CompanyIntelChatCitation {
   readonly quote?: string;
 }
 
+export interface CompanyIntelConsultedDocument {
+  readonly fileId: string;
+  readonly filename?: string;
+  readonly score?: number;
+  readonly chunks?: readonly CompanyIntelChatCitationChunk[];
+}
+
 export interface CompanyIntelChatResult {
   readonly message: string | null;
   readonly responseId: string;
   readonly usage?: Record<string, unknown> | null;
   readonly citations?: readonly CompanyIntelChatCitation[];
+  readonly consultedDocuments?: readonly CompanyIntelConsultedDocument[];
 }
 
 interface CompanyIntelChatStreamBaseEvent {
@@ -69,6 +77,7 @@ interface CompanyIntelChatMessageCompleteEvent extends CompanyIntelChatStreamBas
   readonly type: 'chat-message-complete';
   readonly message: string | null;
   readonly citations?: readonly CompanyIntelChatCitation[];
+  readonly consultedDocuments?: readonly CompanyIntelConsultedDocument[];
 }
 
 interface CompanyIntelChatUsageEvent extends CompanyIntelChatStreamBaseEvent {

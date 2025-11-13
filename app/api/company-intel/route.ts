@@ -201,7 +201,14 @@ export async function POST(request: NextRequest) {
   }
 
   const acceptHeader = request.headers.get('accept') ?? '';
-  const wantsStream = acceptHeader.toLowerCase().includes('text/event-stream');
+  if (!acceptHeader.toLowerCase().includes('text/event-stream')) {
+    return jsonResponse(
+      {
+        error: 'Streaming only endpoint. Set the Accept header to text/event-stream.',
+      },
+      { status: 406 },
+    );
+  }
 
   try {
     const { runtime } = getCompanyIntelEnvironment();
@@ -225,35 +232,6 @@ export async function POST(request: NextRequest) {
       domain: domainTrimmed,
       ...(options ? { options } : {}),
     };
-
-    if (!wantsStream) {
-      const activeRun = runtime.getActiveRunForDomain(domainTrimmed);
-      if (activeRun && activeRun.status === 'running') {
-        return jsonResponse(
-          {
-            error: 'Company intel run already in progress for this domain.',
-            snapshotId: activeRun.snapshotId,
-          },
-          { status: 409 },
-        );
-      }
-
-      try {
-        const result = await runtime.runToCompletion(runParams);
-        return jsonResponse({ data: result });
-      } catch (error) {
-        if (error instanceof ActiveRunError) {
-          return jsonResponse(
-            {
-              error: 'Company intel run already in progress for this domain.',
-              snapshotId: error.snapshotId,
-            },
-            { status: 409 },
-          );
-        }
-        throw error;
-      }
-    }
 
     let startResult;
     try {

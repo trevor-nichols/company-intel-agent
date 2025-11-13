@@ -57,25 +57,19 @@ export async function POST(request: NextRequest, context: { params: { id: string
     }
 
     const systemPrompt = buildChatSystemPrompt({ domain: snapshot.domain ?? undefined });
-    const chatExecution = await runChatAgent(
+    const chatStream = await runChatAgent(
       {
         vectorStoreId: snapshot.vectorStoreId,
         systemPrompt,
         messages: validation.messages,
         metadata: { snapshot_id: String(snapshotId) },
-        mode: 'stream',
       },
       {
         openAIClient: openAI,
         model: chatModel,
       },
     );
-
-    if (chatExecution.mode !== 'stream') {
-      throw new Error('Chat agent returned unexpected blocking mode.');
-    }
-
-    const { events, abort } = chatExecution.stream;
+    const { events, abort } = chatStream;
 
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {

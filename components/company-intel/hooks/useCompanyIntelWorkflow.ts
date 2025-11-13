@@ -267,14 +267,14 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
   }, [profileStatusFromQuery, refetch]);
 
-  const triggerMutation = useTriggerCompanyIntel({ stream: true, onEvent: handleStreamEvent });
+  const triggerMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent });
   const previewMutation = useCompanyIntelPreview();
   const updateProfileMutation = useUpdateCompanyIntelProfile();
   const cancelRunMutation = useCancelCompanyIntelRun();
 
   const profile = companyIntelData?.profile ?? null;
   const activeSnapshotId = profile?.activeSnapshotId ?? null;
-  const resumeMutation = useTriggerCompanyIntel({ stream: true, onEvent: handleStreamEvent, resumeSnapshotId: activeSnapshotId ?? undefined });
+  const resumeMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent, resumeSnapshotId: activeSnapshotId ?? undefined });
   const [domain, setDomain] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);

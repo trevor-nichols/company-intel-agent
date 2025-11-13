@@ -6,7 +6,7 @@ import { logger as defaultLogger } from '@agenai/logging';
 import type OpenAI from 'openai';
 import type { ResponseCreateParams, ResponseStreamEvent } from 'openai/resources/responses/responses';
 
-import type { CompanyIntelChatMessage, CompanyIntelChatResult, CompanyIntelChatCitation, CompanyIntelChatToolStatus } from '@/shared/company-intel/chat';
+import type { CompanyIntelChatMessage, CompanyIntelChatCitation, CompanyIntelChatToolStatus } from '@/shared/company-intel/chat';
 import { extractChatCitations } from './citations';
 import type { OpenAIClientLike } from '../shared/openai';
 import { resolveOpenAIClient } from '../shared/openai';
@@ -14,13 +14,10 @@ import { extractResponseText, extractUsageMetadata } from '../shared/response';
 
 const DEFAULT_VECTOR_RESULTS = 6;
 
-export type ChatAgentMode = 'blocking' | 'stream';
-
 export interface RunChatAgentParams {
   readonly vectorStoreId: string;
   readonly systemPrompt: string;
   readonly messages: readonly CompanyIntelChatMessage[];
-  readonly mode: ChatAgentMode;
   readonly reasoningEffort?: 'low' | 'medium' | 'high';
   readonly maxVectorResults?: number;
   readonly metadata?: Record<string, string>;
@@ -32,22 +29,10 @@ export interface RunChatAgentDependencies {
   readonly logger?: typeof defaultLogger;
 }
 
-export interface ChatAgentResultBlocking {
-  readonly mode: 'blocking';
-  readonly result: CompanyIntelChatResult;
-}
-
 export interface ChatAgentStream {
   readonly events: AsyncIterable<ChatAgentEvent>;
   abort: () => void;
 }
-
-export interface ChatAgentResultStream {
-  readonly mode: 'stream';
-  readonly stream: ChatAgentStream;
-}
-
-export type ChatAgentResult = ChatAgentResultBlocking | ChatAgentResultStream;
 
 interface ChatAgentEventBase {
   readonly responseId?: string;
@@ -63,15 +48,10 @@ export type ChatAgentEvent =
   | ({ readonly type: 'usage'; readonly usage?: Record<string, unknown> | null } & ChatAgentEventBase)
   | ({ readonly type: 'complete' } & ChatAgentEventBase);
 
-const MODE_REASONING_EFFORT: Record<ChatAgentMode, 'low' | 'medium'> = {
-  blocking: 'medium',
-  stream: 'low',
-};
-
 export async function runChatAgent(
   params: RunChatAgentParams,
   dependencies: RunChatAgentDependencies,
-): Promise<ChatAgentResult> {
+): Promise<ChatAgentStream> {
   const log = dependencies.logger ?? defaultLogger;
   if (!params.systemPrompt || params.systemPrompt.trim().length === 0) {
     throw new Error('Chat agent requires a system prompt.');
@@ -82,7 +62,7 @@ export async function runChatAgent(
   }
 
   const openAI = resolveOpenAIClient(dependencies.openAIClient);
-  const reasoningEffort = params.reasoningEffort ?? MODE_REASONING_EFFORT[params.mode];
+  const reasoningEffort = params.reasoningEffort ?? 'low';
   const input: ResponseCreateParams['input'] = buildInput(params.systemPrompt, params.messages);
 
   const requestPayload: ResponseCreateParams = {
@@ -100,34 +80,23 @@ export async function runChatAgent(
     metadata: params.metadata,
   };
 
-  if (params.mode === 'blocking') {
-    const response = await openAI.responses.create(requestPayload);
-    return {
-      mode: 'blocking',
-      result: formatBlockingResult(response),
-    } satisfies ChatAgentResultBlocking;
-  }
-
   const modelStream = await openAI.responses.stream({
     ...requestPayload,
     stream: true,
   });
 
   return {
-    mode: 'stream',
-    stream: {
-      events: buildStreamIterator(modelStream, log),
-      abort: () => {
-        try {
-          modelStream.abort();
-        } catch (error) {
-          log.warn('company-intel:chat-agent:abort-error', {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      },
+    events: buildStreamIterator(modelStream, log),
+    abort: () => {
+      try {
+        modelStream.abort();
+      } catch (error) {
+        log.warn('company-intel:chat-agent:abort-error', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     },
-  } satisfies ChatAgentResultStream;
+  } satisfies ChatAgentStream;
 }
 
 function buildInput(
@@ -143,24 +112,6 @@ function buildInput(
     { role: 'system', content: systemPrompt },
     ...normalizedMessages,
   ];
-}
-
-function formatBlockingResult(response: unknown): CompanyIntelChatResult {
-  const message = extractResponseText(response);
-  const citations = extractChatCitations(response);
-  const usage = extractUsageMetadata(response);
-  const responseId = (response as { id?: string }).id;
-
-  if (!responseId) {
-    throw new Error('Chat response did not include a response id.');
-  }
-
-  return {
-    message,
-    responseId,
-    usage: usage ?? null,
-    citations,
-  } satisfies CompanyIntelChatResult;
 }
 
 type ResponsesStream = Awaited<ReturnType<OpenAI['responses']['stream']>>;

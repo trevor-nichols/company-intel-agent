@@ -12,11 +12,9 @@ import type {
   TriggerCompanyIntelResult,
 } from '../types';
 import { useCompanyIntelClient } from '../context';
-import { toTriggerResult } from '../utils/serialization';
 import { toHttpError } from '../utils/errors';
 
 export interface UseTriggerCompanyIntelOptions {
-  readonly stream?: boolean;
   readonly onEvent?: (event: CompanyIntelStreamEvent) => void;
   readonly resumeSnapshotId?: number | null;
 }
@@ -27,12 +25,11 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
 
   return useMutation<TriggerCompanyIntelResult, Error, TriggerCompanyIntelInput>({
     mutationFn: async (input) => {
-      const wantsStream = Boolean(options.stream && options.onEvent);
       const resumeSnapshotId = typeof options.resumeSnapshotId === 'number' ? options.resumeSnapshotId : null;
 
       let response: Response;
 
-      if (resumeSnapshotId && wantsStream) {
+      if (resumeSnapshotId) {
         response = await request(`/runs/${resumeSnapshotId}/stream`, {
           method: 'GET',
           headers: {
@@ -44,7 +41,7 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(wantsStream ? { Accept: 'text/event-stream' } : {}),
+            Accept: 'text/event-stream',
           },
           body: JSON.stringify(input),
         });
@@ -57,7 +54,7 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
       const contentType = response.headers.get('content-type') ?? '';
       const isEventStream = contentType.includes('text/event-stream');
 
-      if (wantsStream && isEventStream) {
+      if (isEventStream) {
         const body = response.body;
         if (!body) {
           throw new Error('Streaming response did not include a readable body');
@@ -140,8 +137,7 @@ export const useTriggerCompanyIntel = (options: UseTriggerCompanyIntelOptions = 
         return finalResult;
       }
 
-      const result = await response.json();
-      return toTriggerResult(result.data);
+      throw new Error('Company intel endpoint must stream results. Verify Accept: text/event-stream.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['company-intel'] });

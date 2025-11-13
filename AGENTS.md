@@ -62,8 +62,12 @@ ALLOW_ORIGINS=http://localhost:3000
   → `{ data: preview }`
 * `POST /api/company-intel`
 
-  * `Accept: text/event-stream` → **SSE stream** (see §8) + final `[DONE]`
-  * else `{ data: result }`
+  * Requires `Accept: text/event-stream`; responds with **SSE stream** (see §8) and final `[DONE]`
+  * Missing header → `406`
+* `POST /api/company-intel/snapshots/:id/chat/stream`
+
+  * Requires `Accept: text/event-stream`; emits chat-specific SSE events ending with `[DONE]`
+  * The legacy `/chat` route responds with `426` to signal streaming-only access
 * `GET /api/company-intel/snapshots/:id/export` → `application/pdf`
 
 ## 8) SSE contract (strict)

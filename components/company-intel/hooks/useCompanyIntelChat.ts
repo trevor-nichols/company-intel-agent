@@ -27,7 +27,6 @@ export interface CompanyIntelChatRequest {
 }
 
 export interface UseCompanyIntelChatOptions {
-  readonly stream?: boolean;
   readonly onEvent?: (event: CompanyIntelChatStreamEvent) => void;
 }
 
@@ -49,10 +48,7 @@ export const useCompanyIntelChat = (options: UseCompanyIntelChatOptions = {}) =>
         throw new Error('snapshotId is required to start a chat');
       }
 
-      const wantsStream = Boolean(options.stream && typeof options.onEvent === 'function');
-      const path = wantsStream
-        ? `/snapshots/${snapshotId}/chat/stream`
-        : `/snapshots/${snapshotId}/chat`;
+      const path = `/snapshots/${snapshotId}/chat/stream`;
 
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -62,7 +58,7 @@ export const useCompanyIntelChat = (options: UseCompanyIntelChatOptions = {}) =>
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(wantsStream ? { Accept: 'text/event-stream' } : {}),
+          Accept: 'text/event-stream',
         },
         body: JSON.stringify({ messages }),
         signal: controller.signal,
@@ -76,12 +72,12 @@ export const useCompanyIntelChat = (options: UseCompanyIntelChatOptions = {}) =>
       const isEventStream = contentType.includes('text/event-stream');
 
       try {
-        if (wantsStream && isEventStream) {
-          return await consumeChatStream(response, options.onEvent!);
+        if (isEventStream) {
+          const handler = options.onEvent ?? (() => {});
+          return await consumeChatStream(response, handler);
         }
 
-        const payload = await response.json();
-        return (payload?.data ?? null) as CompanyIntelChatResult;
+        throw new Error('Chat endpoint must stream results. Verify Accept: text/event-stream.');
       } finally {
         abortRef.current = null;
       }

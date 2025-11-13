@@ -235,7 +235,7 @@ export const createCompanyIntelHandlers = ({
   const resolvedStreamEvents =
     streamEvents === undefined
       ? createDefaultStreamEvents(resolvedTrigger, resolvedPayload)
-      : streamEvents;
+      : streamEvents ?? [];
   const resolvedChatEvents =
     chatStreamEvents === undefined
       ? createDefaultChatStreamEvents(resolvedTrigger.snapshotId)
@@ -252,28 +252,19 @@ export const createCompanyIntelHandlers = ({
     }),
     http.post(API_BASE, async ({ request }) => {
       const accept = request.headers.get('accept') ?? '';
-
-      if (resolvedStreamEvents && accept.includes('text/event-stream')) {
-        return new HttpResponse(createEventStream(resolvedStreamEvents), {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            Connection: 'keep-alive',
-            'Cache-Control': 'no-cache',
-          },
-        });
+      if (!accept.includes('text/event-stream')) {
+        return HttpResponse.json(
+          { error: { message: 'Streaming required for Company Intel runs.' } },
+          { status: 406 },
+        );
       }
 
-      await delay(220);
-      return HttpResponse.json({ data: resolvedTrigger });
-    }),
-    http.post(`${API_BASE}/snapshots/:id/chat`, async () => {
-      await delay(150);
-      return HttpResponse.json({
-        data: {
-          message: 'Snapshot chat response from MSW.',
-          responseId: 'resp_story_chat',
-          usage: { total_tokens: 64 },
-          citations: [],
+      const events = resolvedStreamEvents ?? [];
+      return new HttpResponse(createEventStream(events), {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
         },
       });
     }),
@@ -300,7 +291,6 @@ export const companyIntelEmptyHandlers = createCompanyIntelHandlers({
   payload: emptyCompanyIntelApiPayload,
   preview: emptyCompanyIntelPreviewFixture,
   triggerResult: triggerCompanyIntelEmptyResultFixture,
-  streamEvents: null,
 });
 
 export const companyIntelPreviewErrorHandlers = [

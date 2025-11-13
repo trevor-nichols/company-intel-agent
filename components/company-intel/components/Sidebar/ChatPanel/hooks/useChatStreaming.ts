@@ -122,7 +122,6 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
   );
 
   const defaultChatMutation = useCompanyIntelChat({
-    stream: true,
     onEvent: handleStreamingEvent,
   });
   const chatMutation = chatAdapter ?? defaultChatMutation;

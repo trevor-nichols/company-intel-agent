@@ -87,7 +87,7 @@ All routes live under `/api/company-intel` and run on the Node.js runtime.
 | `GET` | `/` | Returns `{ data: { profile, snapshots } }` with ISO timestamps.
 | `PATCH` | `/` | Applies sanitized updates (`companyName`, `tagline`, `overview`, `primaryIndustries`, `valueProps`, `keyOfferings`).
 | `POST` | `/preview` | Maps a domain and returns recommended selections before scraping.
-| `POST` | `/` | Triggers a run. JSON clients receive `{ data: result }`. Streaming clients (`Accept: text/event-stream`) attach to a live feed ending with `[DONE]`. Returns `409` if a run is already active for the domain.
+| `POST` | `/` | Triggers a run. **Requires** `Accept: text/event-stream`; the response is an SSE feed that ends with `[DONE]`. Returns `406` if the header is missing and `409` if a run is already active for the domain.
 | `GET` | `/runs/:snapshotId/stream` | Reconnects to an active run, replays buffered frames, and resumes the live SSE stream.
 | `DELETE` | `/runs/:snapshotId` | Cancels the active run (idempotent). On success the stream emits `run-cancelled` and the snapshot is pruned.
 | `GET` | `/snapshots/:id/export` | Generates a PDF export (`Content-Disposition: attachment`).

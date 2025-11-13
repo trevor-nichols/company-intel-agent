@@ -1,19 +1,14 @@
 import { NextRequest } from 'next/server';
-import type { ResponseCreateParams } from 'openai/resources/responses/responses';
 
 import { errorResponse, jsonResponse } from '@/server/handlers';
 import { getCompanyIntelEnvironment } from '@/server/bootstrap';
-import { extractResponseText } from '@/server/agents/shared/response';
-import { resolveOpenAIClient } from '@/server/agents/shared/openai';
 import { validateChatRequestBody } from '@/server/agents/chat/validation';
 import { buildChatSystemPrompt } from '@/server/agents/chat/prompts';
-import { extractChatCitations } from '@/server/agents/chat/citations';
+import { runChatAgent } from '@/server/agents/chat/client';
 import {
   COMPANY_INTEL_CHAT_MAX_MESSAGES,
   type CompanyIntelChatResult,
 } from '@/shared/company-intel/chat';
-
-const DEFAULT_VECTOR_RESULTS = 6;
 
 export async function POST(request: NextRequest, context: { params: { id: string } }) {
   const snapshotId = Number.parseInt(context.params.id, 10);
@@ -34,7 +29,6 @@ export async function POST(request: NextRequest, context: { params: { id: string
 
   try {
     const { persistence, openAI, chatModel } = getCompanyIntelEnvironment();
-    const openAIClient = resolveOpenAIClient(openAI);
     const snapshot = await persistence.getSnapshotById(snapshotId);
     if (!snapshot) {
       return errorResponse('Snapshot not found', 404);
@@ -45,37 +39,26 @@ export async function POST(request: NextRequest, context: { params: { id: string
     }
 
     const systemPrompt = buildChatSystemPrompt({ domain: snapshot.domain ?? undefined });
-    const input = [
-      { role: 'system', content: systemPrompt },
-      ...normalizedMessages,
-    ];
 
-    const response = await openAIClient.responses.create({
-      model: chatModel,
-      input: input as ResponseCreateParams['input'],
-      reasoning: { effort: 'medium' },
-      tools: [
-        {
-          type: 'file_search',
-          vector_store_ids: [snapshot.vectorStoreId],
-          max_num_results: DEFAULT_VECTOR_RESULTS,
-        },
-      ],
-      include: ['file_search_call.results'],
-      metadata: {
-        snapshot_id: String(snapshotId),
+    const chatExecution = await runChatAgent(
+      {
+        vectorStoreId: snapshot.vectorStoreId,
+        systemPrompt,
+        messages: normalizedMessages,
+        metadata: { snapshot_id: String(snapshotId) },
+        mode: 'blocking',
       },
-    });
+      {
+        openAIClient: openAI,
+        model: chatModel,
+      },
+    );
 
-    const text = extractResponseText(response);
-    const citations = extractChatCitations(response);
+    if (chatExecution.mode !== 'blocking') {
+      throw new Error('Chat agent returned unexpected stream mode.');
+    }
 
-    const payload: CompanyIntelChatResult = {
-      message: text,
-      responseId: response.id,
-      usage: response.usage ? (response.usage as unknown as Record<string, unknown>) : null,
-      citations,
-    };
+    const payload: CompanyIntelChatResult = chatExecution.result;
 
     return jsonResponse({ data: payload });
   } catch (error) {

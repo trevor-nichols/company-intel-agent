@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Square } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 export interface ChatInputProps {
@@ -12,6 +12,8 @@ export interface ChatInputProps {
   readonly helperText?: string;
   readonly minHeight?: number;
   readonly maxHeight?: number;
+  readonly isStreaming?: boolean;
+  readonly onStop?: () => void;
 }
 
 export function ChatInput({
@@ -24,6 +26,8 @@ export function ChatInput({
   helperText,
   minHeight = 52,
   maxHeight = 200,
+  isStreaming = false,
+  onStop,
 }: ChatInputProps): React.ReactElement {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasContent = value.trim().length > 0;
@@ -39,14 +43,20 @@ export function ChatInput({
     textarea.style.height = `${newHeight}px`;
   }, [value, minHeight, maxHeight]);
 
+  const isStopMode = isStreaming && typeof onStop === 'function';
+
   const handleSubmit = useCallback(
     (event?: FormEvent) => {
       event?.preventDefault();
+      if (isStopMode) {
+        onStop?.();
+        return;
+      }
       if (!disabled && hasContent) {
         onSubmit();
       }
     },
-    [disabled, hasContent, onSubmit],
+    [disabled, hasContent, isStopMode, onStop, onSubmit],
   );
 
   const handleKeyDown = useCallback(
@@ -62,7 +72,7 @@ export function ChatInput({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <form onSubmit={handleSubmit} className="relative">
-        <div className="relative flex items-center rounded-full border border-input bg-background shadow-sm transition-shadow hover:shadow-md focus-within:shadow-md">
+        <div className="flex items-start gap-3 rounded-2xl border border-input bg-background/95 px-4 py-3 shadow-sm transition-all focus-within:border-foreground/60 focus-within:shadow-md">
           <textarea
             ref={textareaRef}
             value={value}
@@ -72,28 +82,30 @@ export function ChatInput({
             disabled={disabled}
             rows={1}
             className={cn(
-              'flex-1 resize-none rounded-full bg-transparent px-5 py-3.5 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
-              'pr-14',
+              'flex-1 resize-none rounded-2xl bg-transparent px-1 text-sm leading-relaxed outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+              'py-1.5',
             )}
             style={{
               height: `${minHeight}px`,
               maxHeight: `${maxHeight}px`,
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           />
           <button
             type="submit"
-            disabled={disabled || !hasContent}
+            disabled={disabled || (!isStopMode && !hasContent)}
             className={cn(
-              'absolute right-2 flex h-9 w-9 items-center justify-center rounded-full transition-all',
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors self-center',
               'disabled:cursor-not-allowed',
-              hasContent && !disabled
-                ? 'bg-foreground text-background hover:bg-foreground/90'
-                : 'bg-muted text-muted-foreground',
+              isStopMode
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : hasContent && !disabled
+                  ? 'bg-foreground text-background hover:bg-foreground/90'
+                  : 'bg-muted text-muted-foreground',
             )}
-            aria-label="Send message"
+            aria-label={isStopMode ? 'Stop response' : 'Send message'}
           >
-            <ArrowUp className="h-5 w-5" aria-hidden="true" />
+            {isStopMode ? <Square className="h-4 w-4" aria-hidden="true" /> : <ArrowUp className="h-5 w-5" aria-hidden="true" />}
           </button>
         </div>
       </form>

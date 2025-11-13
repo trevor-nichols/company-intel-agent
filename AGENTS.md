@@ -143,7 +143,7 @@ Redis keys (optional):
 
 * `lib/logging.ts` → `logger.info|warn|error|debug` to `console`
 * `lib/config.ts` → `getEnvVar(key) | requireEnvVar(key)`
-* `components/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `MinimalMarkdown` (`react-markdown`) and `ShimmeringText` (CSS).
+* `components/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `Markdown` (`react-markdown`) and `ShimmeringText` (CSS).
 
 ## 15) Command cheat-sheet
 

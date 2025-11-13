@@ -26,9 +26,7 @@ function ComposerFixture(props: Partial<React.ComponentProps<typeof ChatComposer
         placeholder="Ask how this company positions itself…"
         disabled={false}
         helperText="Press Ctrl+Enter to send."
-        canClear
-        onClear={() => setValue('')}
-        canStop={false}
+        isStreaming={false}
         {...props}
       />
     </div>
@@ -47,7 +45,6 @@ export const Disabled: Story = {
       disabled
       helperText="Chat unlocks when the knowledge base finishes publishing."
       placeholder="Preparing the knowledge base…"
-      canClear={false}
     />
   ),
 };
@@ -56,9 +53,8 @@ export const Streaming: Story = {
   render: () => (
     <ComposerFixture
       helperText="Streaming live reasoning and answer…"
-      canStop
+      isStreaming
       onStop={() => undefined}
-      canClear
     />
   ),
 };

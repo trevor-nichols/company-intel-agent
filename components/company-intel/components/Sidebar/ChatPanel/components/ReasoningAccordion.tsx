@@ -7,7 +7,7 @@
 import React, { useId, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-import { MinimalMarkdown } from '@agenai/ui/minimal-markdown';
+import { Markdown } from '@/components/ui/markdown';
 import { ShimmeringText } from '@agenai/ui/shimmering-text';
 import { cn } from '@/lib/utils/cn';
 
@@ -73,7 +73,7 @@ export function ReasoningAccordion({
         className="border-t border-muted px-3 py-2 text-foreground"
       >
         {summary ? (
-          <MinimalMarkdown content={summary} className="text-sm leading-relaxed" />
+          <Markdown content={summary} className="text-sm leading-relaxed" />
         ) : (
           <p className="italic text-muted-foreground">Waiting on the model’s reasoning summary…</p>
         )}

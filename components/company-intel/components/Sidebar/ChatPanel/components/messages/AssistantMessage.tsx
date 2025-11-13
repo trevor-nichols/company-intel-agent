@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Components } from 'react-markdown';
 
-import { MinimalMarkdown } from '@agenai/ui/minimal-markdown';
+import { Markdown } from '@/components/ui/markdown';
 import { TooltipProvider } from '@agenai/ui/tooltip';
 import { ShimmeringText } from '@agenai/ui/shimmering-text';
 
@@ -36,7 +36,7 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
     <div className="max-w-full rounded-lg border bg-muted/60 px-3 py-2 text-foreground shadow-sm md:max-w-[85%]">
       {message.content ? (
         <TooltipProvider delayDuration={120} skipDelayDuration={0}>
-          <MinimalMarkdown content={content} className="text-sm" components={markdownComponents} />
+          <Markdown content={content} className="text-sm" components={markdownComponents} />
         </TooltipProvider>
       ) : message.status === 'failed' ? (
         <span className="text-sm text-destructive">Response interrupted.</span>

@@ -14,7 +14,7 @@ import type { CompanyIntelChatToolStatus } from '@/shared/company-intel/chat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@agenai/ui/card';
 import { ScrollArea } from '@agenai/ui/scroll-area';
 import { TooltipProvider } from '@agenai/ui/tooltip';
-import { MinimalMarkdown } from '@agenai/ui/minimal-markdown';
+import { Markdown } from '@/components/ui/markdown';
 import { Badge } from '@agenai/ui/badge';
 import { CitationMarker } from './components/CitationMarker';
 import { type CitationMarkerMap, prepareCitationRendering } from './utils/citations';
@@ -204,7 +204,7 @@ function FixtureAssistantBubble({ message }: { readonly message: Extract<Fixture
       ) : null}
       <TooltipProvider delayDuration={120} skipDelayDuration={0}>
         <div className="max-w-full rounded-lg border bg-muted/60 px-3 py-2 text-foreground shadow-sm md:max-w-[85%]">
-          <MinimalMarkdown content={content} className="text-sm" components={markdownComponents} />
+          <Markdown content={content} className="text-sm" components={markdownComponents} />
         </div>
       </TooltipProvider>
     </div>

@@ -8,7 +8,7 @@ import { Button } from '@agenai/ui/button';
 import { ScrollArea } from '@agenai/ui/scroll-area';
 import { Textarea } from '@agenai/ui/textarea';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@agenai/ui/tooltip';
-import { MinimalMarkdown } from '@agenai/ui';
+import { Markdown } from '@agenai/ui';
 import { EmptyPlaceholder, SectionTitle, ThinkingPlaceholder } from '../../Common';
 
 interface EditableOverviewSectionProps {
@@ -124,7 +124,7 @@ export function EditableOverviewSection({
           ) : hasNarrative ? (
             <ScrollArea className="max-h-[32rem]">
               <div className="space-y-3">
-                <MinimalMarkdown content={displayNarrative ?? ''} />
+                <Markdown content={displayNarrative ?? ''} />
               </div>
             </ScrollArea>
           ) : (

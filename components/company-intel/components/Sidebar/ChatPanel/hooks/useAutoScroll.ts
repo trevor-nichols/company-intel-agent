@@ -11,7 +11,8 @@ export interface UseAutoScrollResult {
   readonly scrollToBottom: (behavior?: ScrollBehavior) => void;
   readonly scrollIfPinned: (behavior?: ScrollBehavior) => void;
   readonly reset: () => void;
-  readonly isPinnedRef: React.MutableRefObject<boolean>;
+  readonly pinToBottom: (behavior?: ScrollBehavior) => void;
+  readonly isPinned: boolean;
 }
 
 export function useAutoScroll(options: UseAutoScrollOptions = {}): UseAutoScrollResult {
@@ -20,6 +21,15 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}): UseAutoScroll
   const [viewportNode, setViewportNode] = useState<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const isPinnedRef = useRef(true);
+  const [isPinned, setIsPinned] = useState(true);
+
+  const setPinState = useCallback((next: boolean) => {
+    if (isPinnedRef.current === next) {
+      return;
+    }
+    isPinnedRef.current = next;
+    setIsPinned(next);
+  }, []);
 
   const setViewport = useCallback((node: HTMLDivElement | null) => {
     viewportRef.current = node;
@@ -44,10 +54,18 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}): UseAutoScroll
     [scrollToBottom],
   );
 
+  const pinToBottom = useCallback(
+    (behavior: ScrollBehavior = 'smooth') => {
+      isPinnedRef.current = true;
+      setIsPinned(true);
+      scrollToBottom(behavior);
+    },
+    [scrollToBottom],
+  );
+
   const reset = useCallback(() => {
-    isPinnedRef.current = true;
-    scrollToBottom('auto');
-  }, [scrollToBottom]);
+    pinToBottom('auto');
+  }, [pinToBottom]);
 
   useEffect(() => {
     const viewport = viewportNode;
@@ -57,7 +75,8 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}): UseAutoScroll
 
     const updatePinState = () => {
       const distanceToBottom = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop;
-      isPinnedRef.current = distanceToBottom <= stickyThresholdPx;
+      const nextPinned = distanceToBottom <= stickyThresholdPx;
+      setPinState(nextPinned);
     };
 
     updatePinState();
@@ -66,7 +85,7 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}): UseAutoScroll
     return () => {
       viewport.removeEventListener('scroll', updatePinState, listenerOptions);
     };
-  }, [stickyThresholdPx, viewportNode]);
+  }, [setPinState, stickyThresholdPx, viewportNode]);
 
-  return { setViewport, scrollToBottom, scrollIfPinned, reset, isPinnedRef };
+  return { setViewport, scrollToBottom, scrollIfPinned, reset, pinToBottom, isPinned };
 }

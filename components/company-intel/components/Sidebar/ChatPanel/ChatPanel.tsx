@@ -49,8 +49,8 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
   } = props;
 
   const transcript = useChatTranscript({ snapshotId });
-  const { setViewport, scrollIfPinned, reset } = useAutoScroll();
-  const { submitMessage, stopStreaming, clearConversation, isSending } = useChatStreaming({
+  const { setViewport, scrollIfPinned, reset, pinToBottom, isPinned } = useAutoScroll();
+  const { submitMessage, stopStreaming, isSending } = useChatStreaming({
     snapshotId,
     transcript,
     chatAdapter,
@@ -101,11 +101,6 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
     await submitMessage();
   }, [reset, submitMessage]);
 
-  const handleClearConversation = useCallback(() => {
-    reset();
-    clearConversation();
-  }, [clearConversation, reset]);
-
   return (
     <Card className="w-full">
       <CardHeader className="space-y-1">
@@ -121,7 +116,12 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
       <CardContent className="space-y-4">
         <ChatStatusBanner statusNotice={statusNotice} isVectorFailed={isVectorFailed} vectorStoreError={vectorStoreError} />
 
-        <ChatTranscript messages={transcript.messages} viewportRef={setViewport} />
+        <ChatTranscript
+          messages={transcript.messages}
+          viewportRef={setViewport}
+          isPinned={isPinned}
+          onJumpToLatest={() => pinToBottom('smooth')}
+        />
 
         {transcript.chatError ? (
           <Alert variant="warning">
@@ -138,10 +138,7 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
           placeholder={placeholder}
           disabled={composerDisabled}
           helperText={helperText}
-          canClear={transcript.hasMessages || transcript.isStreamingResponse}
-          onClear={handleClearConversation}
-          clearDisabled={isSending}
-          canStop={transcript.isStreamingResponse}
+          isStreaming={transcript.isStreamingResponse}
           onStop={stopStreaming}
         />
       </CardContent>

@@ -29,6 +29,6 @@ export { Skeleton } from './skeleton';
 export { Spinner } from './spinner';
 export { Textarea } from './textarea';
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
-export { MinimalMarkdown } from './minimal-markdown';
+export { Markdown } from './markdown';
 export { ShimmeringText } from './shimmering-text';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';

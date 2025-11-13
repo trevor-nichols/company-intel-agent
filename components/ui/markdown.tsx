@@ -7,7 +7,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils/cn';
 
-export interface MinimalMarkdownProps {
+export interface MarkdownProps {
   readonly content: string;
   readonly className?: string;
   readonly components?: Components;
@@ -38,7 +38,7 @@ const defaultComponents: Components = {
   ),
 };
 
-export function MinimalMarkdown({ content, className, components }: MinimalMarkdownProps): React.ReactElement {
+export function Markdown({ content, className, components }: MarkdownProps): React.ReactElement {
   return (
     <ReactMarkdown
       className={cn('prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground', className)}

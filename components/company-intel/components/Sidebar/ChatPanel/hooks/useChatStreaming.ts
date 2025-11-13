@@ -180,6 +180,7 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
       return;
     }
     chatMutationRef.current.cancel?.();
+    chatMutationRef.current.reset?.();
     transcript.updateActiveAssistant(message => ({
       ...message,
       status: 'failed',
@@ -187,6 +188,12 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
         ...message.reasoning,
         isStreaming: false,
       },
+      tool: message.tool
+        ? {
+            ...message.tool,
+            status: 'cancelled',
+          }
+        : message.tool,
     }));
     transcript.clearActiveAssistant();
     transcript.setChatError('Response cancelled.');
@@ -196,7 +203,7 @@ export function useChatStreaming(options: UseChatStreamingOptions): UseChatStrea
     chatMutationRef.current.cancel?.();
     transcript.clearActiveAssistant();
     transcript.resetTranscript();
-    chatMutationRef.current.reset();
+    chatMutationRef.current.reset?.();
   }, [transcript]);
 
   return {

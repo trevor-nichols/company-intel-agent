@@ -5,9 +5,6 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
-
-import { Alert, AlertDescription, AlertTitle } from '@agenai/ui/alert';
 import { Badge } from '@agenai/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@agenai/ui/card';
 
@@ -58,10 +55,12 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
 
   const isVectorReady = vectorStoreStatus === 'ready';
   const isVectorFailed = vectorStoreStatus === 'failed';
-  const composerDisabled = !isVectorReady || isRunInProgress || isSending;
+  const isStreamingResponse = transcript.isStreamingResponse;
+  const inputDisabled = !isVectorReady || isRunInProgress || isSending;
+  const submitDisabled = inputDisabled || isStreamingResponse;
   const helperText = !isVectorReady
     ? 'Chat unlocks when the knowledge base finishes publishing.'
-    : transcript.isStreamingResponse
+    : isStreamingResponse
       ? 'Streaming live reasoning and answer…'
       : 'Press Ctrl+Enter to send. Shift+Enter adds a new line.';
   const statusBadgeVariant = isVectorReady ? 'secondary' : 'outline';
@@ -123,22 +122,15 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
           onJumpToLatest={() => pinToBottom('smooth')}
         />
 
-        {transcript.chatError ? (
-          <Alert variant="warning">
-            <AlertTriangle className="h-4 w-4" aria-hidden />
-            <AlertTitle>Unable to send message</AlertTitle>
-            <AlertDescription>{transcript.chatError}</AlertDescription>
-          </Alert>
-        ) : null}
-
         <ChatComposer
           value={transcript.draft}
           onChange={transcript.setDraft}
           onSubmit={() => void handleSubmit()}
           placeholder={placeholder}
-          disabled={composerDisabled}
+          inputDisabled={inputDisabled}
+          submitDisabled={submitDisabled}
           helperText={helperText}
-          isStreaming={transcript.isStreamingResponse}
+          isStreaming={isStreamingResponse}
           onStop={stopStreaming}
         />
       </CardContent>

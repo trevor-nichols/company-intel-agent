@@ -7,7 +7,8 @@ interface ChatInputProps {
   readonly onChange: (value: string) => void;
   readonly onSubmit: () => void;
   readonly placeholder?: string;
-  readonly disabled?: boolean;
+  readonly inputDisabled?: boolean;
+  readonly submitDisabled?: boolean;
   readonly className?: string;
   readonly helperText?: string;
   readonly minHeight?: number;
@@ -21,7 +22,8 @@ export function ChatInput({
   onChange,
   onSubmit,
   placeholder = 'Ask anything',
-  disabled = false,
+  inputDisabled = false,
+  submitDisabled = false,
   className,
   helperText,
   minHeight = 52,
@@ -52,11 +54,11 @@ export function ChatInput({
         onStop?.();
         return;
       }
-      if (!disabled && hasContent) {
+      if (!submitDisabled && hasContent) {
         onSubmit();
       }
     },
-    [disabled, hasContent, isStopMode, onStop, onSubmit],
+    [hasContent, isStopMode, onStop, onSubmit, submitDisabled],
   );
 
   const handleKeyDown = useCallback(
@@ -79,7 +81,7 @@ export function ChatInput({
             onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={disabled}
+            disabled={inputDisabled}
             rows={1}
             className={cn(
               'flex-1 resize-none rounded-2xl bg-transparent px-1 text-sm leading-relaxed outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
@@ -93,13 +95,13 @@ export function ChatInput({
           />
           <button
             type="submit"
-            disabled={disabled || (!isStopMode && !hasContent)}
+            disabled={!isStopMode && (submitDisabled || !hasContent)}
             className={cn(
               'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors self-center',
               'disabled:cursor-not-allowed',
               isStopMode
                 ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                : hasContent && !disabled
+                : hasContent && !submitDisabled
                   ? 'bg-foreground text-background hover:bg-foreground/90'
                   : 'bg-muted text-muted-foreground',
             )}

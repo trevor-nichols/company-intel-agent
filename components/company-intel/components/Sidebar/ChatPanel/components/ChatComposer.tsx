@@ -7,7 +7,8 @@ interface ChatComposerProps {
   readonly onChange: (value: string) => void;
   readonly onSubmit: () => void;
   readonly placeholder: string;
-  readonly disabled: boolean;
+  readonly inputDisabled: boolean;
+  readonly submitDisabled: boolean;
   readonly helperText: string;
   readonly isStreaming: boolean;
   readonly onStop?: () => void;
@@ -19,7 +20,8 @@ export function ChatComposer(props: ChatComposerProps): React.ReactElement {
     onChange,
     onSubmit,
     placeholder,
-    disabled,
+    inputDisabled,
+    submitDisabled,
     helperText,
     isStreaming,
     onStop,
@@ -31,7 +33,8 @@ export function ChatComposer(props: ChatComposerProps): React.ReactElement {
       onChange={onChange}
       onSubmit={onSubmit}
       placeholder={placeholder}
-      disabled={disabled}
+      inputDisabled={inputDisabled}
+      submitDisabled={submitDisabled}
       helperText={helperText}
       isStreaming={isStreaming}
       onStop={onStop}

@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 import { cn } from '@/lib/utils/cn';
 import { Spinner } from '@agenai/ui/spinner';
@@ -19,6 +19,7 @@ const STATUS_LABELS: Record<CompanyIntelChatToolStatus, string> = {
   in_progress: 'Preparing context…',
   searching: 'Searching snapshot files…',
   completed: 'Tool complete',
+  cancelled: 'Tool stopped',
 };
 
 export interface ToolActivityIndicatorProps {
@@ -30,6 +31,7 @@ export interface ToolActivityIndicatorProps {
 export function ToolActivityIndicator({ tool, status, className }: ToolActivityIndicatorProps): React.ReactElement {
   const label = TOOL_LABELS[tool] ?? 'Tool';
   const statusLabel = STATUS_LABELS[status] ?? status;
+  const isCancelled = status === 'cancelled';
 
   return (
     <div
@@ -40,6 +42,8 @@ export function ToolActivityIndicator({ tool, status, className }: ToolActivityI
     >
       {status === 'completed' ? (
         <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+      ) : isCancelled ? (
+        <XCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
       ) : (
         <Spinner size="sm" className="text-muted-foreground" />
       )}

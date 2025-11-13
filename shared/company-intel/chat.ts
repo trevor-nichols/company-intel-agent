@@ -34,7 +34,7 @@ interface CompanyIntelChatStreamBaseEvent {
   readonly responseId?: string | null;
 }
 
-export type CompanyIntelChatToolStatus = 'in_progress' | 'searching' | 'completed';
+export type CompanyIntelChatToolStatus = 'in_progress' | 'searching' | 'completed' | 'cancelled';
 
 interface CompanyIntelChatStreamStartEvent extends CompanyIntelChatStreamBaseEvent {
   readonly type: 'chat-stream-start';

@@ -74,7 +74,7 @@ export function ChatInput({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex items-start gap-3 rounded-2xl border border-input bg-background/95 px-4 py-3 shadow-sm transition-all focus-within:border-foreground/60 focus-within:shadow-md">
+        <div className="flex items-start gap-3 rounded-2xl border border-input bg-background/95 px-3 py-2 shadow-sm transition-all focus-within:border-foreground/60 focus-within:shadow-md">
           <textarea
             ref={textareaRef}
             value={value}
@@ -97,7 +97,7 @@ export function ChatInput({
             type="submit"
             disabled={!isStopMode && (submitDisabled || !hasContent)}
             className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors self-center',
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors self-center',
               'disabled:cursor-not-allowed',
               isStopMode
                 ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
@@ -107,7 +107,7 @@ export function ChatInput({
             )}
             aria-label={isStopMode ? 'Stop response' : 'Send message'}
           >
-            {isStopMode ? <Square className="h-4 w-4" aria-hidden="true" /> : <ArrowUp className="h-5 w-5" aria-hidden="true" />}
+            {isStopMode ? <Square className="h-4 w-4" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
           </button>
         </div>
       </form>

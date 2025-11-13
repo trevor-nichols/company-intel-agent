@@ -130,7 +130,7 @@ function buildCitationComponents(markerMap: CitationMarkerMap): Components | und
     return undefined;
   }
 
-  const defaultAnchor = ({ children, href, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+  const defaultAnchor = ({ children, href, title: _title, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a
       href={href}
       target="_blank"

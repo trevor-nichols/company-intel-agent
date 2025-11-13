@@ -4,10 +4,12 @@ import { NextRequest } from 'next/server';
 
 const getSnapshotById = vi.fn();
 const responsesCreate = vi.fn();
+const responsesStream = vi.fn();
 
 const openAIStub = {
   responses: {
     create: responsesCreate,
+    stream: responsesStream,
   },
   vectorStores: {
     create: vi.fn(),
@@ -48,6 +50,7 @@ describe('Company intel chat route', () => {
   beforeEach(() => {
     getSnapshotById.mockReset();
     responsesCreate.mockReset();
+    responsesStream.mockReset();
   });
 
   it('returns 409 when the vector store is not ready', async () => {

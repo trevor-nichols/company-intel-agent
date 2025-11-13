@@ -67,6 +67,7 @@
     "eslint-plugin-storybook": "10.0.4",
     "gitleaks-secret-scanner": "^1.2.2",
     "ioredis-mock": "^8.13.0",
+    "jsdom": "^27.2.0",
     "msw": "^2.6.8",
     "msw-storybook-addon": "^2.0.4",
     "next-themes": "^0.4.6",

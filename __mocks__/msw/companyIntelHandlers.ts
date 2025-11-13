@@ -31,6 +31,7 @@ interface CompanyIntelHandlerOptions {
   readonly preview?: unknown;
   readonly triggerResult?: TriggerCompanyIntelResult;
   readonly streamEvents?: ReadonlyArray<Record<string, unknown>> | null;
+  readonly chatStreamEvents?: ReadonlyArray<Record<string, unknown>> | null;
 }
 
 function createEventStream(events: ReadonlyArray<Record<string, unknown>>) {
@@ -162,11 +163,72 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
   ];
 }
 
+function createDefaultChatStreamEvents(snapshotId: number) {
+  const baseEvent = {
+    snapshotId,
+    responseId: 'resp_story_chat',
+  };
+
+  return [
+    {
+      ...baseEvent,
+      type: 'chat-stream-start',
+      model: 'gpt-5-story',
+    },
+    {
+      ...baseEvent,
+      type: 'chat-reasoning-delta',
+      summaryIndex: 0,
+      delta: 'Comparing mapping summary with scraped snippets… ',
+    },
+    {
+      ...baseEvent,
+      type: 'chat-reasoning-summary',
+      summaryIndex: 0,
+      text: '**Reconcile sources**\n\nCross-check value props against mapped selections, then respond with the clearest articulation.',
+      headline: 'Reasoning through the answer',
+    },
+    {
+      ...baseEvent,
+      type: 'chat-tool-status',
+      tool: 'file_search',
+      status: 'searching',
+    },
+    {
+      ...baseEvent,
+      type: 'chat-tool-status',
+      tool: 'file_search',
+      status: 'completed',
+    },
+    {
+      ...baseEvent,
+      type: 'chat-message-delta',
+      delta: 'Acme’s snapshot positions the platform as ',
+    },
+    {
+      ...baseEvent,
+      type: 'chat-message-complete',
+      message: 'Acme’s snapshot positions the platform as the fastest path to GTM-ready intel by combining automated mapping with curated human QA.',
+      citations: [],
+    },
+    {
+      ...baseEvent,
+      type: 'chat-usage',
+      usage: { total_tokens: 128 },
+    },
+    {
+      ...baseEvent,
+      type: 'chat-complete',
+    },
+  ] as const;
+}
+
 export const createCompanyIntelHandlers = ({
   payload = companyIntelApiPayload,
   preview = companyIntelPreviewFixture,
   triggerResult = triggerCompanyIntelResultFixture,
   streamEvents,
+  chatStreamEvents,
 }: CompanyIntelHandlerOptions = {}) => {
   const resolvedPayload = payload ?? companyIntelApiPayload;
   const resolvedTrigger = triggerResult ?? triggerCompanyIntelResultFixture;
@@ -174,6 +236,10 @@ export const createCompanyIntelHandlers = ({
     streamEvents === undefined
       ? createDefaultStreamEvents(resolvedTrigger, resolvedPayload)
       : streamEvents;
+  const resolvedChatEvents =
+    chatStreamEvents === undefined
+      ? createDefaultChatStreamEvents(resolvedTrigger.snapshotId)
+      : chatStreamEvents;
 
   return [
     http.get(API_BASE, async () => {
@@ -199,6 +265,31 @@ export const createCompanyIntelHandlers = ({
 
       await delay(220);
       return HttpResponse.json({ data: resolvedTrigger });
+    }),
+    http.post(`${API_BASE}/snapshots/:id/chat`, async () => {
+      await delay(150);
+      return HttpResponse.json({
+        data: {
+          message: 'Snapshot chat response from MSW.',
+          responseId: 'resp_story_chat',
+          usage: { total_tokens: 64 },
+          citations: [],
+        },
+      });
+    }),
+    http.post(`${API_BASE}/snapshots/:id/chat/stream`, async ({ params }) => {
+      const rawParam = params.id;
+      const idRaw = Array.isArray(rawParam) ? rawParam[0] ?? '' : rawParam ?? '';
+      const parsedId = Number.parseInt(idRaw, 10);
+      const snapshotId = Number.isFinite(parsedId) ? parsedId : resolvedTrigger.snapshotId;
+      const events = resolvedChatEvents ?? createDefaultChatStreamEvents(snapshotId);
+      return new HttpResponse(createEventStream(events), {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
+        },
+      });
     }),
   ] as const;
 };

@@ -9,10 +9,8 @@ interface CitationMarkerProps {
 }
 
 export function CitationMarker({ marker }: CitationMarkerProps): React.ReactElement {
-  const fallbackLabel = marker.citation.filename ?? marker.citation.fileId ?? 'Source';
+  const label = marker.citation.filename ?? marker.citation.fileId ?? 'Source';
   const snippet = marker.citation.quote ?? marker.citation.chunks?.[0]?.text ?? undefined;
-  const score = typeof marker.citation.score === 'number' ? marker.citation.score : undefined;
-  const scoreLabel = typeof score === 'number' ? `Relevance: ${Math.round(score * 100) / 100}` : null;
 
   return (
     <Tooltip>
@@ -28,7 +26,7 @@ export function CitationMarker({ marker }: CitationMarkerProps): React.ReactElem
       </TooltipTrigger>
       <TooltipContent side="top" align="center" sideOffset={8} className="max-w-xs text-xs">
         <div className="space-y-1 text-left">
-          <p className="font-medium text-foreground">{scoreLabel ?? fallbackLabel}</p>
+          <p className="font-medium text-foreground">{label}</p>
           {snippet ? <p className="text-muted-foreground">“{snippet.trim()}”</p> : null}
         </div>
       </TooltipContent>

@@ -63,7 +63,16 @@ export function ChatInput({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      const isComposing = event.nativeEvent?.isComposing;
+      if (isComposing) {
+        return;
+      }
+
+      if (!event.shiftKey) {
         event.preventDefault();
         handleSubmit();
       }

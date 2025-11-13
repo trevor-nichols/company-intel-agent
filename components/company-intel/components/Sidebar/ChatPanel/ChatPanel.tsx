@@ -60,7 +60,7 @@ export function ChatPanel(props: ChatPanelProps): React.ReactElement {
   const submitDisabled = inputDisabled || isStreamingResponse;
   const helperText = !isVectorReady
     ? 'Chat unlocks when the knowledge base finishes publishing.'
-    : 'Press Ctrl+Enter to send. Shift+Enter adds a new line.';
+    : 'Press Enter to send. Shift+Enter adds a new line.';
   const statusBadgeVariant = isVectorReady ? 'secondary' : 'outline';
   const placeholder = isVectorReady
     ? `Ask how ${domain ?? 'this company'} positions itself…`

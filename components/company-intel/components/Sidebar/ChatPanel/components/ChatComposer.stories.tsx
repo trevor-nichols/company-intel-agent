@@ -26,7 +26,7 @@ function ComposerFixture(props: Partial<React.ComponentProps<typeof ChatComposer
         placeholder="Ask how this company positions itself…"
         inputDisabled={false}
         submitDisabled={false}
-        helperText="Press Ctrl+Enter to send."
+        helperText="Press Enter to send."
         isStreaming={false}
         {...props}
       />
@@ -36,7 +36,7 @@ function ComposerFixture(props: Partial<React.ComponentProps<typeof ChatComposer
 
 export const Ready: Story = {
   render: () => (
-    <ComposerFixture helperText="Press Ctrl+Enter to send. Shift+Enter adds a newline." />
+    <ComposerFixture helperText="Press Enter to send. Shift+Enter adds a newline." />
   ),
 };
 

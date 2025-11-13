@@ -4,13 +4,6 @@
 
 import type OpenAI from 'openai';
 
-export interface OpenAIResponsePayload {
-  readonly id: string;
-  readonly output?: unknown;
-  readonly output_parsed?: unknown;
-  readonly usage?: unknown;
-}
-
 export type OpenAIResponsesClient = OpenAI['responses'];
 
 export type OpenAIClientLike =

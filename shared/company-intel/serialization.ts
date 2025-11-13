@@ -5,7 +5,6 @@
 import type {
   CompanyIntelAgentSource,
   CompanyIntelData,
-  CompanyIntelSelection,
   CompanyIntelScrapeRecord,
   CompanyIntelScrapeResponse,
   CompanyIntelScrapeResponseFailure,
@@ -510,56 +509,5 @@ export function toCompanyIntelData(payload: unknown): CompanyIntelData {
   return {
     profile: profileRaw ? toCompanyProfile(profileRaw) : null,
     snapshots: snapshotsArray.map(toCompanyProfileSnapshot),
-  };
-}
-
-function toSelections(raw: unknown): CompanyIntelSelection[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  const selections: CompanyIntelSelection[] = [];
-
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') {
-      continue;
-    }
-
-    const record = item as Record<string, unknown>;
-    const url = typeof record.url === 'string' ? record.url : '';
-    if (!url) {
-      continue;
-    }
-
-    const matchedSignalsSource = Array.isArray(record.matchedSignals)
-      ? record.matchedSignals
-      : Array.isArray(record.matched_signals)
-        ? record.matched_signals
-        : [];
-
-    const matchedSignals = matchedSignalsSource.filter(
-      (value): value is string => typeof value === 'string',
-    );
-
-    selections.push({
-      url,
-      score: typeof record.score === 'number' ? record.score : 1,
-      matchedSignals,
-    });
-  }
-
-  return selections;
-}
-
-export function toTriggerResult(payload: unknown) {
-  const record = asRecord(payload);
-  const status = typeof record.status === 'string' ? (record.status as CompanyProfileSnapshotStatus) : 'running';
-  return {
-    snapshotId: Number(record.snapshotId),
-    status,
-    selections: toSelections(record.selections),
-    totalLinksMapped: Number(record.totalLinksMapped ?? 0),
-    successfulPages: Number(record.successfulPages ?? 0),
-    failedPages: Number(record.failedPages ?? 0),
   };
 }

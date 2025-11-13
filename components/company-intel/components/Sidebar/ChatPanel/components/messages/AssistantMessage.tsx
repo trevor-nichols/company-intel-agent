@@ -32,25 +32,25 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
     [message.reasoning.segments],
   );
 
-  const bubble = (
-    <div className="max-w-full rounded-lg border bg-muted/60 px-3 py-2 text-foreground shadow-sm md:max-w-[85%]">
-      {message.content ? (
-        <TooltipProvider delayDuration={120} skipDelayDuration={0}>
-          <Markdown content={content} className="text-sm" components={markdownComponents} />
-        </TooltipProvider>
-      ) : message.status === 'failed' ? (
-        <span className="text-sm text-destructive">Response interrupted.</span>
-      ) : (
-        <ShimmeringText text="Generating answer…" className="text-sm" />
-      )}
-    </div>
-  );
-
   const timelineSections = useMemo(() => {
     type Section = { key: string; order: number; element: React.ReactElement; fallbackIndex: number };
     const sections: Section[] = [];
     const baseOrder = message.createdAt ?? Date.now();
     let fallbackIndex = 0;
+
+    const bubble = (
+      <div className="max-w-full rounded-lg border bg-muted/60 px-3 py-2 text-foreground shadow-sm md:max-w-[85%]">
+        {message.content ? (
+          <TooltipProvider delayDuration={120} skipDelayDuration={0}>
+            <Markdown content={content} className="text-sm" components={markdownComponents} />
+          </TooltipProvider>
+        ) : message.status === 'failed' ? (
+          <span className="text-sm text-destructive">Response interrupted.</span>
+        ) : (
+          <ShimmeringText text="Generating answer…" className="text-sm" />
+        )}
+      </div>
+    );
 
     const reasoningVisible = summarySegments.length > 0 || message.reasoning.isStreaming;
     if (reasoningVisible) {
@@ -94,7 +94,18 @@ export function AssistantMessage({ message }: AssistantMessageProps): React.Reac
       }
       return a.order - b.order;
     });
-  }, [bubble, message.contentStartedAt, message.id, message.reasoning, message.tool, summarySegments]);
+  }, [
+    content,
+    markdownComponents,
+    message.content,
+    message.contentStartedAt,
+    message.createdAt,
+    message.id,
+    message.reasoning,
+    message.status,
+    message.tool,
+    summarySegments,
+  ]);
 
   return (
     <div className="flex flex-col items-start gap-3 text-left text-sm">

@@ -29,7 +29,7 @@ export interface RunSubscription {
   readonly unsubscribe: () => void;
 }
 
-export interface ActiveRunSummary {
+interface ActiveRunSummary {
   readonly snapshotId: number | null;
   readonly domain: string;
   readonly startedAt: Date;
@@ -50,7 +50,7 @@ export class ActiveRunError extends Error {
 
 const CLEANUP_DELAY_MS = 30_000;
 
-export interface CompanyIntelRunCoordinatorDependencies {
+interface CompanyIntelRunCoordinatorDependencies {
   readonly server: CompanyIntelServer;
   readonly logger?: typeof defaultLogger;
 }

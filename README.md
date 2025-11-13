@@ -117,6 +117,7 @@ The UI hooks in `components/company-intel/hooks` assume this order and will fail
 - `pnpm test` — Vitest suites covering serialization, persistence parity, and SSE framing.
 - `pnpm build` — `next build` for production bundles.
 - `pnpm scan` — gitleaks secret scan (required to be clean before merge).
+- `pnpm prune:exports` — runs `ts-prune` with Storybook stories and Next.js entrypoints filtered out so signal focuses on actionable unused exports.
 
 ## Limitations & Notes
 - Integration tests mock Tavily and OpenAI; real runs require valid API keys.

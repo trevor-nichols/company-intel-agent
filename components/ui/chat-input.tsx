@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, type FormEvent, type KeyboardEve
 import { ArrowUp, Square } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
-export interface ChatInputProps {
+interface ChatInputProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
   readonly onSubmit: () => void;

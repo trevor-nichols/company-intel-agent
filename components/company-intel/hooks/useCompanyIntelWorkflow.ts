@@ -35,7 +35,7 @@ function resolveErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export interface UseCompanyIntelWorkflowResult {
+interface UseCompanyIntelWorkflowResult {
   readonly profile: CompanyProfile | null;
   readonly profileStatus: CompanyProfile['status'] | 'not_configured';
   readonly activeSnapshotId: number | null;

@@ -293,7 +293,7 @@ export const companyIntelEmptyHandlers = createCompanyIntelHandlers({
   triggerResult: triggerCompanyIntelEmptyResultFixture,
 });
 
-export const companyIntelPreviewErrorHandlers = [
+const companyIntelPreviewErrorHandlers = [
   ...createCompanyIntelHandlers(),
 ];
 companyIntelPreviewErrorHandlers.splice(
@@ -312,7 +312,7 @@ companyIntelPreviewErrorHandlers.splice(
   }),
 );
 
-export const companyIntelSlowPreviewHandlers = [
+const companyIntelSlowPreviewHandlers = [
   ...createCompanyIntelHandlers(),
 ];
 companyIntelSlowPreviewHandlers.splice(

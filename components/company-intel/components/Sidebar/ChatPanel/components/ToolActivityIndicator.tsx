@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import React from 'react';
-import { CheckCircle2, Search } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils/cn';
 import { Spinner } from '@agenai/ui/spinner';
@@ -40,8 +40,6 @@ export function ToolActivityIndicator({ tool, status, className }: ToolActivityI
     >
       {status === 'completed' ? (
         <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-      ) : status === 'searching' ? (
-        <Search className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
       ) : (
         <Spinner size="sm" className="text-muted-foreground" />
       )}

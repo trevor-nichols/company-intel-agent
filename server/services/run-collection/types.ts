@@ -56,14 +56,6 @@ export interface RunCompanyIntelCollectionResult {
   readonly failedPages: number;
 }
 
-export interface MappingOutcome {
-  readonly intelResult: SiteIntelResult;
-  readonly structuredPages: CompanyIntelPageContent[];
-  readonly pageRecords: CompanyIntelPageInsert[];
-  readonly successfulScrapes: SiteIntelScrapeOutcome[];
-  readonly selectedUrls: string[];
-}
-
 export interface CompanyIntelPageContent {
   readonly url: string;
   readonly content: string;

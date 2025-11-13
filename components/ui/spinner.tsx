@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils/cn';
 
-export interface SpinnerProps {
+interface SpinnerProps {
   readonly className?: string;
   readonly size?: 'sm' | 'md' | 'lg' | 'xl';
 }

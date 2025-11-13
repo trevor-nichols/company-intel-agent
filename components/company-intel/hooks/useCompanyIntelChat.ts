@@ -13,11 +13,6 @@ import type {
   CompanyIntelChatResult,
   CompanyIntelChatStreamEvent,
 } from '@/shared/company-intel/chat';
-export type {
-  CompanyIntelChatCitation,
-  CompanyIntelChatMessage,
-  CompanyIntelChatResult,
-} from '@/shared/company-intel/chat';
 import { useCompanyIntelClient } from '../context';
 import { toHttpError } from '../utils/errors';
 

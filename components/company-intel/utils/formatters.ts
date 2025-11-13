@@ -20,10 +20,6 @@ export function formatDate(value: Date | null | undefined): string {
   }).format(value);
 }
 
-export function formatDateTime(value: Date | null | undefined): string {
-  return formatDate(value);
-}
-
 export function getStatusVariant(
   status: CompanyProfileStatus | CompanyProfileSnapshotStatus | 'not_configured',
 ): BadgeVariant {

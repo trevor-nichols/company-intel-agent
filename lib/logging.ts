@@ -3,8 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
-export type LogMetadata = Record<string, unknown>;
+type LogMetadata = Record<string, unknown>;
 
 export interface Logger {
   readonly debug: (message: string, metadata?: LogMetadata) => void;
@@ -87,7 +86,3 @@ function createLogger(baseContext: LogMetadata = {}): Logger {
 }
 
 export const logger = createLogger();
-
-export function createLoggerWithContext(context: LogMetadata): Logger {
-  return createLogger(context);
-}

@@ -6,15 +6,11 @@ export { useExportCompanyIntelSnapshot } from './useExportCompanyIntelSnapshot';
 export { useCancelCompanyIntelRun } from './useCancelCompanyIntelRun';
 export { useCompanyIntelChat } from './useCompanyIntelChat';
 export type {
-  CompanyIntelChatMessage,
-  CompanyIntelChatResult,
   CompanyIntelChatRequest,
   UseCompanyIntelChatOptions,
   UseCompanyIntelChatResult,
 } from './useCompanyIntelChat';
-export type {
-  CompanyIntelChatCitation,
-} from '@/shared/company-intel/chat';
+export type { CompanyIntelChatMessage, CompanyIntelChatResult, CompanyIntelChatCitation } from '@/shared/company-intel/chat';
 
 export { useUpdateCompanyIntelProfile } from './useUpdateCompanyIntelProfile';
 export type { UseTriggerCompanyIntelOptions } from './useTriggerCompanyIntel';

@@ -65,7 +65,7 @@ const structuredProfileSummary: CompanyIntelSnapshotStructuredProfileSummary = {
   sources: structuredSources,
 };
 
-export const companyIntelProfileFixture: CompanyProfile = {
+const companyIntelProfileFixture: CompanyProfile = {
   id: 71,
   domain: 'https://acmeintel.ai',
   status: 'ready',
@@ -116,7 +116,7 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
 </pages>`,
 };
 
-export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
+const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
   id: 3421,
   domain: 'https://acmeintel.ai',
   status: 'complete',
@@ -197,7 +197,7 @@ export const companyIntelSuccessfulSnapshotFixture: CompanyProfileSnapshot = {
   completedAt: new Date('2024-10-14T11:15:00.000Z'),
 };
 
-export const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
+const companyIntelFailedSnapshotFixture: CompanyProfileSnapshot = {
   id: 3174,
   domain: 'https://acmeintel.ai',
   status: 'failed',

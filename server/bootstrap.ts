@@ -49,28 +49,6 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 let cachedEnvironment: CompanyIntelEnvironment | null = globalThis.__companyIntelEnvironment ?? null;
 
-async function disposeEnvironment(environment: CompanyIntelEnvironment | null): Promise<void> {
-  if (!environment) {
-    return;
-  }
-
-  const persistenceWithLifecycle = environment.persistence as {
-    disconnect?: () => Promise<void> | void;
-  };
-
-  const disconnect = persistenceWithLifecycle.disconnect;
-  if (typeof disconnect === 'function') {
-    try {
-      await disconnect.call(environment.persistence);
-    } catch (error) {
-      const err = error instanceof Error ? { name: error.name, message: error.message } : error ?? null;
-      defaultLogger.warn('company-intel:bootstrap:persistence-disconnect-error', {
-        error: err,
-      });
-    }
-  }
-}
-
 function resolvePersistence(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): CompanyIntelPersistence {
   if (overrides.persistence) {
     return overrides.persistence;
@@ -180,13 +158,4 @@ export function getCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverr
     cachedEnvironment = environment;
   }
   return environment;
-}
-
-export function resetCompanyIntelEnvironment(): void {
-  const previous = cachedEnvironment;
-  cachedEnvironment = null;
-  if (!isProduction) {
-    globalThis.__companyIntelEnvironment = null;
-  }
-  void disposeEnvironment(previous);
 }

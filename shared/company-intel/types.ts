@@ -274,8 +274,3 @@ export type CompanyIntelStreamEvent =
       readonly type: 'run-cancelled';
       readonly reason?: string | null;
     });
-
-export interface CompanyIntelStreamErrorEvent extends CompanyIntelStreamBaseEvent {
-  readonly type: 'run-error';
-  readonly message: string;
-}

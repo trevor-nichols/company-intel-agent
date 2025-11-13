@@ -83,11 +83,11 @@ Events (in practice you’ll see a subset, in this order):
 * `snapshot-created` `{ status }`
 * `status` `{ stage: 'mapping'|'scraping'|'analysis_structured'|'analysis_overview'|'persisting', completed?, total? }`
 * `structured-delta` `{ delta, accumulated, summary? }`
-* `structured-reasoning-delta` `{ delta, headline? }`
-* `structured-complete` `{ payload: { structuredProfile, metadata, faviconUrl?, reasoningHeadline? } }`
+* `structured-reasoning-delta` `{ delta, headlines? }`
+* `structured-complete` `{ payload: { structuredProfile, metadata, faviconUrl?, reasoningHeadlines? } }`
 * `overview-delta` `{ delta, displayText? }`
-* `overview-reasoning-delta` `{ delta, headline? }`
-* `overview-complete` `{ overview, headline? }`
+* `overview-reasoning-delta` `{ delta, headlines? }`
+* `overview-complete` `{ overview, headlines? }`
 * `run-complete` `{ result }`
 * `run-error` `{ message }`
 * **Terminal:** send `data: [DONE]` and close.
@@ -157,6 +157,7 @@ pnpm lint
 pnpm typecheck
 pnpm scan       # gitleaks detect --redact
 ```
+Note: Run pnpm lint and pnpm typecheck after all edits to ensure no errors exist
 
 ## 16) Task handoff protocol (how you work)
 

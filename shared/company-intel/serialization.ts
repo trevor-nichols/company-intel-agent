@@ -140,19 +140,33 @@ function normaliseAgentMetadata(value: unknown): CompanyIntelSnapshotAgentMetada
     typeof record.raw_text === 'string' ||
     typeof record.usage === 'object' ||
     typeof record.headline === 'string' ||
-    typeof record.reasoning_headline === 'string';
+    typeof record.reasoning_headline === 'string' ||
+    Array.isArray(record.headlines) ||
+    Array.isArray(record.reasoning_headlines);
 
   if (!hasAny) {
     return undefined;
   }
 
-  const headlineCandidate =
-    typeof record.headline === 'string'
-      ? record.headline
-      : typeof record.reasoning_headline === 'string'
-        ? record.reasoning_headline
-        : undefined;
-  const headline = headlineCandidate?.trim();
+  const normalizedHeadlines = (() => {
+    if (Array.isArray(record.headlines)) {
+      return record.headlines.filter(value => typeof value === 'string').map(value => value.trim()).filter(Boolean);
+    }
+    if (Array.isArray(record.reasoning_headlines)) {
+      return record.reasoning_headlines
+        .filter(value => typeof value === 'string')
+        .map(value => value.trim())
+        .filter(Boolean);
+    }
+    const headlineCandidate =
+      typeof record.headline === 'string'
+        ? record.headline
+        : typeof record.reasoning_headline === 'string'
+          ? record.reasoning_headline
+          : undefined;
+    const headline = headlineCandidate?.trim();
+    return headline ? [headline] : undefined;
+  })();
 
   return {
     responseId:
@@ -169,7 +183,7 @@ function normaliseAgentMetadata(value: unknown): CompanyIntelSnapshotAgentMetada
         : typeof record.raw_text === 'string'
           ? record.raw_text
           : undefined,
-    headline: headline && headline.length > 0 ? headline : undefined,
+    headlines: normalizedHeadlines && normalizedHeadlines.length > 0 ? normalizedHeadlines : undefined,
   } satisfies CompanyIntelSnapshotAgentMetadata;
 }
 

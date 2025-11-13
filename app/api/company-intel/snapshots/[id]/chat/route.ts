@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, context: { params: { id: string
     const response = await openAIClient.responses.create({
       model: chatModel,
       input: input as ResponseCreateParams['input'],
-      reasoning: { effort: 'high' },
+      reasoning: { effort: 'medium' },
       tools: [
         {
           type: 'file_search',

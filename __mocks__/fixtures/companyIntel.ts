@@ -97,14 +97,14 @@ const completeSnapshotSummaries: CompanyIntelSnapshotSummaries = {
       model: 'gpt-5',
       responseId: 'resp_6f54b2d8b2',
       usage: { input_tokens: 13842, output_tokens: 1256 },
-      headline: 'Framing differentiators for revenue intelligence',
+      headlines: ['Framing differentiators for revenue intelligence'],
       summary:
         'Highlight how Acme positions its intel stack against manual research and emphasize the executive-ready brief workflow.',
     },
     overview: {
       model: 'gpt-5',
       usage: { input_tokens: 9782, output_tokens: 842 },
-      headline: 'Summarising why Acme accelerates GTM teams',
+      headlines: ['Summarising why Acme accelerates GTM teams'],
       summary:
         'Lead with the latency advantage and connect it to outcomes for sales, marketing, and customer leadership.',
     },
@@ -239,12 +239,12 @@ const reasoningHeadlineSnapshot: CompanyProfileSnapshot = {
           ...companyIntelSuccessfulSnapshotFixture.summaries.metadata,
           structuredProfile: {
             ...companyIntelSuccessfulSnapshotFixture.summaries.metadata?.structuredProfile,
-            headline: 'Key revenue levers to spotlight',
+            headlines: ['Key revenue levers to spotlight'],
             summary: 'Focus on pipeline velocity, sales cycle compression, and cross-sell activation in the next brief.',
           },
           overview: {
             ...companyIntelSuccessfulSnapshotFixture.summaries.metadata?.overview,
-            headline: 'Executive takeaway for GTM leadership',
+            headlines: ['Executive takeaway for GTM leadership'],
             summary: 'Lead with how automated briefs surface risks earlier and free ops teams to intervene faster.',
           },
         },

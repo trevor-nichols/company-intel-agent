@@ -41,8 +41,8 @@ export function CompanyIntelPanel({
     statusMessages,
     overviewDraft,
     structuredSummaryDraft,
-    structuredReasoningHeadline,
-    overviewReasoningHeadline,
+    structuredReasoningHeadlines,
+    overviewReasoningHeadlines,
     faviconDraft,
     manualUrl,
     hasPreview,
@@ -208,8 +208,8 @@ export function CompanyIntelPanel({
                 isScraping={isScraping}
                 isLoading={isLoading}
                 overviewDraft={overviewDraft}
-                overviewHeadline={overviewReasoningHeadline}
-                structuredHeadline={structuredReasoningHeadline}
+                overviewHeadlines={overviewReasoningHeadlines}
+                structuredHeadlines={structuredReasoningHeadlines}
                 onSaveOverview={profileEditor.saveOverview}
                 onSavePrimaryIndustries={profileEditor.savePrimaryIndustries}
                 onSaveValueProps={profileEditor.saveValueProps}

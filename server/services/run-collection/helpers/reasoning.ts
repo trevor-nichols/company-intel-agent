@@ -2,27 +2,52 @@
 //                reasoning.ts - Helpers for reasoning summary/headline handling
 // ------------------------------------------------------------------------------------------------
 
-export function extractReasoningHeadline(summary: string | null): string | null {
+const HEADLINE_MAX_LENGTH = 160;
+
+export function extractReasoningHeadlines(summary: string | null): readonly string[] {
   if (!summary) {
-    return null;
+    return [];
   }
 
   const trimmed = summary.trim();
   if (trimmed.length === 0) {
-    return null;
+    return [];
   }
 
-  const [firstLineRaw] = trimmed.split(/\n+/);
-  const firstLine = firstLineRaw ?? trimmed;
-  const boldMatch = firstLine.match(/^\*\*(?<headline>.+?)\*\*$/);
-  if (boldMatch?.groups?.headline) {
-    return boldMatch.groups.headline.trim();
+  const matches = Array.from(trimmed.matchAll(/\*\*(?<headline>[\s\S]+?)\*\*/g));
+  const seen = new Set<string>();
+  const headlines: string[] = [];
+
+  for (const match of matches) {
+    const candidate = match.groups?.headline?.trim();
+    if (!candidate) {
+      continue;
+    }
+
+    const normalized = normalizeHeadline(candidate);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    headlines.push(normalized);
   }
 
-  return firstLine.replace(/^\*\*/g, '').replace(/\*\*$/g, '').trim();
+  if (headlines.length === 0) {
+    const [firstLineRaw] = trimmed.split(/\n+/);
+    const fallback = normalizeHeadline(firstLineRaw ?? trimmed);
+    if (fallback) {
+      headlines.push(fallback);
+    }
+  }
+
+  return headlines;
 }
 
-export function normalizeReasoningSummary(summary: string | null, headline: string | null): string | null {
+export function normalizeReasoningSummary(
+  summary: string | null,
+  headlines: readonly string[],
+): string | null {
   if (!summary) {
     return null;
   }
@@ -32,11 +57,19 @@ export function normalizeReasoningSummary(summary: string | null, headline: stri
     return null;
   }
 
-  const effectiveHeadline = headline?.trim();
-  if (effectiveHeadline) {
-    const boldHeadline = `**${effectiveHeadline}**`;
-    if (trimmed.startsWith(boldHeadline)) {
-      trimmed = trimmed.slice(boldHeadline.length).trimStart();
+  if (headlines.length > 0) {
+    for (const rawHeadline of headlines) {
+      const effectiveHeadline = rawHeadline?.trim();
+      if (!effectiveHeadline) {
+        continue;
+      }
+
+      const boldHeadline = `**${effectiveHeadline}**`;
+      if (!trimmed.includes(boldHeadline)) {
+        continue;
+      }
+
+      trimmed = trimmed.replace(boldHeadline, '').trim();
     }
   }
 
@@ -44,46 +77,19 @@ export function normalizeReasoningSummary(summary: string | null, headline: stri
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function deriveReasoningHeadline(
-  summary: string | null,
-  candidate: string | null,
-  current: string | null,
-): string | null {
-  if (!candidate) {
-    return current ?? null;
+function normalizeHeadline(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
   }
 
-  const normalizedCandidate = candidate.trim();
-  if (normalizedCandidate.length === 0) {
-    return current ?? null;
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
   }
 
-  if (!hasExplicitReasoningHeadline(summary)) {
-    return current ?? null;
+  if (trimmed.length > HEADLINE_MAX_LENGTH) {
+    return `${trimmed.slice(0, HEADLINE_MAX_LENGTH - 3).trimEnd()}…`;
   }
 
-  if (normalizedCandidate.length > 160) {
-    return `${normalizedCandidate.slice(0, 157).trimEnd()}…`;
-  }
-
-  return normalizedCandidate;
-}
-
-function hasExplicitReasoningHeadline(summary: string | null): boolean {
-  if (!summary) {
-    return false;
-  }
-
-  const trimmed = summary.trimStart();
-  if (!trimmed.startsWith('**')) {
-    return false;
-  }
-
-  const closingIndex = trimmed.indexOf('**', 2);
-  if (closingIndex <= 2) {
-    return false;
-  }
-
-  const headlineLength = closingIndex - 2;
-  return headlineLength > 0 && headlineLength <= 120;
+  return trimmed;
 }

@@ -73,7 +73,7 @@ export interface CompanyIntelPageContent {
 export interface StructuredAnalysisResult {
   readonly summary: CompanyIntelSnapshotStructuredProfileSummary;
   readonly normalizedTagline: string | null;
-  readonly reasoningHeadline: string | null;
+  readonly reasoningHeadlines: readonly string[];
   readonly reasoningSummary: string | null;
   readonly metadata: {
     readonly responseId: string | null;
@@ -87,7 +87,7 @@ export interface StructuredAnalysisResult {
 
 export interface OverviewAnalysisResult {
   readonly overview: string;
-  readonly reasoningHeadline: string | null;
+  readonly reasoningHeadlines: readonly string[];
   readonly reasoningSummary: string | null;
   readonly metadata: {
     readonly responseId: string | null;

@@ -41,7 +41,7 @@ export async function persistResults(params: PersistResultsParams): Promise<RunC
           model: structured.metadata.model,
           usage: structured.metadata.usage ?? null,
           rawText: structured.metadata.rawText ?? null,
-          headline: structured.reasoningHeadline,
+          headlines: structured.reasoningHeadlines,
           summary: structured.reasoningSummary,
         },
         overview: {
@@ -49,7 +49,7 @@ export async function persistResults(params: PersistResultsParams): Promise<RunC
           model: overview.metadata.model,
           usage: overview.metadata.usage ?? null,
           rawText: overview.metadata.rawText ?? null,
-          headline: overview.reasoningHeadline,
+          headlines: overview.reasoningHeadlines,
           summary: overview.reasoningSummary,
         },
       },

@@ -50,7 +50,7 @@ export interface CompanyIntelSnapshotAgentMetadata {
   readonly model?: string | null;
   readonly usage?: Record<string, unknown> | null;
   readonly rawText?: string | null;
-  readonly headline?: string | null;
+  readonly headlines?: readonly string[] | null;
   readonly summary?: string | null;
 }
 
@@ -77,7 +77,7 @@ export interface CompanyIntelStreamStructuredPayload {
   readonly structuredProfile: CompanyIntelSnapshotStructuredProfileSummary;
   readonly metadata?: CompanyIntelSnapshotAgentMetadata;
   readonly faviconUrl?: string | null;
-  readonly reasoningHeadline?: string | null;
+  readonly reasoningHeadlines?: readonly string[] | null;
 }
 
 export interface CompanyIntelSnapshotProgress {
@@ -231,7 +231,7 @@ export type CompanyIntelStreamEvent =
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'structured-reasoning-delta';
       readonly delta: string;
-      readonly headline: string | null;
+      readonly headlines: readonly string[];
       readonly snapshot?: string | null;
     })
   | (CompanyIntelStreamBaseEvent & {
@@ -247,13 +247,13 @@ export type CompanyIntelStreamEvent =
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'overview-reasoning-delta';
       readonly delta: string;
-      readonly headline: string | null;
+      readonly headlines: readonly string[];
       readonly snapshot?: string | null;
     })
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'overview-complete';
       readonly overview: string;
-      readonly headline?: string | null;
+      readonly headlines?: readonly string[] | null;
     })
   | (CompanyIntelStreamBaseEvent & {
       readonly type: 'vector-store-status';

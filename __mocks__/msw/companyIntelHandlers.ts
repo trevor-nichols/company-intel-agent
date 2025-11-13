@@ -76,12 +76,12 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
     (profile?.structuredProfile as Record<string, unknown> | undefined) ??
     null;
   const structuredHeadline =
-    (summaries?.metadata as { structuredProfile?: { headline?: string } })?.structuredProfile?.headline ??
+    (summaries?.metadata as { structuredProfile?: { headlines?: readonly string[] } })?.structuredProfile?.headlines?.[0] ??
     'Framing differentiators for revenue intelligence';
   const overviewText = (summaries?.overview as string | undefined) ??
     'Acme Intel Systems helps revenue leaders act on competitive shifts faster than the market moves.';
   const overviewHeadline =
-    (summaries?.metadata as { overview?: { headline?: string } })?.overview?.headline ??
+    (summaries?.metadata as { overview?: { headlines?: readonly string[] } })?.overview?.headlines?.[0] ??
     'Summarising why Acme accelerates GTM teams';
   const baseEvent = {
     snapshotId: triggerResult.snapshotId,
@@ -117,7 +117,7 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
       ...baseEvent,
       type: 'overview-reasoning-delta',
       delta: `**${overviewHeadline}**`,
-      headline: overviewHeadline,
+      headlines: [overviewHeadline],
       snapshot: null,
     },
     {
@@ -131,7 +131,7 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
       ...baseEvent,
       type: 'structured-reasoning-delta',
       delta: `**${structuredHeadline}**`,
-      headline: structuredHeadline,
+      headlines: [structuredHeadline],
       snapshot: null,
     },
     {
@@ -143,17 +143,17 @@ function createDefaultStreamEvents(triggerResult: TriggerCompanyIntelResult, pay
         metadata: {
           model: 'gpt-5-story',
           responseId: 'resp_story_structured',
-          headline: structuredHeadline,
+          headlines: [structuredHeadline],
           summary: 'Focus on key differentiators and explain how briefs reduce cycle time for exec decisions.',
         },
-        reasoningHeadline: structuredHeadline,
+        reasoningHeadlines: [structuredHeadline],
       },
     },
     {
       ...baseEvent,
       type: 'overview-complete',
       overview: overviewText,
-      headline: overviewHeadline,
+      headlines: [overviewHeadline],
     },
     {
       ...baseEvent,

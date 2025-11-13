@@ -60,6 +60,8 @@ export interface UseCompanyIntelWorkflowResult {
   readonly statusMessages: readonly string[];
   readonly overviewDraft: string | null;
   readonly structuredSummaryDraft: CompanyIntelSnapshotStructuredProfileSummary | null;
+  readonly structuredReasoningHeadlines: readonly string[];
+  readonly overviewReasoningHeadlines: readonly string[];
   readonly structuredReasoningHeadline: string | null;
   readonly overviewReasoningHeadline: string | null;
   readonly faviconDraft: string | null;
@@ -125,8 +127,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setOverviewDraft(null);
         setStructuredSummaryDraft(null);
         setStructuredTextDraft(null);
-        setStructuredReasoningHeadlineDraft(null);
-        setOverviewReasoningHeadlineDraft(null);
+        setStructuredReasoningHeadlinesDraft([]);
+        setOverviewReasoningHeadlinesDraft([]);
         setFaviconDraft(null);
         setStreamSnapshotId(event.snapshotId);
         lastResumeSnapshotIdRef.current = event.snapshotId;
@@ -151,11 +153,11 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         });
         break;
       case 'overview-reasoning-delta':
-        setOverviewReasoningHeadlineDraft(event.headline ?? null);
+        setOverviewReasoningHeadlinesDraft(event.headlines ?? []);
         break;
       case 'overview-complete':
         setOverviewDraft(event.overview);
-        setOverviewReasoningHeadlineDraft(event.headline ?? null);
+        setOverviewReasoningHeadlinesDraft(event.headlines ?? []);
         break;
       case 'vector-store-status':
         setVectorStoreOverrides(prev => {
@@ -195,13 +197,13 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         });
         break;
       case 'structured-reasoning-delta':
-        setStructuredReasoningHeadlineDraft(event.headline ?? null);
+        setStructuredReasoningHeadlinesDraft(event.headlines ?? []);
         break;
       case 'structured-complete':
         setStructuredSummaryDraft(event.payload.structuredProfile);
         setStructuredTextDraft(null);
-        setStructuredReasoningHeadlineDraft(
-          event.payload.metadata?.headline ?? event.payload.reasoningHeadline ?? null,
+        setStructuredReasoningHeadlinesDraft(
+          event.payload.metadata?.headlines ?? event.payload.reasoningHeadlines ?? [],
         );
         setFaviconDraft(event.payload.faviconUrl ?? null);
         break;
@@ -230,8 +232,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setOverviewDraft(null);
         setStructuredSummaryDraft(null);
         setStructuredTextDraft(null);
-        setStructuredReasoningHeadlineDraft(null);
-        setOverviewReasoningHeadlineDraft(null);
+        setStructuredReasoningHeadlinesDraft([]);
+        setOverviewReasoningHeadlinesDraft([]);
         setFaviconDraft(null);
         setStreamSnapshotId(null);
         lastResumeSnapshotIdRef.current = event.snapshotId;
@@ -253,8 +255,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setOverviewDraft(null);
         setStructuredSummaryDraft(null);
         setStructuredTextDraft(null);
-        setStructuredReasoningHeadlineDraft(null);
-        setOverviewReasoningHeadlineDraft(null);
+        setStructuredReasoningHeadlinesDraft([]);
+        setOverviewReasoningHeadlinesDraft([]);
         setFaviconDraft(null);
         setStreamSnapshotId(null);
         lastResumeSnapshotIdRef.current = event.snapshotId;
@@ -290,8 +292,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const [overviewDraft, setOverviewDraft] = useState<string | null>(null);
   const [structuredSummaryDraft, setStructuredSummaryDraft] = useState<CompanyIntelSnapshotStructuredProfileSummary | null>(null);
   const [, setStructuredTextDraft] = useState<string | null>(null);
-  const [structuredReasoningHeadlineDraft, setStructuredReasoningHeadlineDraft] = useState<string | null>(null);
-  const [overviewReasoningHeadlineDraft, setOverviewReasoningHeadlineDraft] = useState<string | null>(null);
+  const [structuredReasoningHeadlinesDraft, setStructuredReasoningHeadlinesDraft] = useState<readonly string[]>([]);
+  const [overviewReasoningHeadlinesDraft, setOverviewReasoningHeadlinesDraft] = useState<readonly string[]>([]);
   const [faviconDraft, setFaviconDraft] = useState<string | null>(null);
   const [vectorStoreOverrides, setVectorStoreOverrides] = useState<Record<number, VectorStoreOverride>>({});
   const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
@@ -315,14 +317,20 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       completedAt: latestSnapshot.completedAt ?? null,
     };
   }, [latestSnapshot, vectorStoreOverrides]);
-  const structuredReasoningHeadline = useMemo(
-    () => structuredReasoningHeadlineDraft ?? latestSnapshot?.summaries?.metadata?.structuredProfile?.headline ?? null,
-    [structuredReasoningHeadlineDraft, latestSnapshot],
-  );
-  const overviewReasoningHeadline = useMemo(
-    () => overviewReasoningHeadlineDraft ?? latestSnapshot?.summaries?.metadata?.overview?.headline ?? null,
-    [overviewReasoningHeadlineDraft, latestSnapshot],
-  );
+  const structuredReasoningHeadlines = useMemo<readonly string[]>(() => {
+    if (structuredReasoningHeadlinesDraft.length > 0) {
+      return structuredReasoningHeadlinesDraft;
+    }
+    return latestSnapshot?.summaries?.metadata?.structuredProfile?.headlines ?? [];
+  }, [structuredReasoningHeadlinesDraft, latestSnapshot]);
+  const overviewReasoningHeadlines = useMemo<readonly string[]>(() => {
+    if (overviewReasoningHeadlinesDraft.length > 0) {
+      return overviewReasoningHeadlinesDraft;
+    }
+    return latestSnapshot?.summaries?.metadata?.overview?.headlines ?? [];
+  }, [overviewReasoningHeadlinesDraft, latestSnapshot]);
+  const structuredReasoningHeadline = structuredReasoningHeadlines[0] ?? null;
+  const overviewReasoningHeadline = overviewReasoningHeadlines[0] ?? null;
 
   useEffect(() => {
     if (profile?.domain) {
@@ -673,8 +681,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setStreamActive(false);
     setOverviewDraft(null);
     setStructuredSummaryDraft(null);
-    setStructuredReasoningHeadlineDraft(null);
-    setOverviewReasoningHeadlineDraft(null);
+    setStructuredReasoningHeadlinesDraft([]);
+    setOverviewReasoningHeadlinesDraft([]);
     setFaviconDraft(null);
     setStreamSnapshotId(null);
     lastResumeSnapshotIdRef.current = null;
@@ -687,8 +695,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setStreamProgress(null);
     setOverviewDraft(null);
     setStructuredSummaryDraft(null);
-    setStructuredReasoningHeadlineDraft(null);
-    setOverviewReasoningHeadlineDraft(null);
+    setStructuredReasoningHeadlinesDraft([]);
+    setOverviewReasoningHeadlinesDraft([]);
     setFaviconDraft(null);
 
     if (activeSnapshotId) {
@@ -736,8 +744,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       setStreamActive(false);
       setOverviewDraft(null);
       setStructuredSummaryDraft(null);
-      setStructuredReasoningHeadlineDraft(null);
-      setOverviewReasoningHeadlineDraft(null);
+      setStructuredReasoningHeadlinesDraft([]);
+      setOverviewReasoningHeadlinesDraft([]);
       setFaviconDraft(null);
     } catch (error) {
       setStreamActive(false);
@@ -772,6 +780,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     statusMessages,
     overviewDraft,
     structuredSummaryDraft,
+    structuredReasoningHeadlines,
+    overviewReasoningHeadlines,
     structuredReasoningHeadline,
     overviewReasoningHeadline,
     faviconDraft,

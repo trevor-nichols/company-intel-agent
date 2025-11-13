@@ -24,6 +24,8 @@ const baseArgs = {
   isLoading: false,
   isStreaming: false,
   isScraping: false,
+  overviewHeadlines: ['Executive reasoning focus'],
+  structuredHeadlines: ['Structured profile reasoning'],
   onSaveOverview: asyncNoop,
   onSavePrimaryIndustries: asyncNoop,
   onSaveValueProps: asyncNoop,

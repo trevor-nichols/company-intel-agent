@@ -99,11 +99,11 @@ Each frame is emitted as `data: <json>\n\n` and the stream terminates with `data
 1. `snapshot-created` `{ status }`
 2. `status` `{ stage, completed?, total? }`
 3. `structured-delta` `{ delta, accumulated, summary? }`
-4. `structured-reasoning-delta` `{ delta, headline? }`
-5. `structured-complete` `{ payload }`
+4. `structured-reasoning-delta` `{ delta, headlines: string[] }`
+5. `structured-complete` `{ payload }` (payload metadata includes `reasoningHeadlines: string[]`)
 6. `overview-delta` `{ delta, displayText? }`
-7. `overview-reasoning-delta` `{ delta, headline? }`
-8. `overview-complete` `{ overview, headline? }`
+7. `overview-reasoning-delta` `{ delta, headlines: string[] }`
+8. `overview-complete` `{ overview, headlines: string[] }`
 9. `run-complete` `{ result }`
 10. `run-error` `{ message }`
 11. `run-cancelled` `{ reason? }`

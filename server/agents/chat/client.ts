@@ -68,7 +68,7 @@ export async function runChatAgent(
   const requestPayload: ResponseCreateParams = {
     model: dependencies.model,
     input,
-    reasoning: { effort: reasoningEffort },
+    reasoning: { effort: reasoningEffort, summary: 'auto' },
     include: ['file_search_call.results'],
     tools: [
       {

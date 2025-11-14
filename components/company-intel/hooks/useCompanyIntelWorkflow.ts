@@ -44,6 +44,7 @@ interface UseCompanyIntelWorkflowResult {
   readonly hasActiveRun: boolean;
   readonly snapshots: readonly CompanyProfileSnapshot[];
   readonly latestSnapshot: CompanyProfileSnapshot | null;
+  readonly displayedSnapshot: CompanyProfileSnapshot | null;
   readonly chatSnapshot: {
     readonly snapshotId: number;
     readonly domain: string | null;
@@ -136,6 +137,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setStructuredReasoningHeadlinesDraft([]);
         setOverviewReasoningHeadlinesDraft([]);
         setFaviconDraft(null);
+        setSnapshotOverride(null);
         setLoadedSnapshotId(null);
         setLoadingSnapshotId(null);
         setStreamSnapshotId(event.snapshotId);
@@ -214,6 +216,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
           event.payload.metadata?.headlines ?? event.payload.reasoningHeadlines ?? [],
         );
         setFaviconDraft(event.payload.faviconUrl ?? null);
+        setSnapshotOverride(null);
         setLoadedSnapshotId(event.snapshotId);
         break;
       case 'run-complete':
@@ -233,6 +236,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
           }
           return previous;
         });
+        setSnapshotOverride(null);
         setLoadedSnapshotId(event.snapshotId);
         setLoadingSnapshotId(null);
         break;
@@ -258,6 +262,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
           }
           return previous;
         });
+        setSnapshotOverride(null);
         setLoadedSnapshotId(null);
         setLoadingSnapshotId(null);
         break;
@@ -276,6 +281,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setErrorMessage(event.reason ?? 'Company intel run cancelled.');
         setProfileStatusOverride(runBaselineStatusRef.current);
         void refetch();
+        setSnapshotOverride(null);
         setLoadedSnapshotId(null);
         setLoadingSnapshotId(null);
         break;
@@ -313,11 +319,19 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const [vectorStoreOverrides, setVectorStoreOverrides] = useState<Record<number, VectorStoreOverride>>({});
   const [loadingSnapshotId, setLoadingSnapshotId] = useState<number | null>(null);
   const [loadedSnapshotId, setLoadedSnapshotId] = useState<number | null>(null);
+  const [snapshotOverride, setSnapshotOverride] = useState<CompanyProfileSnapshot | null>(null);
   const isRunRefreshing = triggerMutation.isPending || resumeMutation.isPending || isStreamActive;
   const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
 
   const snapshots = useMemo<readonly CompanyProfileSnapshot[]>(() => companyIntelData?.snapshots ?? [], [companyIntelData?.snapshots]);
   const latestSnapshot = useMemo(() => snapshots[0] ?? null, [snapshots]);
+  const loadedSnapshotFromHistory = useMemo(() => {
+    if (!loadedSnapshotId) {
+      return null;
+    }
+    return snapshots.find(snapshot => snapshot.id === loadedSnapshotId) ?? null;
+  }, [loadedSnapshotId, snapshots]);
+  const displayedSnapshot = snapshotOverride ?? loadedSnapshotFromHistory ?? latestSnapshot;
   const chatSnapshot = useMemo(() => {
     if (!latestSnapshot || latestSnapshot.status !== 'complete') {
       return null;
@@ -704,6 +718,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       setOverviewReasoningHeadlinesDraft(snapshot.summaries?.metadata?.overview?.headlines ?? []);
       setStructuredTextDraft(null);
       setFaviconDraft(null);
+      setSnapshotOverride(snapshot);
       setLoadedSnapshotId(snapshotId);
     } catch (error) {
       setErrorMessage(resolveErrorMessage(error, 'Unable to load snapshot details.'));
@@ -743,6 +758,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setFaviconDraft(null);
     setStreamSnapshotId(null);
     lastResumeSnapshotIdRef.current = null;
+    setSnapshotOverride(null);
     setLoadedSnapshotId(null);
     setLoadingSnapshotId(null);
   }, [previewMutation]);
@@ -757,6 +773,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setStructuredReasoningHeadlinesDraft([]);
     setOverviewReasoningHeadlinesDraft([]);
     setFaviconDraft(null);
+    setSnapshotOverride(null);
     setLoadedSnapshotId(null);
     setLoadingSnapshotId(null);
 
@@ -829,6 +846,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     hasActiveRun,
     snapshots,
     latestSnapshot,
+    displayedSnapshot,
     chatSnapshot,
     previewData,
     recommendedSelections,

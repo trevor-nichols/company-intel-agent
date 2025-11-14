@@ -28,7 +28,7 @@ export function CompanyIntelPanel({
     profile,
     profileStatus,
     snapshots,
-    latestSnapshot,
+    displayedSnapshot,
     chatSnapshot,
     previewData,
     recommendedSelections,
@@ -44,7 +44,6 @@ export function CompanyIntelPanel({
     structuredReasoningHeadlines,
     overviewReasoningHeadlines,
     faviconDraft,
-    loadedSnapshotId,
     loadingSnapshotId,
     manualUrl,
     hasPreview,
@@ -115,7 +114,7 @@ export function CompanyIntelPanel({
               isError={isError}
               onSnapshotLoad={loadSnapshotIntoEditor}
               loadingSnapshotId={loadingSnapshotId}
-              activeSnapshotId={loadedSnapshotId}
+              activeSnapshotId={displayedSnapshot?.id ?? null}
               disableSnapshotLoad={isScraping || isStreaming}
             />
           ) : null}
@@ -174,7 +173,7 @@ export function CompanyIntelPanel({
     removeManualUrl,
     loadSnapshotIntoEditor,
     snapshots,
-    loadedSnapshotId,
+    displayedSnapshot?.id,
     loadingSnapshotId,
     startOver,
     statusMessages,
@@ -202,7 +201,7 @@ export function CompanyIntelPanel({
               structuredProfile={structuredSummaryDraft}
               faviconOverride={faviconDraft}
               profileStatus={profileStatus}
-              latestSnapshot={latestSnapshot}
+              latestSnapshot={displayedSnapshot}
               domainLabel={domainLabel}
               isScraping={isScraping}
               isStreaming={isStreaming}

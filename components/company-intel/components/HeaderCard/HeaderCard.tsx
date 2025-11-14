@@ -50,14 +50,15 @@ export function HeaderCard({
   const faviconUrl = faviconOverride ?? profile?.faviconUrl ?? null;
   const domainDisplay = domainLabel ? domainLabel.replace(/https?:\/\//i, '').replace(/\/$/, '') : null;
   const avatarInitials = deriveInitials(effectiveCompanyName ?? domainDisplay ?? null);
-  const lastRefreshedLabel = profile?.lastRefreshedAt ? formatDate(profile.lastRefreshedAt) : null;
-  const latestSnapshotLabel = profile?.lastSnapshotId ? `Snapshot #${profile.lastSnapshotId}` : null;
+  const snapshotForDisplay = latestSnapshot ?? null;
+  const lastRefreshedLabel = snapshotForDisplay?.completedAt ? formatDate(snapshotForDisplay.completedAt) : null;
+  const latestSnapshotLabel = snapshotForDisplay ? `Snapshot #${snapshotForDisplay.id}` : null;
   const isRefreshing = isScraping || isStreaming;
   const valuePropCount = structuredProfile?.valueProps.length ?? (isRefreshing ? 0 : (profile?.valueProps.length ?? 0));
   const industryCount = structuredProfile?.primaryIndustries.length ?? (isRefreshing ? 0 : (profile?.primaryIndustries.length ?? 0));
   const offeringsCount = structuredProfile?.keyOfferings.length ?? (isRefreshing ? 0 : (profile?.keyOfferings.length ?? 0));
   const showLiveIndicator = isStreaming && (structuredProfile !== null || isScraping);
-  const latestSnapshotIsComplete = latestSnapshot?.status === 'complete';
+  const latestSnapshotIsComplete = snapshotForDisplay?.status === 'complete';
   const showStatusBadge =
     displayStatusBadge &&
     !latestSnapshotIsComplete &&
@@ -82,15 +83,15 @@ export function HeaderCard({
   } = exportSnapshot;
 
   const handleExport = useCallback(() => {
-    if (!latestSnapshot || latestSnapshot.status !== 'complete') {
+    if (!snapshotForDisplay || snapshotForDisplay.status !== 'complete') {
       return;
     }
-    exportSnapshotMutate({ snapshotId: latestSnapshot.id });
-  }, [exportSnapshotMutate, latestSnapshot]);
+    exportSnapshotMutate({ snapshotId: snapshotForDisplay.id });
+  }, [exportSnapshotMutate, snapshotForDisplay]);
 
   useEffect(() => {
     resetExportSnapshot();
-  }, [latestSnapshot?.id, resetExportSnapshot]);
+  }, [snapshotForDisplay?.id, resetExportSnapshot]);
 
   return (
     <CardHeader className="space-y-6 pb-0">

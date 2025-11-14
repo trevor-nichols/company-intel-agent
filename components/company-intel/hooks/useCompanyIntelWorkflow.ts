@@ -333,22 +333,32 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   }, [loadedSnapshotId, snapshots]);
   const displayedSnapshot = snapshotOverride ?? loadedSnapshotFromHistory ?? latestSnapshot;
   const chatSnapshot = useMemo(() => {
-    if (!latestSnapshot || latestSnapshot.status !== 'complete') {
+    const candidateSnapshot = (() => {
+      if (displayedSnapshot && displayedSnapshot.status === 'complete') {
+        return displayedSnapshot;
+      }
+      if (latestSnapshot && latestSnapshot.status === 'complete') {
+        return latestSnapshot;
+      }
+      return null;
+    })();
+
+    if (!candidateSnapshot) {
       return null;
     }
 
-    const override = vectorStoreOverrides[latestSnapshot.id];
-    const vectorStoreStatus = override?.status ?? latestSnapshot.vectorStoreStatus ?? 'pending';
-    const vectorStoreError = override ? override.error : latestSnapshot.vectorStoreError ?? null;
+    const override = vectorStoreOverrides[candidateSnapshot.id];
+    const vectorStoreStatus = override?.status ?? candidateSnapshot.vectorStoreStatus ?? 'pending';
+    const vectorStoreError = override ? override.error : candidateSnapshot.vectorStoreError ?? null;
 
     return {
-      snapshotId: latestSnapshot.id,
-      domain: latestSnapshot.domain ?? null,
+      snapshotId: candidateSnapshot.id,
+      domain: candidateSnapshot.domain ?? null,
       vectorStoreStatus,
       vectorStoreError,
-      completedAt: latestSnapshot.completedAt ?? null,
+      completedAt: candidateSnapshot.completedAt ?? null,
     };
-  }, [latestSnapshot, vectorStoreOverrides]);
+  }, [displayedSnapshot, latestSnapshot, vectorStoreOverrides]);
   const structuredReasoningHeadlines = useMemo<readonly string[]>(() => {
     if (structuredReasoningHeadlinesDraft.length > 0) {
       return structuredReasoningHeadlinesDraft;

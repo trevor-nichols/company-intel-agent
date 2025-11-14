@@ -4,7 +4,7 @@
 //                useCompanyIntelWorkflow - Centralized state + actions for company intel UI
 // ------------------------------------------------------------------------------------------------
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type {
   CompanyIntelPreviewResult,
   CompanyIntelSelection,
@@ -18,12 +18,13 @@ import type {
 } from '../types';
 import { useCompanyIntelClient } from '../context';
 import { useCompanyIntel } from './useCompanyIntel';
-import { useCompanyIntelPreview } from './useCompanyIntelPreview';
 import { useTriggerCompanyIntel } from './useTriggerCompanyIntel';
 import { useCancelCompanyIntelRun } from './useCancelCompanyIntelRun';
-import { useUpdateCompanyIntelProfile } from './useUpdateCompanyIntelProfile';
 import { HttpError, toHttpError } from '../utils/errors';
 import { toCompanyProfileSnapshot } from '../utils/serialization';
+import { useWorkflowProfileEditor } from './workflow/useWorkflowProfileEditor';
+import { useWorkflowPreviewState } from './workflow/useWorkflowPreviewState';
+import { initialWorkflowStreamState, workflowStreamReducer } from './workflow/streamReducer';
 
 const RATE_LIMIT_MESSAGE = 'You’ve reached the demo rate limit. Please wait about a minute and try again.';
 
@@ -121,206 +122,154 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   } = companyIntelQuery;
   const queryProfileStatus = companyIntelData?.profile?.status ?? null;
   const profileStatusFromQuery = queryProfileStatus ?? 'not_configured';
-  const [streamSnapshotId, setStreamSnapshotId] = useState<number | null>(null);
-  const lastResumeSnapshotIdRef = useRef<number | null>(null);
-  const runBaselineStatusRef = useRef<CompanyProfile['status'] | 'not_configured'>('not_configured');
-  const [profileStatusOverride, setProfileStatusOverride] = useState<CompanyProfile['status'] | null>(null);
-  const handleStreamEvent = useCallback((event: CompanyIntelStreamEvent) => {
-    switch (event.type) {
-      case 'snapshot-created':
-        setStreamActive(true);
-        setStreamStage('mapping');
-        setStreamProgress(null);
-        setOverviewDraft(null);
-        setStructuredSummaryDraft(null);
-        setStructuredTextDraft(null);
-        setStructuredReasoningHeadlinesDraft([]);
-        setOverviewReasoningHeadlinesDraft([]);
-        setFaviconDraft(null);
-        setSnapshotOverride(null);
-        setLoadedSnapshotId(null);
-        setLoadingSnapshotId(null);
-        setStreamSnapshotId(event.snapshotId);
-        lastResumeSnapshotIdRef.current = event.snapshotId;
-        runBaselineStatusRef.current = profileStatusFromQuery;
-        setProfileStatusOverride('refreshing');
-        break;
-      case 'status':
-        setStreamActive(true);
-        setStreamStage(event.stage);
-        if (event.stage === 'scraping' && typeof event.completed === 'number' && typeof event.total === 'number') {
-          setStreamProgress({ completed: event.completed, total: event.total });
-        } else {
-          setStreamProgress(null);
-        }
-        break;
-      case 'overview-delta':
-        setOverviewDraft(previous => {
-          if (event.displayText && event.displayText.trim().length > 0) {
-            return event.displayText.trim();
-          }
-          return `${previous ?? ''}${event.delta}`;
-        });
-        break;
-      case 'overview-reasoning-delta':
-        setOverviewReasoningHeadlinesDraft(event.headlines ?? []);
-        break;
-      case 'overview-complete':
-        setOverviewDraft(event.overview);
-        setOverviewReasoningHeadlinesDraft(event.headlines ?? []);
-        break;
-      case 'vector-store-status':
-        setVectorStoreOverrides(prev => {
-          const current = prev[event.snapshotId];
-          const nextOverride: VectorStoreOverride = {
-            status: event.status,
-            error: event.error ?? null,
-          };
-          if (current && current.status === nextOverride.status && current.error === nextOverride.error) {
-            return prev;
-          }
-          return {
-            ...prev,
-            [event.snapshotId]: nextOverride,
-          };
-        });
-        if (event.status === 'ready' || event.status === 'failed') {
-          void refetch();
-        }
-        break;
-      case 'structured-delta':
-        setStructuredTextDraft(previous => {
-          const next = `${previous ?? ''}${event.delta}`;
-          if (event.summary) {
-            setStructuredSummaryDraft(event.summary);
-            return next;
-          }
-          try {
-            const parsed = JSON.parse(next) as CompanyIntelSnapshotStructuredProfileSummary;
-            if (parsed && typeof parsed === 'object') {
-              setStructuredSummaryDraft(parsed);
-            }
-          } catch {
-            // Ignore parse errors while the payload is still streaming.
-          }
-          return next;
-        });
-        break;
-      case 'structured-reasoning-delta':
-        setStructuredReasoningHeadlinesDraft(event.headlines ?? []);
-        break;
-      case 'structured-complete':
-        setStructuredSummaryDraft(event.payload.structuredProfile);
-        setStructuredTextDraft(null);
-        setStructuredReasoningHeadlinesDraft(
-          event.payload.metadata?.headlines ?? event.payload.reasoningHeadlines ?? [],
-        );
-        setFaviconDraft(event.payload.faviconUrl ?? null);
-        setSnapshotOverride(null);
-        setLoadedSnapshotId(event.snapshotId);
-        break;
-      case 'run-complete':
-        setStreamActive(false);
-        setStreamStage(null);
-        setStreamProgress(null);
-        setStructuredTextDraft(null);
-        setStreamSnapshotId(null);
-        lastResumeSnapshotIdRef.current = event.snapshotId;
-        void refetch();
-        setProfileStatusOverride('ready');
-        setVectorStoreOverrides(previous => {
-          if (previous[event.snapshotId]) {
-            const rest = { ...previous };
-            delete rest[event.snapshotId];
-            return rest;
-          }
-          return previous;
-        });
-        setSnapshotOverride(null);
-        setLoadedSnapshotId(event.snapshotId);
-        setLoadingSnapshotId(null);
-        break;
-      case 'run-error':
-        setStreamActive(false);
-        setStreamStage(null);
-        setStreamProgress(null);
-        setOverviewDraft(null);
-        setStructuredSummaryDraft(null);
-        setStructuredTextDraft(null);
-        setStructuredReasoningHeadlinesDraft([]);
-        setOverviewReasoningHeadlinesDraft([]);
-        setFaviconDraft(null);
-        setStreamSnapshotId(null);
-        lastResumeSnapshotIdRef.current = event.snapshotId;
-        void refetch();
-        setProfileStatusOverride('failed');
-        setVectorStoreOverrides(previous => {
-          if (previous[event.snapshotId]) {
-            const rest = { ...previous };
-            delete rest[event.snapshotId];
-            return rest;
-          }
-          return previous;
-        });
-        setSnapshotOverride(null);
-        setLoadedSnapshotId(null);
-        setLoadingSnapshotId(null);
-        break;
-      case 'run-cancelled':
-        setStreamActive(false);
-        setStreamStage(null);
-        setStreamProgress(null);
-        setOverviewDraft(null);
-        setStructuredSummaryDraft(null);
-        setStructuredTextDraft(null);
-        setStructuredReasoningHeadlinesDraft([]);
-        setOverviewReasoningHeadlinesDraft([]);
-        setFaviconDraft(null);
-        setStreamSnapshotId(null);
-        lastResumeSnapshotIdRef.current = event.snapshotId;
-        setErrorMessage(event.reason ?? 'Company intel run cancelled.');
-        setProfileStatusOverride(runBaselineStatusRef.current);
-        void refetch();
-        setSnapshotOverride(null);
-        setLoadedSnapshotId(null);
-        setLoadingSnapshotId(null);
-        break;
-    }
-  }, [profileStatusFromQuery, refetch]);
-
-  const triggerMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent });
-  const previewMutation = useCompanyIntelPreview();
-  const updateProfileMutation = useUpdateCompanyIntelProfile();
-  const cancelRunMutation = useCancelCompanyIntelRun();
-
   const profile = companyIntelData?.profile ?? null;
   const activeSnapshotId = profile?.activeSnapshotId ?? null;
-  const resumeMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent, resumeSnapshotId: activeSnapshotId ?? undefined });
-  const [domain, setDomain] = useState('');
-  const [domainMode, setDomainMode] = useState<'profile' | 'snapshot' | 'manual'>('profile');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [manualError, setManualError] = useState<string | null>(null);
-  const [manualUrl, setManualUrl] = useState('');
-  const [selectedUrls, setSelectedUrls] = useState<readonly string[]>([]);
-  const [previewDomain, setPreviewDomain] = useState<string | null>(null);
-  const [isSavingOverview, setIsSavingOverview] = useState(false);
-  const [isSavingPrimaryIndustries, setIsSavingPrimaryIndustries] = useState(false);
-  const [isSavingValueProps, setIsSavingValueProps] = useState(false);
-  const [isSavingKeyOfferings, setIsSavingKeyOfferings] = useState(false);
-  const [isSavingIdentity, setIsSavingIdentity] = useState(false);
-  const [streamStage, setStreamStage] = useState<CompanyIntelRunStage | null>(null);
-  const [isStreamActive, setStreamActive] = useState(false);
-  const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
-  const [overviewDraft, setOverviewDraft] = useState<string | null>(null);
-  const [structuredSummaryDraft, setStructuredSummaryDraft] = useState<CompanyIntelSnapshotStructuredProfileSummary | null>(null);
-  const [, setStructuredTextDraft] = useState<string | null>(null);
-  const [structuredReasoningHeadlinesDraft, setStructuredReasoningHeadlinesDraft] = useState<readonly string[]>([]);
-  const [overviewReasoningHeadlinesDraft, setOverviewReasoningHeadlinesDraft] = useState<readonly string[]>([]);
-  const [faviconDraft, setFaviconDraft] = useState<string | null>(null);
+
+  const previewState = useWorkflowPreviewState({ profileDomain: profile?.domain ?? null });
+  const {
+    domain,
+    trimmedDomain,
+    previewData,
+    recommendedSelections,
+    manualSelectedUrls,
+    selectedUrls,
+    manualUrl,
+    manualError,
+    hasPreview,
+    previewMutation,
+    handleDomainChange,
+    handleManualUrlChange,
+    addManualUrl,
+    removeManualUrl,
+    toggleSelection,
+    resetPreviewState,
+    setPreviewDomain,
+    replaceSelections,
+    clearManualError,
+    setDomainMode,
+    setDomainFromSnapshot,
+  } = previewState;
+
+  const profileEditor = useWorkflowProfileEditor();
+
+  const [streamState, dispatchStreamAction] = useReducer(workflowStreamReducer, initialWorkflowStreamState);
+  const {
+    isStreamActive,
+    streamStage,
+    streamProgress,
+    streamSnapshotId,
+    overviewDraft,
+    structuredSummaryDraft,
+    structuredReasoningHeadlinesDraft,
+    overviewReasoningHeadlinesDraft,
+    faviconDraft,
+  } = streamState;
+
   const [vectorStoreOverrides, setVectorStoreOverrides] = useState<Record<number, VectorStoreOverride>>({});
   const [loadingSnapshotId, setLoadingSnapshotId] = useState<number | null>(null);
   const [loadedSnapshotId, setLoadedSnapshotId] = useState<number | null>(null);
   const [snapshotOverride, setSnapshotOverride] = useState<CompanyProfileSnapshot | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [profileStatusOverride, setProfileStatusOverride] = useState<CompanyProfile['status'] | null>(null);
+  const lastResumeSnapshotIdRef = useRef<number | null>(null);
+  const runBaselineStatusRef = useRef<CompanyProfile['status'] | 'not_configured'>('not_configured');
+
+  const handleStreamEvent = useCallback(
+    (event: CompanyIntelStreamEvent) => {
+      dispatchStreamAction({ type: 'event', event });
+
+      switch (event.type) {
+        case 'snapshot-created':
+          setSnapshotOverride(null);
+          setLoadedSnapshotId(null);
+          setLoadingSnapshotId(null);
+          lastResumeSnapshotIdRef.current = event.snapshotId;
+          runBaselineStatusRef.current = profileStatusFromQuery;
+          setProfileStatusOverride('refreshing');
+          break;
+        case 'vector-store-status':
+          setVectorStoreOverrides(prev => {
+            const current = prev[event.snapshotId];
+            const nextOverride: VectorStoreOverride = {
+              status: event.status,
+              error: event.error ?? null,
+            };
+            if (current && current.status === nextOverride.status && current.error === nextOverride.error) {
+              return prev;
+            }
+            return {
+              ...prev,
+              [event.snapshotId]: nextOverride,
+            };
+          });
+          if (event.status === 'ready' || event.status === 'failed') {
+            void refetch();
+          }
+          break;
+        case 'structured-complete':
+          setSnapshotOverride(null);
+          setLoadedSnapshotId(event.snapshotId);
+          break;
+        case 'run-complete':
+          lastResumeSnapshotIdRef.current = event.snapshotId;
+          void refetch();
+          setProfileStatusOverride('ready');
+          setVectorStoreOverrides(prev => {
+            if (prev[event.snapshotId]) {
+              const rest = { ...prev };
+              delete rest[event.snapshotId];
+              return rest;
+            }
+            return prev;
+          });
+          setSnapshotOverride(null);
+          setLoadedSnapshotId(event.snapshotId);
+          setLoadingSnapshotId(null);
+          break;
+        case 'run-error':
+          lastResumeSnapshotIdRef.current = event.snapshotId;
+          void refetch();
+          setProfileStatusOverride('failed');
+          setVectorStoreOverrides(prev => {
+            if (prev[event.snapshotId]) {
+              const rest = { ...prev };
+              delete rest[event.snapshotId];
+              return rest;
+            }
+            return prev;
+          });
+          setSnapshotOverride(null);
+          setLoadedSnapshotId(null);
+          setLoadingSnapshotId(null);
+          break;
+        case 'run-cancelled':
+          lastResumeSnapshotIdRef.current = event.snapshotId;
+          setErrorMessage(event.reason ?? 'Company intel run cancelled.');
+          setProfileStatusOverride(runBaselineStatusRef.current);
+          void refetch();
+          setSnapshotOverride(null);
+          setLoadedSnapshotId(null);
+          setLoadingSnapshotId(null);
+          break;
+        default:
+          break;
+      }
+    },
+    [profileStatusFromQuery, refetch],
+  );
+
+  const triggerMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent });
+  const resumeMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent, resumeSnapshotId: activeSnapshotId ?? undefined });
+  const cancelRunMutation = useCancelCompanyIntelRun();
+
+  const handleDomainChangeWithErrorReset = useCallback(
+    (value: string) => {
+      setErrorMessage(null);
+      handleDomainChange(value);
+    },
+    [handleDomainChange],
+  );
+
   const isRunRefreshing = triggerMutation.isPending || resumeMutation.isPending || isStreamActive;
   const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
 
@@ -333,6 +282,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     return snapshots.find(snapshot => snapshot.id === loadedSnapshotId) ?? null;
   }, [loadedSnapshotId, snapshots]);
   const displayedSnapshot = snapshotOverride ?? loadedSnapshotFromHistory ?? latestSnapshot;
+
   const chatSnapshot = useMemo(() => {
     const candidateSnapshot = (() => {
       if (displayedSnapshot && displayedSnapshot.status === 'complete') {
@@ -360,6 +310,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       completedAt: candidateSnapshot.completedAt ?? null,
     };
   }, [displayedSnapshot, latestSnapshot, vectorStoreOverrides]);
+
   const structuredReasoningHeadlines = useMemo<readonly string[]>(() => {
     if (structuredReasoningHeadlinesDraft.length > 0) {
       return structuredReasoningHeadlinesDraft;
@@ -369,6 +320,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
     return latestSnapshot?.summaries?.metadata?.structuredProfile?.headlines ?? [];
   }, [structuredReasoningHeadlinesDraft, isRunRefreshing, latestSnapshot]);
+
   const overviewReasoningHeadlines = useMemo<readonly string[]>(() => {
     if (overviewReasoningHeadlinesDraft.length > 0) {
       return overviewReasoningHeadlinesDraft;
@@ -378,35 +330,9 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
     return latestSnapshot?.summaries?.metadata?.overview?.headlines ?? [];
   }, [overviewReasoningHeadlinesDraft, isRunRefreshing, latestSnapshot]);
+
   const structuredReasoningHeadline = structuredReasoningHeadlines[0] ?? null;
   const overviewReasoningHeadline = overviewReasoningHeadlines[0] ?? null;
-
-  useEffect(() => {
-    if (!profile?.domain) {
-      return;
-    }
-    if (domainMode !== 'profile') {
-      return;
-    }
-    setDomain(profile.domain);
-  }, [profile?.domain, domainMode]);
-
-  useEffect(() => {
-    if (!previewDomain) {
-      return;
-    }
-
-    const trimmed = domain.trim();
-    if (trimmed === previewDomain) {
-      return;
-    }
-
-    previewMutation.reset();
-    setSelectedUrls([]);
-    setManualUrl('');
-    setManualError(null);
-    setPreviewDomain(null);
-  }, [domain, previewDomain, previewMutation]);
 
   useEffect(() => {
     if (!activeSnapshotId) {
@@ -435,7 +361,6 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       });
   }, [activeSnapshotId, profile?.domain, streamSnapshotId, triggerMutation.isPending, resumeMutation]);
 
-  const trimmedDomain = useMemo(() => domain.trim(), [domain]);
   const isPreviewing = previewMutation.isPending;
   const isCancelling = cancelRunMutation.isPending;
   const isResumeConnecting = resumeMutation.isPending && !isStreamActive;
@@ -487,39 +412,6 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
   }, [latestSnapshot, vectorStoreOverrides]);
 
-  const previewData: CompanyIntelPreviewResult | null = useMemo(() => {
-    if (!previewMutation.data) {
-      return null;
-    }
-    return previewDomain === trimmedDomain ? previewMutation.data : null;
-  }, [previewMutation.data, previewDomain, trimmedDomain]);
-
-  const recommendedSelections: readonly CompanyIntelSelection[] = useMemo(
-    () => previewData?.selections ?? [],
-    [previewData?.selections],
-  );
-
-  const manualSelectedUrls = useMemo(
-    () => selectedUrls.filter(url => !recommendedSelections.some(selection => selection.url === url)),
-    [selectedUrls, recommendedSelections],
-  );
-
-  const previewBaseUrl = useMemo(() => {
-    if (previewData?.map.baseUrl) {
-      return previewData.map.baseUrl;
-    }
-
-    if (!trimmedDomain) {
-      return null;
-    }
-
-    return trimmedDomain.startsWith('http') ? trimmedDomain : `https://${trimmedDomain}`;
-  }, [previewData?.map.baseUrl, trimmedDomain]);
-
-  const hasPreview = Boolean(previewData && !isPreviewing);
-
-  const profileStatus = profileStatusOverride ?? profile?.status ?? 'not_configured';
-
   const statusMessages = useMemo(() => {
     const messages: string[] = [];
 
@@ -569,150 +461,6 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
 
   const isStreaming = isStreamActive || resumeMutation.isPending;
 
-  const handleDomainChange = useCallback((value: string) => {
-    setDomain(value);
-    setDomainMode('manual');
-    setErrorMessage(null);
-  }, []);
-
-  const handleManualUrlChange = useCallback((value: string) => {
-    setManualUrl(value);
-    if (manualError) {
-      setManualError(null);
-    }
-  }, [manualError]);
-
-  const saveOverview = useCallback(
-    async (value: string | null) => {
-      setIsSavingOverview(true);
-      try {
-        await updateProfileMutation.mutateAsync({ overview: value });
-      } finally {
-        setIsSavingOverview(false);
-      }
-    },
-    [updateProfileMutation],
-  );
-
-  const savePrimaryIndustries = useCallback(
-    async (values: readonly string[]) => {
-      setIsSavingPrimaryIndustries(true);
-      try {
-        await updateProfileMutation.mutateAsync({ primaryIndustries: values });
-      } finally {
-        setIsSavingPrimaryIndustries(false);
-      }
-    },
-    [updateProfileMutation],
-  );
-
-  const saveValueProps = useCallback(
-    async (values: readonly string[]) => {
-      setIsSavingValueProps(true);
-      try {
-        await updateProfileMutation.mutateAsync({ valueProps: values });
-      } finally {
-        setIsSavingValueProps(false);
-      }
-    },
-    [updateProfileMutation],
-  );
-
-  const saveKeyOfferings = useCallback(
-    async (values: readonly CompanyProfileKeyOffering[]) => {
-      setIsSavingKeyOfferings(true);
-      try {
-        await updateProfileMutation.mutateAsync({ keyOfferings: values });
-      } finally {
-        setIsSavingKeyOfferings(false);
-      }
-    },
-    [updateProfileMutation],
-  );
-
-  const saveIdentity = useCallback(
-    async ({ companyName, tagline }: { companyName: string | null; tagline: string | null }) => {
-      setIsSavingIdentity(true);
-      try {
-        await updateProfileMutation.mutateAsync({ companyName, tagline });
-      } finally {
-        setIsSavingIdentity(false);
-      }
-    },
-    [updateProfileMutation],
-  );
-
-  const toggleSelection = useCallback(
-    (url: string, checked: boolean) => {
-      setSelectedUrls(prev => {
-        if (checked) {
-          if (prev.includes(url)) {
-            return prev;
-          }
-
-          const insertionIndex = recommendedSelections.findIndex(selection => selection.url === url);
-          if (insertionIndex === -1) {
-            return [...prev, url];
-          }
-
-          const next = [...prev];
-          next.splice(insertionIndex, 0, url);
-          return Array.from(new Set(next));
-        }
-
-        return prev.filter(item => item !== url);
-      });
-    },
-    [recommendedSelections],
-  );
-
-  const addManualUrl = useCallback(() => {
-    setManualError(null);
-
-    if (!hasPreview || !previewBaseUrl) {
-      setManualError('Generate a site map before adding custom URLs.');
-      return;
-    }
-
-    const candidate = manualUrl.trim();
-    if (!candidate) {
-      setManualError('Enter a URL to add.');
-      return;
-    }
-
-    let resolved: URL;
-    try {
-      resolved = new URL(candidate, previewBaseUrl);
-    } catch {
-      setManualError('Enter a valid URL from your site.');
-      return;
-    }
-
-    const baseHost = new URL(previewBaseUrl).hostname.replace(/^www\./i, '').toLowerCase();
-    const candidateHost = resolved.hostname.replace(/^www\./i, '').toLowerCase();
-    const hostMatches = candidateHost === baseHost || candidateHost.endsWith(`.${baseHost}`);
-
-    if (!hostMatches) {
-      setManualError('Custom URLs must belong to the same domain or subdomain.');
-      return;
-    }
-
-    const normalized = resolved.toString().replace(/[#?].*$/, '');
-
-    setSelectedUrls(prev => {
-      if (prev.includes(normalized)) {
-        return prev;
-      }
-
-      return [...prev, normalized];
-    });
-    setManualUrl('');
-  }, [hasPreview, manualUrl, previewBaseUrl]);
-
-  const removeManualUrl = useCallback((url: string) => {
-    setSelectedUrls(prev => prev.filter(item => item !== url));
-  }, []);
-
   const loadSnapshotIntoEditor = useCallback(async (snapshotId: number) => {
     setErrorMessage(null);
     setLoadingSnapshotId(snapshotId);
@@ -727,26 +475,31 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       const snapshot = toCompanyProfileSnapshot(payload.data);
       const structuredProfile = snapshot.summaries?.structuredProfile ?? null;
       const overviewText = typeof snapshot.summaries?.overview === 'string' ? snapshot.summaries.overview : null;
+      const structuredHeadlines = snapshot.summaries?.metadata?.structuredProfile?.headlines ?? [];
+      const overviewHeadlines = snapshot.summaries?.metadata?.overview?.headlines ?? [];
 
-      setStructuredSummaryDraft(structuredProfile);
-      setStructuredReasoningHeadlinesDraft(snapshot.summaries?.metadata?.structuredProfile?.headlines ?? []);
-      setOverviewDraft(overviewText);
-      setOverviewReasoningHeadlinesDraft(snapshot.summaries?.metadata?.overview?.headlines ?? []);
-      setStructuredTextDraft(null);
-      setFaviconDraft(null);
+      dispatchStreamAction({
+        type: 'hydrate-drafts',
+        payload: {
+          structuredProfile,
+          overviewText,
+          structuredHeadlines,
+          overviewHeadlines,
+          faviconUrl: null,
+        },
+      });
       setSnapshotOverride(snapshot);
       setLoadedSnapshotId(snapshotId);
 
       if (snapshot.domain) {
-        setDomain(snapshot.domain);
-        setDomainMode('snapshot');
+        setDomainFromSnapshot(snapshot.domain);
       }
     } catch (error) {
       setErrorMessage(resolveErrorMessage(error, 'Unable to load snapshot details.'));
     } finally {
       setLoadingSnapshotId(current => (current === snapshotId ? null : current));
     }
-  }, [request]);
+  }, [request, setDomainFromSnapshot]);
 
   const cancelActiveRun = useCallback(async () => {
     const snapshotId = activeSnapshotId ?? streamSnapshotId;
@@ -763,38 +516,20 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   }, [activeSnapshotId, streamSnapshotId, cancelRunMutation]);
 
   const startOver = useCallback(() => {
-    previewMutation.reset();
-    setSelectedUrls([]);
-    setManualUrl('');
-    setManualError(null);
-    setPreviewDomain(null);
+    resetPreviewState();
     setErrorMessage(null);
-    setStreamStage(null);
-    setStreamProgress(null);
-    setStreamActive(false);
-    setOverviewDraft(null);
-    setStructuredSummaryDraft(null);
-    setStructuredReasoningHeadlinesDraft([]);
-    setOverviewReasoningHeadlinesDraft([]);
-    setFaviconDraft(null);
-    setStreamSnapshotId(null);
-    lastResumeSnapshotIdRef.current = null;
-    setDomainMode('profile');
+    dispatchStreamAction({ type: 'reset-all' });
     setSnapshotOverride(null);
     setLoadedSnapshotId(null);
     setLoadingSnapshotId(null);
-  }, [previewMutation]);
+    lastResumeSnapshotIdRef.current = null;
+    setDomainMode('profile');
+  }, [resetPreviewState, setDomainMode]);
 
   const submit = useCallback(async () => {
     setErrorMessage(null);
-    setManualError(null);
-    setStreamStage(null);
-    setStreamProgress(null);
-    setOverviewDraft(null);
-    setStructuredSummaryDraft(null);
-    setStructuredReasoningHeadlinesDraft([]);
-    setOverviewReasoningHeadlinesDraft([]);
-    setFaviconDraft(null);
+    clearManualError();
+    dispatchStreamAction({ type: 'reset-drafts' });
     setSnapshotOverride(null);
     setLoadedSnapshotId(null);
     setLoadingSnapshotId(null);
@@ -812,7 +547,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     if (!hasPreview) {
       try {
         const preview = await previewMutation.mutateAsync({ domain: trimmedDomain });
-        setSelectedUrls(preview.selections.map(selection => selection.url));
+        replaceSelections(preview.selections.map(selection => selection.url));
         setPreviewDomain(trimmedDomain);
       } catch (error) {
         setErrorMessage(resolveErrorMessage(error, 'Unable to map the site at this time.'));
@@ -826,8 +561,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
 
     try {
-      setStreamActive(true);
-      setStreamSnapshotId(null);
+      dispatchStreamAction({ type: 'start-request' });
       lastResumeSnapshotIdRef.current = null;
       await triggerMutation.mutateAsync({
         domain: trimmedDomain,
@@ -835,32 +569,28 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       });
       setDomainMode('profile');
       await refetch();
-      previewMutation.reset();
-      setSelectedUrls([]);
-      setManualUrl('');
-      setManualError(null);
-      setPreviewDomain(null);
-      setStreamStage(null);
-      setStreamProgress(null);
-      setStreamActive(false);
-      setOverviewDraft(null);
-      setStructuredSummaryDraft(null);
-      setStructuredReasoningHeadlinesDraft([]);
-      setOverviewReasoningHeadlinesDraft([]);
-      setFaviconDraft(null);
+      resetPreviewState();
+      dispatchStreamAction({ type: 'reset-all' });
     } catch (error) {
-      setStreamActive(false);
+      dispatchStreamAction({ type: 'reset-all' });
       setErrorMessage(resolveErrorMessage(error, 'Unable to refresh company intel at this time.'));
     }
   }, [
-    trimmedDomain,
+    activeSnapshotId,
+    clearManualError,
     hasPreview,
     previewMutation,
-    selectedUrls,
-    triggerMutation,
     refetch,
-    activeSnapshotId,
+    replaceSelections,
+    resetPreviewState,
+    selectedUrls,
+    setDomainMode,
+    setPreviewDomain,
+    trimmedDomain,
+    triggerMutation,
   ]);
+
+  const profileStatus = profileStatusOverride ?? profile?.status ?? 'not_configured';
 
   return {
     profile,
@@ -901,7 +631,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     isCancelling,
     streamStage,
     streamProgress,
-    onDomainChange: handleDomainChange,
+    onDomainChange: handleDomainChangeWithErrorReset,
     onManualUrlChange: handleManualUrlChange,
     addManualUrl,
     removeManualUrl,
@@ -910,17 +640,6 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     cancelActiveRun,
     submit,
     startOver,
-    profileEditor: {
-      saveOverview,
-      savePrimaryIndustries,
-      saveValueProps,
-      saveKeyOfferings,
-      saveIdentity,
-      isSavingOverview,
-      isSavingPrimaryIndustries,
-      isSavingValueProps,
-      isSavingKeyOfferings,
-      isSavingIdentity,
-    },
+    profileEditor,
   };
 };

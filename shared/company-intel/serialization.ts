@@ -444,7 +444,7 @@ export function toCompanyProfile(raw: unknown): CompanyProfile {
   };
 }
 
-function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
+export function toCompanyProfileSnapshot(raw: unknown): CompanyProfileSnapshot {
   const record = asRecord(raw);
   const rawScrapesInput = (record.rawScrapes ?? record.raw_scrapes) as unknown;
   const createdAt = parseDate(record.createdAt as string | Date | null | undefined) ?? new Date();

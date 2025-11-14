@@ -44,6 +44,8 @@ export function CompanyIntelPanel({
     structuredReasoningHeadlines,
     overviewReasoningHeadlines,
     faviconDraft,
+    loadedSnapshotId,
+    loadingSnapshotId,
     manualUrl,
     hasPreview,
     isPreviewing,
@@ -60,6 +62,7 @@ export function CompanyIntelPanel({
     addManualUrl,
     removeManualUrl,
     toggleSelection,
+    loadSnapshotIntoEditor,
     submit,
     startOver,
     cancelActiveRun,
@@ -110,6 +113,10 @@ export function CompanyIntelPanel({
               snapshots={snapshots}
               isLoading={isLoading}
               isError={isError}
+              onSnapshotLoad={loadSnapshotIntoEditor}
+              loadingSnapshotId={loadingSnapshotId}
+              activeSnapshotId={loadedSnapshotId}
+              disableSnapshotLoad={isScraping || isStreaming}
             />
           ) : null}
         </div>
@@ -165,7 +172,10 @@ export function CompanyIntelPanel({
     previewData,
     recommendedSelections,
     removeManualUrl,
+    loadSnapshotIntoEditor,
     snapshots,
+    loadedSnapshotId,
+    loadingSnapshotId,
     startOver,
     statusMessages,
     submit,

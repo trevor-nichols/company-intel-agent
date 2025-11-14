@@ -11,6 +11,13 @@ export async function getCompanyIntelSnapshotHistory(
   return persistence.listSnapshots({ limit });
 }
 
+export async function getCompanyIntelSnapshotById(
+  persistence: CompanyIntelPersistence,
+  snapshotId: number,
+) {
+  return persistence.getSnapshotById(snapshotId);
+}
+
 export function getCompanyIntelProfile(
   persistence: CompanyIntelPersistence,
 ) {

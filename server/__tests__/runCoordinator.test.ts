@@ -29,6 +29,7 @@ describe('CompanyIntelRunCoordinator', () => {
       updateProfile: vi.fn(),
       getProfile: vi.fn(),
       getSnapshotHistory: vi.fn(),
+      getSnapshotById: vi.fn(),
       generateSnapshotPdf: vi.fn(),
     };
 

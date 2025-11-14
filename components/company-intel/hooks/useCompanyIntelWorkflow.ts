@@ -16,12 +16,14 @@ import type {
   CompanyProfileSnapshot,
   CompanyIntelVectorStoreStatus,
 } from '../types';
+import { useCompanyIntelClient } from '../context';
 import { useCompanyIntel } from './useCompanyIntel';
 import { useCompanyIntelPreview } from './useCompanyIntelPreview';
 import { useTriggerCompanyIntel } from './useTriggerCompanyIntel';
 import { useCancelCompanyIntelRun } from './useCancelCompanyIntelRun';
 import { useUpdateCompanyIntelProfile } from './useUpdateCompanyIntelProfile';
-import { HttpError } from '../utils/errors';
+import { HttpError, toHttpError } from '../utils/errors';
+import { toCompanyProfileSnapshot } from '../utils/serialization';
 
 const RATE_LIMIT_MESSAGE = 'You’ve reached the demo rate limit. Please wait about a minute and try again.';
 
@@ -65,6 +67,8 @@ interface UseCompanyIntelWorkflowResult {
   readonly structuredReasoningHeadline: string | null;
   readonly overviewReasoningHeadline: string | null;
   readonly faviconDraft: string | null;
+  readonly loadedSnapshotId: number | null;
+  readonly loadingSnapshotId: number | null;
   readonly manualUrl: string;
   readonly hasPreview: boolean;
   readonly isPreviewing: boolean;
@@ -82,6 +86,7 @@ interface UseCompanyIntelWorkflowResult {
   readonly addManualUrl: () => void;
   readonly removeManualUrl: (url: string) => void;
   readonly toggleSelection: (url: string, checked: boolean) => void;
+  readonly loadSnapshotIntoEditor: (snapshotId: number) => Promise<void>;
   readonly cancelActiveRun: () => Promise<void>;
   readonly submit: () => Promise<void>;
   readonly startOver: () => void;
@@ -105,6 +110,7 @@ interface VectorStoreOverride {
 }
 
 export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
+  const { request } = useCompanyIntelClient();
   const companyIntelQuery = useCompanyIntel();
   const {
     data: companyIntelData,
@@ -130,6 +136,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setStructuredReasoningHeadlinesDraft([]);
         setOverviewReasoningHeadlinesDraft([]);
         setFaviconDraft(null);
+        setLoadedSnapshotId(null);
+        setLoadingSnapshotId(null);
         setStreamSnapshotId(event.snapshotId);
         lastResumeSnapshotIdRef.current = event.snapshotId;
         runBaselineStatusRef.current = profileStatusFromQuery;
@@ -206,6 +214,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
           event.payload.metadata?.headlines ?? event.payload.reasoningHeadlines ?? [],
         );
         setFaviconDraft(event.payload.faviconUrl ?? null);
+        setLoadedSnapshotId(event.snapshotId);
         break;
       case 'run-complete':
         setStreamActive(false);
@@ -224,6 +233,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
           }
           return previous;
         });
+        setLoadedSnapshotId(event.snapshotId);
+        setLoadingSnapshotId(null);
         break;
       case 'run-error':
         setStreamActive(false);
@@ -247,6 +258,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
           }
           return previous;
         });
+        setLoadedSnapshotId(null);
+        setLoadingSnapshotId(null);
         break;
       case 'run-cancelled':
         setStreamActive(false);
@@ -263,6 +276,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         setErrorMessage(event.reason ?? 'Company intel run cancelled.');
         setProfileStatusOverride(runBaselineStatusRef.current);
         void refetch();
+        setLoadedSnapshotId(null);
+        setLoadingSnapshotId(null);
         break;
     }
   }, [profileStatusFromQuery, refetch]);
@@ -296,6 +311,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const [overviewReasoningHeadlinesDraft, setOverviewReasoningHeadlinesDraft] = useState<readonly string[]>([]);
   const [faviconDraft, setFaviconDraft] = useState<string | null>(null);
   const [vectorStoreOverrides, setVectorStoreOverrides] = useState<Record<number, VectorStoreOverride>>({});
+  const [loadingSnapshotId, setLoadingSnapshotId] = useState<number | null>(null);
+  const [loadedSnapshotId, setLoadedSnapshotId] = useState<number | null>(null);
   const isRunRefreshing = triggerMutation.isPending || resumeMutation.isPending || isStreamActive;
   const hasActiveRun = useMemo(() => Boolean(activeSnapshotId ?? streamSnapshotId), [activeSnapshotId, streamSnapshotId]);
 
@@ -477,6 +494,10 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const statusMessages = useMemo(() => {
     const messages: string[] = [];
 
+    if (loadingSnapshotId) {
+      messages.push('Loading snapshot details…');
+    }
+
     if (isResumeConnecting) {
       messages.push('Reconnecting to active run…');
     }
@@ -515,7 +536,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     }
 
     return messages;
-  }, [isPreviewing, isScraping, streamProgress, streamStage, isResumeConnecting, isCancelling]);
+  }, [isPreviewing, isScraping, streamProgress, streamStage, isResumeConnecting, isCancelling, loadingSnapshotId]);
 
   const isStreaming = isStreamActive || resumeMutation.isPending;
 
@@ -662,6 +683,35 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setSelectedUrls(prev => prev.filter(item => item !== url));
   }, []);
 
+  const loadSnapshotIntoEditor = useCallback(async (snapshotId: number) => {
+    setErrorMessage(null);
+    setLoadingSnapshotId(snapshotId);
+
+    try {
+      const response = await request(`/snapshots/${snapshotId}`);
+      if (!response.ok) {
+        throw await toHttpError(response, 'Unable to load snapshot details.');
+      }
+
+      const payload = await response.json();
+      const snapshot = toCompanyProfileSnapshot(payload.data);
+      const structuredProfile = snapshot.summaries?.structuredProfile ?? null;
+      const overviewText = typeof snapshot.summaries?.overview === 'string' ? snapshot.summaries.overview : null;
+
+      setStructuredSummaryDraft(structuredProfile);
+      setStructuredReasoningHeadlinesDraft(snapshot.summaries?.metadata?.structuredProfile?.headlines ?? []);
+      setOverviewDraft(overviewText);
+      setOverviewReasoningHeadlinesDraft(snapshot.summaries?.metadata?.overview?.headlines ?? []);
+      setStructuredTextDraft(null);
+      setFaviconDraft(null);
+      setLoadedSnapshotId(snapshotId);
+    } catch (error) {
+      setErrorMessage(resolveErrorMessage(error, 'Unable to load snapshot details.'));
+    } finally {
+      setLoadingSnapshotId(current => (current === snapshotId ? null : current));
+    }
+  }, [request]);
+
   const cancelActiveRun = useCallback(async () => {
     const snapshotId = activeSnapshotId ?? streamSnapshotId;
     if (!snapshotId) {
@@ -693,6 +743,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setFaviconDraft(null);
     setStreamSnapshotId(null);
     lastResumeSnapshotIdRef.current = null;
+    setLoadedSnapshotId(null);
+    setLoadingSnapshotId(null);
   }, [previewMutation]);
 
   const submit = useCallback(async () => {
@@ -705,6 +757,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setStructuredReasoningHeadlinesDraft([]);
     setOverviewReasoningHeadlinesDraft([]);
     setFaviconDraft(null);
+    setLoadedSnapshotId(null);
+    setLoadingSnapshotId(null);
 
     if (activeSnapshotId) {
       setErrorMessage('A company intel refresh is already running. Cancel it before starting a new one.');
@@ -792,6 +846,8 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     structuredReasoningHeadline,
     overviewReasoningHeadline,
     faviconDraft,
+    loadedSnapshotId,
+    loadingSnapshotId,
     manualUrl,
     hasPreview,
     isPreviewing,
@@ -809,6 +865,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     addManualUrl,
     removeManualUrl,
     toggleSelection,
+    loadSnapshotIntoEditor,
     cancelActiveRun,
     submit,
     startOver,

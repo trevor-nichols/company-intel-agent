@@ -65,6 +65,7 @@ export interface CompanyIntelServer {
   ): Promise<CompanyIntelProfileRecord>;
   getProfile(): Promise<CompanyIntelProfileRecord | null>;
   getSnapshotHistory(limit?: number): Promise<readonly CompanyIntelSnapshotRecord[]>;
+  getSnapshotById(snapshotId: number): Promise<CompanyIntelSnapshotRecord | null>;
   generateSnapshotPdf(
     params: GenerateSnapshotPdfParams,
     overrides?: { readonly logger?: Logger },

@@ -15,12 +15,20 @@ interface SnapshotsPanelProps {
   readonly snapshots: readonly CompanyProfileSnapshot[];
   readonly isLoading: boolean;
   readonly isError: boolean;
+  readonly onSnapshotLoad: (snapshotId: number) => Promise<void> | void;
+  readonly loadingSnapshotId: number | null;
+  readonly activeSnapshotId: number | null;
+  readonly disableSnapshotLoad?: boolean;
 }
 
 export function SnapshotsPanel({
   snapshots,
   isLoading,
   isError,
+  onSnapshotLoad,
+  loadingSnapshotId,
+  activeSnapshotId,
+  disableSnapshotLoad = false,
 }: SnapshotsPanelProps): ReactElement {
   const hasSnapshots = snapshots.length > 0;
 
@@ -57,6 +65,10 @@ export function SnapshotsPanel({
                   key={snapshot.id}
                   snapshot={snapshot}
                   isLast={index === snapshots.length - 1}
+                  onLoadSnapshot={onSnapshotLoad}
+                  isActive={activeSnapshotId === snapshot.id}
+                  isLoading={loadingSnapshotId === snapshot.id}
+                  disableLoad={disableSnapshotLoad}
                 />
               ))}
             </ul>

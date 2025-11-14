@@ -51,9 +51,11 @@ export function HeaderCard({
   const domainDisplay = domainLabel ? domainLabel.replace(/https?:\/\//i, '').replace(/\/$/, '') : null;
   const avatarInitials = deriveInitials(effectiveCompanyName ?? domainDisplay ?? null);
   const snapshotForDisplay = latestSnapshot ?? null;
-  const lastRefreshedLabel = snapshotForDisplay?.completedAt ? formatDate(snapshotForDisplay.completedAt) : null;
-  const latestSnapshotLabel = snapshotForDisplay ? `Snapshot #${snapshotForDisplay.id}` : null;
   const isRefreshing = isScraping || isStreaming;
+  const snapshotMetadataAvailable = !isRefreshing;
+  const snapshotForMetadata = snapshotMetadataAvailable ? snapshotForDisplay : null;
+  const lastRefreshedLabel = snapshotForMetadata?.completedAt ? formatDate(snapshotForMetadata.completedAt) : null;
+  const latestSnapshotLabel = snapshotForMetadata ? `Snapshot #${snapshotForMetadata.id}` : null;
   const valuePropCount = structuredProfile?.valueProps.length ?? (isRefreshing ? 0 : (profile?.valueProps.length ?? 0));
   const industryCount = structuredProfile?.primaryIndustries.length ?? (isRefreshing ? 0 : (profile?.primaryIndustries.length ?? 0));
   const offeringsCount = structuredProfile?.keyOfferings.length ?? (isRefreshing ? 0 : (profile?.keyOfferings.length ?? 0));

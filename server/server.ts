@@ -8,6 +8,7 @@ import {
   previewCompanyIntel,
   runCompanyIntelCollection,
   getCompanyIntelSnapshotHistory as getSnapshotHistoryInternal,
+  getCompanyIntelSnapshotById as getSnapshotByIdInternal,
   getCompanyIntelProfile as getProfileInternal,
   updateCompanyIntelProfile,
   generateSnapshotPdf as generateSnapshotPdfInternal,
@@ -89,6 +90,10 @@ export function createCompanyIntelServer(config: CompanyIntelServerConfig): Comp
 
     getSnapshotHistory(limit?: number) {
       return getSnapshotHistoryInternal(persistence, limit);
+    },
+
+    getSnapshotById(snapshotId: number) {
+      return getSnapshotByIdInternal(persistence, snapshotId);
     },
 
     generateSnapshotPdf(params: GenerateSnapshotPdfParams, overrides?: { readonly logger?: typeof defaultLogger }): Promise<CompanyIntelSnapshotPdfResult> {

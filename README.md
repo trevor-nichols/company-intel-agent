@@ -16,6 +16,7 @@ An end-to-end Next.js agent for building company-intelligence experiences. The a
 - **GPT-5.1 structured intelligence:** Dual GPT-5.1 models produce a normalized profile and a narrative overview, validated with Zod before anything is stored or emitted.
 - **Streaming UX:** Deterministic SSE frames (`text/event-stream`) let the front end surface deltas, reasoning, and completion status in real time—even if the client reconnects mid-run.
 - **Durable runs:** Active collections survive refreshes via a runtime coordinator backed by Redis. Clients can resume a stream or cancel the run with dedicated APIs.
+- **Historical snapshots:** Analysts can load any prior completed run back into the editor or chat via the snapshot detail API, hydrate drafts, and re-export PDFs without re-running the pipeline.
 - **Swappable persistence:** In-memory storage for quick starts with a Redis implementation that satisfies the same `CompanyIntelPersistence` interface.
 - **Operational guardrails:** JSON-ish logging, configurable origins, secret scanning, strict ESLint/Prettier, Vitest, and CI workflows baked in.
 
@@ -67,6 +68,7 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 7. **Durability:** The runtime coordinator keeps the active snapshot id and progress in Redis so clients can resume streaming or cancel mid-run.
 
 ### Architecture
+Need a visual? Check `docs/ops/workflow.md` for the Mermaid systems diagram that walks through the frontend, API, orchestrator, and RAG subsystems end-to-end.
 - **UI (`app/**`, `components/company-intel/**`):** Next.js App Router screens, TanStack Query providers, and shadcn-style UI shims. UI never imports server code directly; it talks to the API via fetchers in `CompanyIntelClientProvider`.
 - **API (`app/api/company-intel/**`):** Route handlers run in the Node.js runtime, coerce HTTP inputs into typed server calls, stream SSE frames, and sanitize responses for the client.
 - **Server (`server/**`):** `createCompanyIntelServer` orchestrates the collection workflow, coordinates Tavily/OpenAI integrations, enforces Zod validation, and drives PDF generation.
@@ -93,6 +95,7 @@ All routes live under `/api/company-intel` and run on the Node.js runtime.
 | `POST` | `/` | Triggers a run. **Requires** `Accept: text/event-stream`; the response is an SSE feed that ends with `[DONE]`. Returns `406` if the header is missing and `409` if a run is already active for the domain.
 | `GET` | `/runs/:snapshotId/stream` | Reconnects to an active run, replays buffered frames, and resumes the live SSE stream.
 | `DELETE` | `/runs/:snapshotId` | Cancels the active run (idempotent). On success the stream emits `run-cancelled` and the snapshot is pruned.
+| `GET` | `/snapshots/:id` | Returns a fully serialized snapshot (profile summaries, overview text, scrape stats) so the UI can hydrate historical runs or gate chat readiness.
 | `GET` | `/snapshots/:id/export` | Generates a PDF export (`Content-Disposition: attachment`).
 
 ### SSE Contract
@@ -107,10 +110,11 @@ Each frame is emitted as `data: <json>\n\n` and the stream terminates with `data
 6. `overview-delta` `{ delta, displayText? }`
 7. `overview-reasoning-delta` `{ delta, headlines: string[] }`
 8. `overview-complete` `{ overview, headlines: string[] }`
-9. `run-complete` `{ result }`
-10. `run-error` `{ message }`
-11. `run-cancelled` `{ reason? }`
-12. `[DONE]`
+9. `vector-store-status` `{ status: 'publishing'|'ready'|'failed', error?, vectorStoreId?, fileCounts? }`
+10. `run-complete` `{ result }`
+11. `run-error` `{ message }`
+12. `run-cancelled` `{ reason? }`
+13. `[DONE]`
 
 The UI hooks in `components/company-intel/hooks` assume this order and will fail fast if malformed frames are encountered.
 

@@ -297,6 +297,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const activeSnapshotId = profile?.activeSnapshotId ?? null;
   const resumeMutation = useTriggerCompanyIntel({ onEvent: handleStreamEvent, resumeSnapshotId: activeSnapshotId ?? undefined });
   const [domain, setDomain] = useState('');
+  const [domainMode, setDomainMode] = useState<'profile' | 'snapshot' | 'manual'>('profile');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
   const [manualUrl, setManualUrl] = useState('');
@@ -381,10 +382,14 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
   const overviewReasoningHeadline = overviewReasoningHeadlines[0] ?? null;
 
   useEffect(() => {
-    if (profile?.domain) {
-      setDomain(profile.domain);
+    if (!profile?.domain) {
+      return;
     }
-  }, [profile?.domain]);
+    if (domainMode !== 'profile') {
+      return;
+    }
+    setDomain(profile.domain);
+  }, [profile?.domain, domainMode]);
 
   useEffect(() => {
     if (!previewDomain) {
@@ -566,6 +571,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
 
   const handleDomainChange = useCallback((value: string) => {
     setDomain(value);
+    setDomainMode('manual');
     setErrorMessage(null);
   }, []);
 
@@ -730,6 +736,11 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
       setFaviconDraft(null);
       setSnapshotOverride(snapshot);
       setLoadedSnapshotId(snapshotId);
+
+      if (snapshot.domain) {
+        setDomain(snapshot.domain);
+        setDomainMode('snapshot');
+      }
     } catch (error) {
       setErrorMessage(resolveErrorMessage(error, 'Unable to load snapshot details.'));
     } finally {
@@ -768,6 +779,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
     setFaviconDraft(null);
     setStreamSnapshotId(null);
     lastResumeSnapshotIdRef.current = null;
+    setDomainMode('profile');
     setSnapshotOverride(null);
     setLoadedSnapshotId(null);
     setLoadingSnapshotId(null);
@@ -821,6 +833,7 @@ export const useCompanyIntelWorkflow = (): UseCompanyIntelWorkflowResult => {
         domain: trimmedDomain,
         selectedUrls,
       });
+      setDomainMode('profile');
       await refetch();
       previewMutation.reset();
       setSelectedUrls([]);

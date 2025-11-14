@@ -11,8 +11,12 @@ export class ManualUrlValidationError extends Error {
   }
 }
 
+const ABSOLUTE_URL_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
+const DOMAIN_LIKE_PATTERN = /^[a-z0-9.-]+\.[a-z]{2,}(?:\/|$)/i;
+
 export function normalizeManualUrl(candidate: string, previewBaseUrl: string): string {
-  if (!candidate.trim()) {
+  const trimmedCandidate = candidate.trim();
+  if (!trimmedCandidate) {
     throw new ManualUrlValidationError('Enter a URL to add.');
   }
 
@@ -20,7 +24,8 @@ export function normalizeManualUrl(candidate: string, previewBaseUrl: string): s
   let base: URL;
   try {
     base = new URL(previewBaseUrl);
-    resolved = new URL(candidate, previewBaseUrl);
+    const candidateForResolution = normalizeCandidateInput(trimmedCandidate);
+    resolved = new URL(candidateForResolution, base);
   } catch {
     throw new ManualUrlValidationError('Enter a valid URL from your site.');
   }
@@ -33,4 +38,24 @@ export function normalizeManualUrl(candidate: string, previewBaseUrl: string): s
   }
 
   return resolved.toString().replace(/[#?].*$/, '');
+}
+
+function normalizeCandidateInput(candidate: string): string {
+  if (ABSOLUTE_URL_PATTERN.test(candidate)) {
+    return candidate;
+  }
+
+  if (candidate.startsWith('//')) {
+    return `https:${candidate}`;
+  }
+
+  if (candidate.startsWith('/')) {
+    return candidate;
+  }
+
+  if (DOMAIN_LIKE_PATTERN.test(candidate)) {
+    return `https://${candidate}`;
+  }
+
+  throw new ManualUrlValidationError('Enter a valid URL from your site.');
 }

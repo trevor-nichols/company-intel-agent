@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { Badge } from '@agenai/ui/badge';
 import { Button } from '@agenai/ui/button';
 import type { CompanyProfileSnapshot } from '../../../types';
-import { formatDate, getStatusVariant } from '../../../utils/formatters';
+import { formatDate, formatStatusLabel, getStatusVariant } from '../../../utils/formatters';
 
 interface SnapshotCardProps {
   readonly snapshot: CompanyProfileSnapshot;
@@ -67,7 +67,11 @@ export function SnapshotCard({
         <dl className="mt-4 grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
           <div className="space-y-1">
             <dt className="font-medium text-foreground">Status</dt>
-            <dd>{snapshot.completedAt ? `Completed ${formatDate(snapshot.completedAt)}` : 'In progress…'}</dd>
+            <dd>
+              {snapshot.status === 'complete' && snapshot.completedAt
+                ? `Completed ${formatDate(snapshot.completedAt)}`
+                : formatStatusLabel(snapshot.status)}
+            </dd>
           </div>
           <div className="space-y-1">
             <dt className="font-medium text-foreground">Domain</dt>

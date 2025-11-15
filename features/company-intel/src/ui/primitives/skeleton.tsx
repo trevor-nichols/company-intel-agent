@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import * as React from 'react';
-import { cn } from '@company-intel/ui/lib/cn';
+import { cn } from '../lib/cn';
 
 export const Skeleton = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>): React.ReactElement => (
   <div

@@ -4,13 +4,13 @@
 
 import React, { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
 import { AlertTriangle, Plus } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@company-intel/ui/alert';
-import { Button } from '@company-intel/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@company-intel/ui/card';
-import { Input } from '@company-intel/ui/input';
-import { Label } from '@company-intel/ui/label';
-import { ScrollArea } from '@company-intel/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@company-intel/ui/tooltip';
+import { Alert, AlertDescription, AlertTitle } from '../../../primitives/alert';
+import { Button } from '../../../primitives/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../primitives/card';
+import { Input } from '../../../primitives/input';
+import { Label } from '../../../primitives/label';
+import { ScrollArea } from '../../../primitives/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../primitives/tooltip';
 import type { CompanyIntelPreviewResult, CompanyIntelSelection } from '../../types';
 import { SelectionList } from './components/SelectionList';
 import { ManualEntryRow } from './components/ManualEntryRow';

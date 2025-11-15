@@ -4,9 +4,9 @@
 
 import React, { useCallback, useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { Pencil, Plus, X, Loader2 } from 'lucide-react';
-import { Button } from '@company-intel/ui/button';
-import { Input } from '@company-intel/ui/input';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@company-intel/ui/tooltip';
+import { Button } from '../../../../primitives/button';
+import { Input } from '../../../../primitives/input';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../../../primitives/tooltip';
 import { EmptyPlaceholder, SectionTitle, ThinkingPlaceholder } from '../../Common';
 
 interface EditableIndustriesSectionProps {

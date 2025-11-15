@@ -10,7 +10,7 @@ export type {
   UseCompanyIntelChatOptions,
   UseCompanyIntelChatResult,
 } from './useCompanyIntelChat';
-export type { CompanyIntelChatMessage, CompanyIntelChatResult, CompanyIntelChatCitation } from '@company-intel/shared/chat';
+export type { CompanyIntelChatMessage, CompanyIntelChatResult, CompanyIntelChatCitation } from '../../../shared/chat';
 
 export { useUpdateCompanyIntelProfile } from './useUpdateCompanyIntelProfile';
 export type { UseTriggerCompanyIntelOptions } from './useTriggerCompanyIntel';

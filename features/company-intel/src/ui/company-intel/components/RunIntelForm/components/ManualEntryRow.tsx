@@ -3,8 +3,8 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { useEffect, useRef, type ReactElement } from 'react';
-import { Button } from '@company-intel/ui/button';
-import { Input } from '@company-intel/ui/input';
+import { Button } from '../../../../primitives/button';
+import { Input } from '../../../../primitives/input';
 
 interface ManualEntryRowProps {
   readonly manualUrl: string;

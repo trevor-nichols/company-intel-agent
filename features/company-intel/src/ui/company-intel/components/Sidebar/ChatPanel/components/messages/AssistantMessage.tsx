@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import type { Components } from 'react-markdown';
 
-import { Markdown } from '@company-intel/ui/markdown';
-import { TooltipProvider } from '@company-intel/ui/tooltip';
-import { ShimmeringText } from '@company-intel/ui/shimmering-text';
+import { Markdown } from '../../../../../../primitives/markdown';
+import { TooltipProvider } from '../../../../../../primitives/tooltip';
+import { ShimmeringText } from '../../../../../../primitives/shimmering-text';
 
 import { ReasoningAccordion } from '../ReasoningAccordion';
 import { ToolActivityIndicator } from '../ToolActivityIndicator';

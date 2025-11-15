@@ -4,10 +4,10 @@
 
 import React, { type ReactElement } from 'react';
 import { History } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@company-intel/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@company-intel/ui/card';
-import { ScrollArea } from '@company-intel/ui/scroll-area';
-import { Skeleton } from '@company-intel/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '../../../primitives/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../primitives/card';
+import { ScrollArea } from '../../../primitives/scroll-area';
+import { Skeleton } from '../../../primitives/skeleton';
 import type { CompanyProfileSnapshot } from '../../types';
 import { SnapshotCard } from './components/SnapshotCard';
 

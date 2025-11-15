@@ -2,7 +2,7 @@
 //                server.ts - Factory for company intel server operations
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../config/logging';
 
 import {
   previewCompanyIntel,

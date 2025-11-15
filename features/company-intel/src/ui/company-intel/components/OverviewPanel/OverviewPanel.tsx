@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { type ReactElement } from 'react';
-import { Separator } from '@company-intel/ui/separator';
+import { Separator } from '../../../primitives/separator';
 import type {
   CompanyIntelSnapshotStructuredProfileSummary,
   CompanyProfile,

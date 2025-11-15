@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
-import { Alert, AlertDescription, AlertTitle } from '@company-intel/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '../../../../../primitives/alert';
 
 interface ChatStatusBannerProps {
   readonly statusNotice: string | null;

@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { useEffect, useMemo, useState, type ReactElement } from 'react';
-import { Card, CardContent } from '@company-intel/ui/card';
+import { Card, CardContent } from '../primitives/card';
 import { HeaderCard } from './components/HeaderCard';
 import { OverviewPanel } from './components/OverviewPanel';
 import { RunIntelForm } from './components/RunIntelForm';

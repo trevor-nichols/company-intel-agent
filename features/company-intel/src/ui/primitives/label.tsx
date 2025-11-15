@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import * as React from 'react';
-import { cn } from '@company-intel/ui/lib/cn';
+import { cn } from '../lib/cn';
 
 interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   readonly requiredIndicator?: React.ReactNode;

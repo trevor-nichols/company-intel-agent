@@ -7,9 +7,9 @@
 import React from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
-import { cn } from '@company-intel/ui/lib/cn';
-import { Spinner } from '@company-intel/ui/spinner';
-import type { CompanyIntelChatToolStatus } from '@company-intel/shared/chat';
+import { cn } from '../../../../../lib/cn';
+import { Spinner } from '../../../../../primitives/spinner';
+import type { CompanyIntelChatToolStatus } from '../../../../../../shared/chat';
 
 const TOOL_LABELS: Record<string, string> = {
   file_search: 'File search',

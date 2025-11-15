@@ -1,4 +1,4 @@
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../config/logging';
 import type { CompanyIntelPersistence } from '../server/services/persistence';
 import { buildChatSystemPrompt } from '../server/agents/chat/prompts';
 import { validateChatRequestBody } from '../server/agents/chat/validation';

@@ -3,9 +3,9 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { useId, useMemo, type ReactElement } from 'react';
-import { Button } from '@company-intel/ui/button';
-import { Checkbox } from '@company-intel/ui/checkbox';
-import { Badge } from '@company-intel/ui/badge';
+import { Button } from '../../../../primitives/button';
+import { Checkbox } from '../../../../primitives/checkbox';
+import { Badge } from '../../../../primitives/badge';
 
 export type SelectionRowType = 'recommended' | 'manual';
 

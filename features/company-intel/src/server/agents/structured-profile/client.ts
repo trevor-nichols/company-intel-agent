@@ -2,7 +2,7 @@
 //                client.ts - Structured profile agent orchestrator
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../../config/logging';
 import { zodTextFormat } from 'openai/helpers/zod';
 import type { ResponseCreateParams } from 'openai/resources/responses/responses';
 

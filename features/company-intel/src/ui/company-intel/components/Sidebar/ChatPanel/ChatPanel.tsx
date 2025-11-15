@@ -5,8 +5,8 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Badge } from '@company-intel/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@company-intel/ui/card';
+import { Badge } from '../../../../primitives/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../primitives/card';
 
 import type { CompanyIntelVectorStoreStatus } from '../../../types';
 import type { ChatMutationAdapter } from './types';

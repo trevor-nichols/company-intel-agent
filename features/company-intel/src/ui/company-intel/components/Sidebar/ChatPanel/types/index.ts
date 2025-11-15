@@ -1,5 +1,5 @@
 import type { CompanyIntelChatCitation, UseCompanyIntelChatResult } from '../../../../hooks';
-import type { CompanyIntelChatToolStatus, CompanyIntelConsultedDocument } from '@company-intel/shared/chat';
+import type { CompanyIntelChatToolStatus, CompanyIntelConsultedDocument } from '../../../../../../shared/chat';
 
 export type TranscriptMessage = UserTranscriptMessage | AssistantTranscriptMessage;
 

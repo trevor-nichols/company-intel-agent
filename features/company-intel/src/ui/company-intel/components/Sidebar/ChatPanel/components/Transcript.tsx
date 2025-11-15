@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowDown, MessageCircle } from 'lucide-react';
 
-import { ScrollArea } from '@company-intel/ui/scroll-area';
+import { ScrollArea } from '../../../../../primitives/scroll-area';
 
 import type { TranscriptMessage } from '../types';
 import { AssistantMessage } from './messages/AssistantMessage';

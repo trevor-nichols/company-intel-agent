@@ -10,12 +10,12 @@ import type {
   CompanyIntelChatRequest,
   UseCompanyIntelChatResult,
 } from '../../../hooks';
-import type { CompanyIntelChatToolStatus, CompanyIntelConsultedDocument } from '@company-intel/shared/chat';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@company-intel/ui/card';
-import { ScrollArea } from '@company-intel/ui/scroll-area';
-import { TooltipProvider } from '@company-intel/ui/tooltip';
-import { Markdown } from '@company-intel/ui/markdown';
-import { Badge } from '@company-intel/ui/badge';
+import type { CompanyIntelChatToolStatus, CompanyIntelConsultedDocument } from '../../../../../shared/chat';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../primitives/card';
+import { ScrollArea } from '../../../../primitives/scroll-area';
+import { TooltipProvider } from '../../../../primitives/tooltip';
+import { Markdown } from '../../../../primitives/markdown';
+import { Badge } from '../../../../primitives/badge';
 import { CitationMarker } from './components/CitationMarker';
 import { type CitationMarkerMap, prepareCitationRendering } from './utils/citations';
 import { ConsultedDocumentChips } from './components/ConsultedDocumentChips';

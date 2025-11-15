@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import Redis, { type Redis as RedisClient } from 'ioredis';
-import { logger as defaultLogger, type Logger } from '@company-intel/logging';
+import { logger as defaultLogger, type Logger } from '../../config/logging';
 
 import type {
   CompanyIntelPersistence,

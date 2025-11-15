@@ -2,8 +2,8 @@
 //                client.ts - OpenAI client factory - Dependencies: @company-intel/config, @company-intel/logging, openai
 // ------------------------------------------------------------------------------------------------
 
-import { getEnvVar, requireEnvVar } from '@company-intel/config';
-import { logger as defaultLogger } from '@company-intel/logging';
+import { getEnvVar, requireEnvVar } from '../../../config/env';
+import { logger as defaultLogger } from '../../../config/logging';
 import OpenAI, { type ClientOptions, APIError } from 'openai';
 
 import type { OpenAIClient, OpenAIClientConfig, ResolvedOpenAIClientConfig } from './types';

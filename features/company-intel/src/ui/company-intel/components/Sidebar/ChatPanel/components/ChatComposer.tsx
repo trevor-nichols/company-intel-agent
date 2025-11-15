@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ChatInput } from '@company-intel/ui/chat-input';
+import { ChatInput } from '../../../../../primitives/chat-input';
 
 interface ChatComposerProps {
   readonly value: string;

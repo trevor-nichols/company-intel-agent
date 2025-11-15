@@ -2,7 +2,7 @@
 //                overviewAnalysis.ts - Company overview generation stage
 // ------------------------------------------------------------------------------------------------
 
-import type { Logger } from '@company-intel/logging';
+import type { Logger } from '../../../../config/logging';
 
 import {
   generateCompanyOverview,

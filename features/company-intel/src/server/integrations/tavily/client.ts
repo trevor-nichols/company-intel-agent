@@ -6,8 +6,8 @@
 //                Client Factory
 // ------------------------------------------------------------------------------------------------
 
-import { requireEnvVar } from '@company-intel/config';
-import { logger as defaultLogger } from '@company-intel/logging';
+import { requireEnvVar } from '../../../config/env';
+import { logger as defaultLogger } from '../../../config/logging';
 
 import type {
   TavilyClient,

@@ -2,7 +2,7 @@
 //                preview.ts - Site intel preview helper
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../../config/logging';
 
 import { previewSiteIntel, type CollectSiteIntelOptions, type SiteIntelResult } from '../../web-search';
 import type { RunCompanyIntelCollectionDependencies } from './types';

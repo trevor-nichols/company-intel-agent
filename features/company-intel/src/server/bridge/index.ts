@@ -2,7 +2,7 @@
 //                bridge/index.ts - Server-side configuration contracts for company intel feature
 // ------------------------------------------------------------------------------------------------
 
-import type { Logger } from '@company-intel/logging';
+import type { Logger } from '../../config/logging';
 
 import type { CollectSiteIntelOptions, SiteIntelResult } from '../web-search';
 import type { CollectSiteIntelDependencies } from '../web-search/collect';

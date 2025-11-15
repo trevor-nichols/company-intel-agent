@@ -5,7 +5,7 @@
 import * as React from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { cn } from '@company-intel/ui/lib/cn';
+import { cn } from '../lib/cn';
 
 interface MarkdownProps {
   readonly content: string;

@@ -2,7 +2,7 @@ import type { CompanyIntelRunCoordinator, RunSubscription } from '../server/runt
 import { ActiveRunError } from '../server/runtime/runCoordinator';
 import type { CollectSiteIntelOptions } from '../server/web-search';
 import type { CompanyIntelStreamEvent } from '../shared/types';
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../config/logging';
 import { error, type HttpResult } from './http';
 
 const textEncoder = new TextEncoder();

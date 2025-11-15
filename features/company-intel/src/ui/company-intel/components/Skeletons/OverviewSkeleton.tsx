@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { type ReactElement } from 'react';
-import { Skeleton } from '@company-intel/ui/skeleton';
+import { Skeleton } from '../../../primitives/skeleton';
 
 export function OverviewSkeleton(): ReactElement {
   return (

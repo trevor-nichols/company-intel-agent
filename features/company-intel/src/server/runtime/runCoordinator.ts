@@ -2,7 +2,7 @@
 //                runCoordinator.ts - Coordinates live run sessions for SSE streaming
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../config/logging';
 
 import type { CompanyIntelServer } from '../bridge';
 import type { RunCompanyIntelCollectionParams, RunCompanyIntelCollectionResult } from '../services/run-collection';

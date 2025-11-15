@@ -2,7 +2,7 @@
 //                context.ts - Shared run context utilities for modular stages
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger, type Logger } from '@company-intel/logging';
+import { logger as defaultLogger, type Logger } from '../../../config/logging';
 
 import type { CompanyIntelRunStage, CompanyIntelStreamEvent } from '../../../shared/types';
 import type { CompanyIntelPersistence } from '../persistence';

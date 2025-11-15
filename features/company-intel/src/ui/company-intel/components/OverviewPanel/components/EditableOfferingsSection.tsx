@@ -4,11 +4,11 @@
 
 import React, { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { Pencil, Plus, Trash2, Loader2 } from 'lucide-react';
-import { Button } from '@company-intel/ui/button';
-import { Input } from '@company-intel/ui/input';
-import { ScrollArea } from '@company-intel/ui/scroll-area';
-import { Textarea } from '@company-intel/ui/textarea';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@company-intel/ui/tooltip';
+import { Button } from '../../../../primitives/button';
+import { Input } from '../../../../primitives/input';
+import { ScrollArea } from '../../../../primitives/scroll-area';
+import { Textarea } from '../../../../primitives/textarea';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../../../primitives/tooltip';
 import type { CompanyProfileKeyOffering } from '../../../types';
 import { EmptyPlaceholder, SectionTitle, ThinkingPlaceholder } from '../../Common';
 

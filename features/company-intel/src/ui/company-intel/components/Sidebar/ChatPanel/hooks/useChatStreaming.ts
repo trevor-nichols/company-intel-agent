@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import type { CompanyIntelChatStreamEvent } from '@company-intel/shared/chat';
+import type { CompanyIntelChatStreamEvent } from '../../../../../../shared/chat';
 
 import { useCompanyIntelChat } from '../../../../hooks';
 import type { ChatMutationAdapter } from '../types';

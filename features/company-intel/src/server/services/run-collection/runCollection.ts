@@ -2,7 +2,7 @@
 //                runCollection.ts - Modular run orchestrator for company intel collection
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../../config/logging';
 
 import { initialiseRun, type InitialiseRunResult } from './stages/initialise';
 import { mapAndScrape } from './stages/mapAndScrape';

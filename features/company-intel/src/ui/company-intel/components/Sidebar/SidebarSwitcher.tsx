@@ -5,8 +5,8 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { type ReactElement } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@company-intel/ui/tabs';
-import { cn } from '@company-intel/ui/lib/cn';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../primitives/tabs';
+import { cn } from '../../../lib/cn';
 
 export interface SidebarPane {
   readonly id: string;

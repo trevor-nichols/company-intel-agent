@@ -3,11 +3,11 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { useCallback, useEffect, type ReactElement } from 'react';
-import { Button } from '@company-intel/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@company-intel/ui/avatar';
-import { Badge } from '@company-intel/ui/badge';
-import { CardHeader } from '@company-intel/ui/card';
-import { Separator } from '@company-intel/ui/separator';
+import { Button } from '../../../primitives/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../../../primitives/avatar';
+import { Badge } from '../../../primitives/badge';
+import { CardHeader } from '../../../primitives/card';
+import { Separator } from '../../../primitives/separator';
 import { Download } from 'lucide-react';
 import { useExportCompanyIntelSnapshot } from '../../hooks';
 import type {

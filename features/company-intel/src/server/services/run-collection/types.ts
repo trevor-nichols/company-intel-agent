@@ -2,7 +2,7 @@
 //                types.ts - Shared types for the run-collection pipeline
 // ------------------------------------------------------------------------------------------------
 
-import type { Logger } from '@company-intel/logging';
+import type { Logger } from '../../../config/logging';
 
 import type {
   CollectSiteIntelOptions,

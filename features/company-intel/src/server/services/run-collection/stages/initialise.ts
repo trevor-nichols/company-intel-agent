@@ -2,7 +2,7 @@
 //                initialise.ts - Snapshot bootstrap and run context creation
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../../../config/logging';
 
 import type { CompanyIntelProfileRecord } from '../../persistence';
 import { CompanyIntelRunCancelledError } from '../errors';

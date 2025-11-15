@@ -2,7 +2,7 @@
 //                vectorStorePublisher.ts - Publish snapshot knowledge into OpenAI vector stores
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../config/logging';
 import { toFile } from 'openai';
 
 import type { OpenAIClientLike } from '../agents/shared/openai';

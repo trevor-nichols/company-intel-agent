@@ -2,7 +2,7 @@
 //                profileUpdates.ts - Helpers for manual company intel profile adjustments
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../config/logging';
 
 import type { CompanyProfileKeyOffering } from '../../shared/types';
 import type { CompanyIntelPersistence, CompanyIntelProfileRecord, CompanyIntelProfileUpsert } from './persistence';

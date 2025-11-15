@@ -2,7 +2,7 @@
 //                client.ts - Snapshot chat agent orchestrator
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../../config/logging';
 import type OpenAI from 'openai';
 import type { ResponseCreateParams, ResponseStreamEvent } from 'openai/resources/responses/responses';
 

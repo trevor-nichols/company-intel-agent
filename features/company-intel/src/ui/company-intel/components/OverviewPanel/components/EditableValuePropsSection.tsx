@@ -4,10 +4,10 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pencil, Plus, X, Loader2 } from 'lucide-react';
-import { Button } from '@company-intel/ui/button';
-import { ScrollArea } from '@company-intel/ui/scroll-area';
-import { Textarea } from '@company-intel/ui/textarea';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@company-intel/ui/tooltip';
+import { Button } from '../../../../primitives/button';
+import { ScrollArea } from '../../../../primitives/scroll-area';
+import { Textarea } from '../../../../primitives/textarea';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../../../primitives/tooltip';
 import { EmptyPlaceholder, SectionTitle, ThinkingPlaceholder } from '../../Common';
 
 interface EditableValuePropsSectionProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { CompanyIntelConsultedDocument } from '@company-intel/shared/chat';
+import type { CompanyIntelConsultedDocument } from '../../../../../../shared/chat';
 
 interface ConsultedDocumentChipsProps {
   readonly documents: readonly CompanyIntelConsultedDocument[];

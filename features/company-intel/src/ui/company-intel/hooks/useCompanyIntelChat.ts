@@ -12,7 +12,7 @@ import type {
   CompanyIntelChatMessage,
   CompanyIntelChatResult,
   CompanyIntelChatStreamEvent,
-} from '@company-intel/shared/chat';
+} from '../../../shared/chat';
 import { useCompanyIntelClient } from '../context';
 import { toHttpError } from '../utils/errors';
 

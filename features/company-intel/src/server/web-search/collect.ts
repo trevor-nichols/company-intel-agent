@@ -6,7 +6,7 @@
 //                Orchestration Logic
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../config/logging';
 
 import { rankMapLinks } from './selectors';
 import type {

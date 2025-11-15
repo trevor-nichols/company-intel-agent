@@ -6,7 +6,7 @@
 //                URL Ranking Logic
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../config/logging';
 
 import type { SiteIntelMapLink } from './types';
 

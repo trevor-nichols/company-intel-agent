@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import { renderToBuffer } from '@react-pdf/renderer';
-import { logger as defaultLogger } from '@company-intel/logging';
+import { logger as defaultLogger } from '../../config/logging';
 
 import type {
   CompanyIntelPersistence,

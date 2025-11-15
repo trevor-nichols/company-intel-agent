@@ -2,8 +2,8 @@
 //                bootstrap.ts - Factory helpers for constructing the Company Intel server runtime
 // ------------------------------------------------------------------------------------------------
 
-import { getEnvVar } from '@company-intel/config';
-import { logger as defaultLogger } from '@company-intel/logging';
+import { getEnvVar } from '../config/env';
+import { logger as defaultLogger } from '../config/logging';
 
 import { createCompanyIntelServer } from './server';
 import type { CompanyIntelServer } from './bridge';

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import React from 'react';
 
-import type { CompanyIntelChatCitation } from '@company-intel/shared/chat';
+import type { CompanyIntelChatCitation } from '../../../../../../../shared/chat';
 
 import type { AssistantTranscriptMessage } from '../../types';
 import { AssistantMessage } from './AssistantMessage';

@@ -2,7 +2,7 @@
 //                memory.ts - In-memory persistence implementation for development/demo usage
 // ------------------------------------------------------------------------------------------------
 
-import { logger as defaultLogger, type Logger } from '@company-intel/logging';
+import { logger as defaultLogger, type Logger } from '../../config/logging';
 
 import type {
   CompanyIntelPersistence,

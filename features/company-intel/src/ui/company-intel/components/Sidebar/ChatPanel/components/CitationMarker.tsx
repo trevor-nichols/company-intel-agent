@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '@company-intel/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../../primitives/tooltip';
 
 import type { CitationMarkerDescriptor } from '../utils/citations';
 

@@ -7,9 +7,9 @@
 import React, { useId, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-import { Markdown } from '@company-intel/ui/markdown';
-import { ShimmeringText } from '@company-intel/ui/shimmering-text';
-import { cn } from '@company-intel/ui/lib/cn';
+import { Markdown } from '../../../../../primitives/markdown';
+import { ShimmeringText } from '../../../../../primitives/shimmering-text';
+import { cn } from '../../../../../lib/cn';
 
 export interface ReasoningAccordionProps {
   readonly headline?: string | null;

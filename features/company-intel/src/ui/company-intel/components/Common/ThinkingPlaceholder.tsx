@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import React, { type ReactElement } from 'react';
-import { ShimmeringText } from '@company-intel/ui';
+import { ShimmeringText } from '../../../primitives';
 
 interface ThinkingPlaceholderProps {
   readonly fallbackText?: string;

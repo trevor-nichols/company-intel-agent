@@ -4,8 +4,8 @@
 
 import React, { type ReactElement } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Badge } from '@company-intel/ui/badge';
-import { Button } from '@company-intel/ui/button';
+import { Badge } from '../../../../primitives/badge';
+import { Button } from '../../../../primitives/button';
 import type { CompanyProfileSnapshot } from '../../../types';
 import { formatDate, formatStatusLabel, getStatusVariant } from '../../../utils/formatters';
 

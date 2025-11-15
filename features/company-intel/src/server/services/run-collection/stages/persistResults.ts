@@ -2,7 +2,7 @@
 //                persistResults.ts - Snapshot persistence and completion handling
 // ------------------------------------------------------------------------------------------------
 
-import type { Logger } from '@company-intel/logging';
+import type { Logger } from '../../../../config/logging';
 
 import type { RunContext } from '../context';
 import type {

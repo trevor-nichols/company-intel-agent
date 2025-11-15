@@ -2,7 +2,7 @@
 //                types.ts - Shared OpenAI integration types - Dependencies: openai
 // ------------------------------------------------------------------------------------------------
 
-import type { Logger } from '@company-intel/logging';
+import type { Logger } from '../../../config/logging';
 import type OpenAI from 'openai';
 
 export interface OpenAIClientConfig {

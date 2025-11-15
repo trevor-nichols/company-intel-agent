@@ -5,7 +5,7 @@ import type {
   CompanyIntelChatStreamEvent,
   CompanyIntelChatCitation,
   CompanyIntelConsultedDocument,
-} from '@company-intel/shared/chat';
+} from '../../../../../../shared/chat';
 import type { AssistantTranscriptMessage } from '../types';
 
 vi.mock('../../../../hooks', async () => {

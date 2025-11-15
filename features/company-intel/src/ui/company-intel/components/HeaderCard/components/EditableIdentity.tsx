@@ -4,10 +4,10 @@
 
 import React, { useCallback, useEffect, useState, type ChangeEvent } from 'react';
 import { Pencil, Loader2 } from 'lucide-react';
-import { Button } from '@company-intel/ui/button';
-import { Input } from '@company-intel/ui/input';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@company-intel/ui/tooltip';
-import { CardTitle } from '@company-intel/ui/card';
+import { Button } from '../../../../primitives/button';
+import { Input } from '../../../../primitives/input';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../../../primitives/tooltip';
+import { CardTitle } from '../../../../primitives/card';
 
 interface EditableIdentityProps {
   readonly companyName: string | null;

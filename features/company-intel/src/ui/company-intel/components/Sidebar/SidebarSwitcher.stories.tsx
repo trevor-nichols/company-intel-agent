@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { SidebarSwitcher } from './SidebarSwitcher';
-import { Card, CardContent, CardHeader, CardTitle } from '@company-intel/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../primitives/card';
 
 function SidebarSwitcherExample({ chatEnabled = true }: { readonly chatEnabled?: boolean }) {
   const [value, setValue] = useState(chatEnabled ? 'chat' : 'run');

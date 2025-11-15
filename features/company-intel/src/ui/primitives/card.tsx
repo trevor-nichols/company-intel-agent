@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 import * as React from 'react';
-import { cn } from '@company-intel/ui/lib/cn';
+import { cn } from '../lib/cn';
 
 export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (

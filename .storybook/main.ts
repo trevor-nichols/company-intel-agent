@@ -16,7 +16,10 @@ import autoprefixer from 'autoprefixer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 const config: StorybookConfig = {
-  stories: ['../components/**/*.stories.@(ts|tsx)'],
+  stories: [
+    '../components/**/*.stories.@(ts|tsx)',
+    '../features/**/*.stories.@(ts|tsx)'
+  ],
 
   addons: [
     '@storybook/addon-a11y',

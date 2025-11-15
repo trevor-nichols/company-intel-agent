@@ -14,11 +14,10 @@ import { companyIntelHandlers, companyIntelEmptyHandlers, createCompanyIntelHand
  * Default handlers applied to every story unless overridden.
  * Start with an empty set; feature stories will compose domain-specific handlers.
  */
-const defaultHandlers: HttpHandler[] = [...companyIntelHandlers];
+export const defaultHandlers: HttpHandler[] = [...companyIntelHandlers];
 
 /**
  * Utility to merge per-story handlers with the defaults to avoid repetition.
  */
 export const withHandlers = (...scopedHandlers: HttpHandler[]) => [...scopedHandlers, ...defaultHandlers];
-
 export { companyIntelEmptyHandlers, createCompanyIntelHandlers };

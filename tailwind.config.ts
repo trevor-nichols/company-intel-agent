@@ -7,6 +7,7 @@ const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
+    './features/**/*.{ts,tsx}',
     './server/**/*.{ts,tsx}',
     './shared/**/*.{ts,tsx}',
     './__mocks__/**/*.{ts,tsx}',

@@ -40,6 +40,50 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
    ```
    Storybook runs at `http://localhost:6007` and uses MSW fixtures to simulate streaming states.
 
+## Using the Feature Package
+
+All UI, server, and API contracts live inside the workspace package `@company-intel/feature` (see `features/company-intel`). You can import the pieces you need without relying on the demo app, then install via npm **or** a local tarball:
+
+```ts
+// UI
+import { CompanyIntelPanel, CompanyIntelProviders } from '@company-intel/ui/company-intel';
+
+// Server + persistence bootstrap
+import { createCompanyIntelEnvironment } from '@company-intel/server/bootstrap';
+
+// HTTP handlers (framework agnostic)
+import { handleCompanyIntelGet, handleCompanyIntelPatch } from '@company-intel/feature/api/companyIntelRest';
+import { createRunStream } from '@company-intel/feature/api/runStream';
+import { createChatStream } from '@company-intel/feature/api/chatStream';
+
+// Next.js adapters (optional)
+import { toNextResponse, createSseResponse } from '@company-intel/feature/adapters/next/http';
+```
+
+### Configuring env + logging
+
+Call the new config helpers once during bootstrap so the feature never reaches into global `process.env` or console logging implicitly:
+
+```ts
+import { configureCompanyIntelFeature, createLogger } from '@company-intel/feature/config';
+
+configureCompanyIntelFeature({
+  env: process.env, // replace with your own env loader in serverless contexts
+  logger: createLogger({ service: 'my-app' }), // optional
+});
+```
+
+For finer-grained control (e.g., tests), use `configureCompanyIntelEnv(customSource)` or `configureCompanyIntelLogger(customLogger)` directly.
+
+### Distribution options
+- **npm registry (recommended):** `pnpm add @company-intel/feature`. Publish updates with `npm publish --access public` from `features/company-intel`.
+- **Tarball / file install:** `pnpm pack --filter @company-intel/feature` produces `company-intel-feature-X.Y.Z.tgz`, which consumers can install via `pnpm add ./company-intel-feature-X.Y.Z.tgz`.
+- **Workspace link (monorepo consumers):** add `"@company-intel/feature": "workspace:*"` in your root `package.json`.
+
+The integration steps below are identical regardless of distribution method.
+
+For a detailed integration guide (including server bootstrap, API mounting, and SSE expectations) see [`docs/integration.md`](docs/integration.md).
+
 ## Environment
 
 | Variable | Description | Default |
@@ -69,12 +113,12 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
 
 ### Architecture
 Need a visual? Check `docs/ops/workflow.md` for the Mermaid systems diagram that walks through the frontend, API, orchestrator, and RAG subsystems end-to-end.
-- **UI (`app/**`, `components/company-intel/**`):** Next.js App Router screens, TanStack Query providers, and shadcn-style UI shims. UI never imports server code directly; it talks to the API via fetchers in `CompanyIntelClientProvider`.
+- **UI (`app/**`, `features/company-intel/src/ui/company-intel/**`):** Next.js App Router screens, TanStack Query providers, and shadcn-style UI shims. UI never imports server code directly; it talks to the API via fetchers in `CompanyIntelClientProvider`.
 - **API (`app/api/company-intel/**`):** Route handlers run in the Node.js runtime, coerce HTTP inputs into typed server calls, stream SSE frames, and sanitize responses for the client.
-- **Server (`server/**`):** `createCompanyIntelServer` orchestrates the collection workflow, coordinates Tavily/OpenAI integrations, enforces Zod validation, and drives PDF generation.
-- **Persistence (`server/persistence/**`):** Redis is the default backend (fallbacks to in-memory for local dev). Both adapters implement `CompanyIntelPersistence`, serialize dates to ISO at module boundaries, and support snapshot/page replacement.
-- **Runtime coordinator (`server/runtime/**`):** Manages single-flight execution, SSE subscriptions, cancellation, and recovery so runs survive disconnects.
-- **Bootstrap (`server/bootstrap.ts`):** `getCompanyIntelEnvironment()` resolves config, logging, persistence, Tavily, and OpenAI clients once per process and caches the singleton.
+- **Server (`features/company-intel/src/server/**`):** `createCompanyIntelServer` orchestrates the collection workflow, coordinates Tavily/OpenAI integrations, enforces Zod validation, and drives PDF generation.
+- **Persistence (`features/company-intel/src/server/persistence/**`):** Redis is the default backend (fallbacks to in-memory for local dev). Both adapters implement `CompanyIntelPersistence`, serialize dates to ISO at module boundaries, and support snapshot/page replacement.
+- **Runtime coordinator (`features/company-intel/src/server/runtime/**`):** Manages single-flight execution, SSE subscriptions, cancellation, and recovery so runs survive disconnects.
+- **Bootstrap (`features/company-intel/src/server/bootstrap.ts`):** `getCompanyIntelEnvironment()` resolves config, logging, persistence, Tavily, and OpenAI clients once per process and caches the singleton.
 - **Logging & metrics:** `lib/logging.ts` emits JSON-friendly logs for stage transitions, including model ids, response ids, and usage metadata when available.
 
 ### GPT-5.1 Structured Outputs
@@ -96,6 +140,7 @@ All routes live under `/api/company-intel` and run on the Node.js runtime.
 | `GET` | `/runs/:snapshotId/stream` | Reconnects to an active run, replays buffered frames, and resumes the live SSE stream.
 | `DELETE` | `/runs/:snapshotId` | Cancels the active run (idempotent). On success the stream emits `run-cancelled` and the snapshot is pruned.
 | `GET` | `/snapshots/:id` | Returns a fully serialized snapshot (profile summaries, overview text, scrape stats) so the UI can hydrate historical runs or gate chat readiness.
+| `POST` | `/snapshots/:id/chat` | Streams chat completions for a snapshot. **Requires** `Accept: text/event-stream`; responds with `[DONE]` upon completion.
 | `GET` | `/snapshots/:id/export` | Generates a PDF export (`Content-Disposition: attachment`).
 
 ### SSE Contract
@@ -116,7 +161,7 @@ Each frame is emitted as `data: <json>\n\n` and the stream terminates with `data
 12. `run-cancelled` `{ reason? }`
 13. `[DONE]`
 
-The UI hooks in `components/company-intel/hooks` assume this order and will fail fast if malformed frames are encountered.
+The UI hooks in `features/company-intel/src/ui/company-intel/hooks` assume this order and will fail fast if malformed frames are encountered.
 
 ## Tooling & Quality Gates
 - `pnpm lint` — ESLint + Prettier with strict rules for server and client bundles.

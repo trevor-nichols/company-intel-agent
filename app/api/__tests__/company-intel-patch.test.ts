@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { CompanyIntelServer } from '@/server/bridge';
+import type { CompanyIntelServer } from '@company-intel/feature/server/bridge';
 
 const updateProfileMock = vi.fn();
 
-vi.mock('@/server/bootstrap', () => ({
+vi.mock('@company-intel/feature/server/bootstrap', () => ({
   getCompanyIntelEnvironment: () => ({
     server: {
       updateProfile: updateProfileMock,

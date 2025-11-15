@@ -18,7 +18,7 @@ const openAIStub = {
   },
 };
 
-vi.mock('@/server/bootstrap', () => ({
+vi.mock('@company-intel/feature/server/bootstrap', () => ({
   getCompanyIntelEnvironment: () => ({
     persistence: {
       getSnapshotById,
@@ -29,14 +29,14 @@ vi.mock('@/server/bootstrap', () => ({
   }),
 }));
 
-vi.mock('@/server/agents/shared/openai', () => ({
+vi.mock('@company-intel/feature/server/agents/shared/openai', () => ({
   resolveOpenAIClient: () => openAIStub,
 }));
 
-import { POST } from '../company-intel/snapshots/[id]/chat/stream/route';
+import { POST } from '../company-intel/snapshots/[id]/chat/route';
 
 function buildRequest(messages: { role: 'user' | 'assistant' | 'system'; content: string }[]) {
-  return new NextRequest('http://localhost/api/company-intel/snapshots/42/chat/stream', {
+  return new NextRequest('http://localhost/api/company-intel/snapshots/42/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,0 +1,87 @@
+{
+  "name": "@company-intel/feature",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./config": {
+      "import": "./src/config/index.ts",
+      "require": "./src/config/index.ts",
+      "types": "./src/config/index.ts"
+    },
+    "./adapters/next/http": {
+      "import": "./src/adapters/next/http.ts",
+      "require": "./src/adapters/next/http.ts",
+      "types": "./src/adapters/next/http.ts"
+    },
+    "./api/http": {
+      "import": "./src/api/http.ts",
+      "require": "./src/api/http.ts",
+      "types": "./src/api/http.ts"
+    },
+    "./api/companyIntelRest": {
+      "import": "./src/api/companyIntelRest.ts",
+      "require": "./src/api/companyIntelRest.ts",
+      "types": "./src/api/companyIntelRest.ts"
+    },
+    "./api/preview": {
+      "import": "./src/api/preview.ts",
+      "require": "./src/api/preview.ts",
+      "types": "./src/api/preview.ts"
+    },
+    "./api/runStream": {
+      "import": "./src/api/runStream.ts",
+      "require": "./src/api/runStream.ts",
+      "types": "./src/api/runStream.ts"
+    },
+    "./api/runCancel": {
+      "import": "./src/api/runCancel.ts",
+      "require": "./src/api/runCancel.ts",
+      "types": "./src/api/runCancel.ts"
+    },
+    "./api/chatStream": {
+      "import": "./src/api/chatStream.ts",
+      "require": "./src/api/chatStream.ts",
+      "types": "./src/api/chatStream.ts"
+    },
+    "./api/exportSnapshot": {
+      "import": "./src/api/exportSnapshot.ts",
+      "require": "./src/api/exportSnapshot.ts",
+      "types": "./src/api/exportSnapshot.ts"
+    },
+    "./api/snapshots": {
+      "import": "./src/api/snapshots.ts",
+      "require": "./src/api/snapshots.ts",
+      "types": "./src/api/snapshots.ts"
+    },
+    "./server/bootstrap": {
+      "import": "./src/server/bootstrap.ts",
+      "require": "./src/server/bootstrap.ts",
+      "types": "./src/server/bootstrap.ts"
+    },
+    "./server/bridge": {
+      "import": "./src/server/bridge/index.ts",
+      "require": "./src/server/bridge/index.ts",
+      "types": "./src/server/bridge/index.ts"
+    },
+    "./server/agents/shared/openai": {
+      "import": "./src/server/agents/shared/openai.ts",
+      "require": "./src/server/agents/shared/openai.ts",
+      "types": "./src/server/agents/shared/openai.ts"
+    },
+    "./shared/types": {
+      "import": "./src/shared/types.ts",
+      "require": "./src/shared/types.ts",
+      "types": "./src/shared/types.ts"
+    },
+    "./package.json": "./package.json"
+  }
+}

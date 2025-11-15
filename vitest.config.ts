@@ -14,6 +14,8 @@ export default defineConfig({
       'server/**/__tests__/**/*.{ts,tsx}',
       'shared/**/*.test.{ts,tsx}',
       'shared/**/__tests__/**/*.{ts,tsx}',
+      'features/company-intel/src/**/*.test.{ts,tsx}',
+      'features/company-intel/src/**/__tests__/**/*.{ts,tsx}',
     ],
     coverage: {
       reporter: ['text', 'lcov'],
@@ -21,11 +23,20 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      { find: '@company-intel/logging', replacement: path.resolve(__dirname, 'features/company-intel/src/config/logging.ts') },
+      { find: '@company-intel/config', replacement: path.resolve(__dirname, 'features/company-intel/src/config/env.ts') },
+      { find: '@company-intel/ui/company-intel', replacement: path.resolve(__dirname, 'features/company-intel/src/ui/company-intel/index.ts') },
+      { find: '@company-intel/ui/company-intel/', replacement: `${path.resolve(__dirname, 'features/company-intel/src/ui/company-intel')}${path.sep}` },
+      { find: '@company-intel/ui', replacement: path.resolve(__dirname, 'features/company-intel/src/ui/primitives/index.ts') },
+      { find: '@company-intel/ui/', replacement: `${path.resolve(__dirname, 'features/company-intel/src/ui/primitives')}${path.sep}` },
+      { find: '@company-intel/shared/', replacement: `${path.resolve(__dirname, 'features/company-intel/src/shared')}${path.sep}` },
+      { find: '@company-intel/shared', replacement: path.resolve(__dirname, 'features/company-intel/src/shared/index.ts') },
+      { find: '@company-intel/server/', replacement: `${path.resolve(__dirname, 'features/company-intel/src/server')}${path.sep}` },
+      { find: '@company-intel/server', replacement: path.resolve(__dirname, 'features/company-intel/src/server/index.ts') },
+      { find: '@company-intel/feature/', replacement: `${path.resolve(__dirname, 'features/company-intel/src')}${path.sep}` },
+      { find: '@company-intel/feature', replacement: path.resolve(__dirname, 'features/company-intel/src/index.ts') },
       { find: '@', replacement: path.resolve(__dirname) },
-      { find: '@agenai/logging', replacement: path.resolve(__dirname, 'lib/logging.ts') },
-      { find: '@agenai/config', replacement: path.resolve(__dirname, 'lib/config.ts') },
-      { find: '@agenai/ui', replacement: path.resolve(__dirname, 'components/ui/index.ts') },
-      { find: '@agenai/ui/', replacement: path.resolve(__dirname, 'components/ui/') },
     ],
   },
+  plugins: [],
 });

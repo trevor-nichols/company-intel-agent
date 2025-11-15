@@ -1,3 +1,6 @@
+packages:
+  - features/*
+
 onlyBuiltDependencies:
   - '@swc/core'
   - esbuild

@@ -140,6 +140,7 @@ All routes live under `/api/company-intel` and run on the Node.js runtime.
 | `GET` | `/runs/:snapshotId/stream` | Reconnects to an active run, replays buffered frames, and resumes the live SSE stream.
 | `DELETE` | `/runs/:snapshotId` | Cancels the active run (idempotent). On success the stream emits `run-cancelled` and the snapshot is pruned.
 | `GET` | `/snapshots/:id` | Returns a fully serialized snapshot (profile summaries, overview text, scrape stats) so the UI can hydrate historical runs or gate chat readiness.
+| `POST` | `/snapshots/:id/chat` | Streams chat completions for a snapshot. **Requires** `Accept: text/event-stream`; responds with `[DONE]` upon completion.
 | `GET` | `/snapshots/:id/export` | Generates a PDF export (`Content-Disposition: attachment`).
 
 ### SSE Contract

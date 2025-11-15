@@ -268,7 +268,7 @@ export const createCompanyIntelHandlers = ({
         },
       });
     }),
-    http.post(`${API_BASE}/snapshots/:id/chat/stream`, async ({ params }) => {
+    http.post(`${API_BASE}/snapshots/:id/chat`, async ({ params }) => {
       const rawParam = params.id;
       const idRaw = Array.isArray(rawParam) ? rawParam[0] ?? '' : rawParam ?? '';
       const parsedId = Number.parseInt(idRaw, 10);

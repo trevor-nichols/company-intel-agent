@@ -43,7 +43,7 @@ export const useCompanyIntelChat = (options: UseCompanyIntelChatOptions = {}) =>
         throw new Error('snapshotId is required to start a chat');
       }
 
-      const path = `/snapshots/${snapshotId}/chat/stream`;
+      const path = `/snapshots/${snapshotId}/chat`;
 
       abortRef.current?.abort();
       const controller = new AbortController();

@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-import type { CompanyIntelServer } from '@/server/bridge';
+import type { CompanyIntelServer } from '@company-intel/feature/server/bridge';
 
 const getSnapshotByIdMock = vi.fn();
 
-vi.mock('@/server/bootstrap', () => ({
+vi.mock('@company-intel/feature/server/bootstrap', () => ({
   getCompanyIntelEnvironment: () => ({
     server: {
       getSnapshotById: getSnapshotByIdMock,

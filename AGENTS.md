@@ -12,7 +12,7 @@ Deliver professional code (strict TS, tests, CI, docs) with **no private deps**.
 * **Module boundaries:** UI ↔ API ↔ Server. The UI never imports server code directly.
 * **Streaming:** use **SSE** (`text/event-stream`) with `[DONE]` terminator; follow the event schema.
 * **Validation:** all model outputs validated with **zod**; never trust raw JSON.
-* **Public-only deps:** replace `@agenai/*` with local **vendor shims** or public libs.
+* **Public-only deps:** replace `@company-intel/*` (or similar scoped shims) with local **vendor shims** or public libs.
 * **Determinism:** small, readable functions; explicit types; no implicit `any`.
 * **Observability:** JSON-ish logs for phases; include model/response ids when available.
 
@@ -131,7 +131,7 @@ Redis keys (optional):
 * `pnpm test` (unit + SSE contract)
 * `pnpm build`
 * `pnpm scan` (gitleaks) — zero findings
-* No unresolved `@agenai/*` imports
+* No unresolved `@company-intel/*` imports
 
 ## 12) Testing scope
 
@@ -151,7 +151,7 @@ Redis keys (optional):
 
 * `lib/logging.ts` → `logger.info|warn|error|debug` to `console`
 * `lib/config.ts` → `getEnvVar(key) | requireEnvVar(key)`
-* `components/ui/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `Markdown` (`react-markdown`) and `ShimmeringText` (CSS).
+* `features/company-intel/src/ui/primitives/*` → public shim for `card, badge, input, button, textarea, tooltip, dialog, separator, avatar, skeleton, scroll-area`, plus `Markdown` (`react-markdown`) and `ShimmeringText` (CSS).
 
 ## 15) Command cheat-sheet
 

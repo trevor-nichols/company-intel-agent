@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CompanyIntelStreamEvent } from '@/shared/company-intel/types';
+import type { CompanyIntelStreamEvent } from '@company-intel/feature/shared/types';
 
 const startRunMock = vi.fn();
 const subscribeMock = vi.fn();
 
-vi.mock('@/server/bootstrap', () => ({
+vi.mock('@company-intel/feature/server/bootstrap', () => ({
   getCompanyIntelEnvironment: () => ({
     server: {
       runCollection: vi.fn(),

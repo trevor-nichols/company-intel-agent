@@ -1,4 +1,4 @@
-import { CompanyIntelPanel, CompanyIntelProviders } from '@/components/company-intel';
+import { CompanyIntelPanel, CompanyIntelProviders } from '@company-intel/ui/company-intel';
 
 export default function HomePage(): JSX.Element {
   return (

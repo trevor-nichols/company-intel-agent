@@ -1,27 +1,12 @@
 import { NextRequest } from 'next/server';
-
-import { jsonResponse } from '@/server/handlers';
-import { getCompanyIntelEnvironment } from '@/server/bootstrap';
+import '@/app/api/company-intel/config';
+import { getCompanyIntelEnvironment } from '@company-intel/feature/server/bootstrap';
+import { handleRunCancel } from '@company-intel/feature/api/runCancel';
+import { toNextResponse } from '@company-intel/feature/adapters/next/http';
 
 export async function DELETE(_request: NextRequest, context: { params: { snapshotId: string } }) {
-  const snapshotIdRaw = context.params.snapshotId;
-  const snapshotId = Number.parseInt(snapshotIdRaw, 10);
-
-  if (!Number.isFinite(snapshotId)) {
-    return jsonResponse({ error: 'Invalid snapshot id' }, { status: 400 });
-  }
-
+  const snapshotId = Number.parseInt(context.params.snapshotId, 10);
   const { runtime } = getCompanyIntelEnvironment();
-  const activeRun = runtime.getActiveRunBySnapshot(snapshotId);
-
-  if (!activeRun || activeRun.status !== 'running') {
-    return jsonResponse({ error: 'No active run found for the provided snapshot id.' }, { status: 404 });
-  }
-
-  const cancelled = runtime.cancel(snapshotId, 'Cancelled by user request');
-  if (!cancelled) {
-    return jsonResponse({ error: 'Unable to cancel run.' }, { status: 409 });
-  }
-
-  return jsonResponse({ success: true });
+  const result = handleRunCancel(runtime, snapshotId);
+  return toNextResponse(result);
 }

@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
-import type { CompanyIntelClientProviderProps } from '@/components/company-intel/context/CompanyIntelClientContext';
-import { CompanyIntelProviders } from '@/components/company-intel/hooks';
+import type { CompanyIntelClientProviderProps } from '@company-intel/ui/company-intel/context/CompanyIntelClientContext';
+import { CompanyIntelProviders } from '@company-intel/ui/company-intel/hooks';
 
 export interface MockCompanyIntelProviderProps extends Omit<CompanyIntelClientProviderProps, 'children'> {
   readonly children: ReactNode;

@@ -18,7 +18,7 @@ const openAIStub = {
   },
 };
 
-vi.mock('@/server/bootstrap', () => ({
+vi.mock('@company-intel/feature/server/bootstrap', () => ({
   getCompanyIntelEnvironment: () => ({
     persistence: {
       getSnapshotById,
@@ -29,7 +29,7 @@ vi.mock('@/server/bootstrap', () => ({
   }),
 }));
 
-vi.mock('@/server/agents/shared/openai', () => ({
+vi.mock('@company-intel/feature/server/agents/shared/openai', () => ({
   resolveOpenAIClient: () => openAIStub,
 }));
 

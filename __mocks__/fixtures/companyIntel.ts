@@ -18,7 +18,7 @@ import type {
   CompanyProfileSnapshot,
   CompanyProfileSnapshotStatus,
   TriggerCompanyIntelResult,
-} from '../../components/company-intel/types';
+} from '@company-intel/ui/company-intel/types';
 
 const keyOfferings: CompanyProfileKeyOffering[] = [
   {

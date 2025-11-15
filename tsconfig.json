@@ -30,17 +30,44 @@
       "@app/*": [
         "./app/*"
       ],
-      "@agenai/logging": [
-        "./lib/logging"
+      "@company-intel/logging": [
+        "./features/company-intel/src/config/logging"
       ],
-      "@agenai/config": [
-        "./lib/config"
+      "@company-intel/config": [
+        "./features/company-intel/src/config/env"
       ],
-      "@agenai/ui": [
-        "./components/ui/index"
+      "@company-intel/ui": [
+        "./features/company-intel/src/ui/primitives/index"
       ],
-      "@agenai/ui/*": [
-        "./components/ui/*"
+      "@company-intel/ui/*": [
+        "./features/company-intel/src/ui/primitives/*"
+      ],
+      "@company-intel/ui/lib/*": [
+        "./features/company-intel/src/ui/lib/*"
+      ],
+      "@company-intel/ui/company-intel": [
+        "./features/company-intel/src/ui/company-intel/index"
+      ],
+      "@company-intel/ui/company-intel/*": [
+        "./features/company-intel/src/ui/company-intel/*"
+      ],
+      "@company-intel/shared": [
+        "./features/company-intel/src/shared"
+      ],
+      "@company-intel/shared/*": [
+        "./features/company-intel/src/shared/*"
+      ],
+      "@company-intel/server": [
+        "./features/company-intel/src/server/index"
+      ],
+      "@company-intel/server/*": [
+        "./features/company-intel/src/server/*"
+      ],
+      "@company-intel/feature": [
+        "./features/company-intel/src/index"
+      ],
+      "@company-intel/feature/*": [
+        "./features/company-intel/src/*"
       ]
     },
     "plugins": [

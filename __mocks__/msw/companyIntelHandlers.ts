@@ -8,7 +8,7 @@
 
 import { HttpResponse, delay, http } from 'msw';
 
-import type { TriggerCompanyIntelResult } from '../../components/company-intel/types';
+import type { TriggerCompanyIntelResult } from '@company-intel/ui/company-intel/types';
 
 import {
   companyIntelApiPayload,

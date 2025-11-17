@@ -95,10 +95,8 @@ function formatGeneratedTimestamp(date: Date): { readonly label: string; readonl
   const iso = date.toISOString();
   const formatter = new Intl.DateTimeFormat('en-US', {
     dateStyle: 'long',
-    timeStyle: 'short',
-    timeZone: 'UTC',
   });
-  const label = `${formatter.format(date)} UTC`;
+  const label = formatter.format(date);
   return { label, iso };
 }
 

@@ -6,6 +6,8 @@ Build a public-ready **Company-Intel Agent** codebase that runs end-to-end:
 **map → scrape → structured outputs → overview → SSE → persist → export PDF**
 Deliver professional code (strict TS, tests, CI, docs) with **no private deps**.
 
+**Company-Intel Agent** is a reusable feature module + Next.js app that, given a company website, uses Tavily to map & scrape key pages, runs two GPT-5.1 Responses workflows (structured profile + narrative overview) with streamed reasoning, persists the result as a snapshot, publishes an OpenAI vector store of those pages, exposes that snapshot over a chat agent with file_search, and surfaces all of it via SSE to a React UI that lets you map, curate, run, inspect history, chat against snapshots, and export branded PDFs.
+
 ## 2) Ground rules (non-negotiables)
 
 * **Security:** never commit secrets. Use `.env.example`. Run a secret scan before PR.

@@ -25,7 +25,8 @@ const styles = StyleSheet.create({
   //                Layout containers
   // ------------------------------------------------------------------------------------------------
   page: {
-    padding: 40,
+    paddingHorizontal: 40,
+    paddingVertical: 36,
     backgroundColor: '#f8f8f6',
     color: '#141414',
     fontFamily: 'Helvetica',
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e4e4df',
     borderBottomStyle: 'solid',
     paddingBottom: 20,
-    marginBottom: 26,
+    marginBottom: 20,
   },
   headerTop: {
     flexDirection: 'row',
@@ -48,7 +49,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   section: {
-    marginBottom: 26,
+    marginBottom: 20,
+  },
+  sectionCompact: {
+    marginBottom: 12,
+  },
+  sectionBreak: {
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 12,
@@ -62,20 +69,22 @@ const styles = StyleSheet.create({
     color: '#7f7f7b',
   },
   sectionCard: {
-    marginTop: 12,
+    marginTop: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e4e4df',
     backgroundColor: '#ffffff',
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
   sectionCardSoft: {
-    marginTop: 12,
+    marginTop: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e4e4df',
     backgroundColor: '#fcfcfb',
-    padding: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   sectionBody: {
     fontSize: 11,
@@ -108,21 +117,25 @@ const styles = StyleSheet.create({
   },
   statRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 18,
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
+    marginTop: 14,
   },
   statCard: {
     flexGrow: 1,
-    flexBasis: '45%',
-    minWidth: 120,
+    flexBasis: '33%',
+    minWidth: 0,
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e7e7e3',
-    marginRight: 10,
-    marginBottom: 10,
+    marginRight: 12,
+    marginBottom: 0,
+  },
+  statCardLast: {
+    marginRight: 0,
   },
   statLabel: {
     fontSize: 9,
@@ -206,11 +219,22 @@ const styles = StyleSheet.create({
   },
 });
 
-function renderPrimaryIndustries(primaryIndustries: readonly string[]): ReactElement {
+interface SectionRenderOptions {
+  readonly spacing?: 'default' | 'compact';
+}
+
+function renderPrimaryIndustries(
+  primaryIndustries: readonly string[],
+  options: SectionRenderOptions = {},
+): ReactElement {
   const hasIndustries = primaryIndustries.length > 0;
+  const containerStyles = [styles.section];
+  if (options.spacing === 'compact') {
+    containerStyles.push(styles.sectionCompact);
+  }
 
   return (
-    <View style={styles.section}>
+    <View style={containerStyles}>
       <Text style={styles.sectionTitle}>Primary industries</Text>
       <Text style={styles.sectionDescription}>Sectors most frequently referenced across your content.</Text>
       <View style={styles.sectionCard}>
@@ -234,14 +258,14 @@ function renderKeyOfferings(keyOfferings: CompanyIntelReportDocumentProps['keyOf
   const hasOfferings = keyOfferings.length > 0;
 
   return (
-    <View style={styles.section}>
+    <View break style={[styles.section, styles.sectionBreak]}>
       <Text style={styles.sectionTitle}>Key offerings</Text>
       <Text style={styles.sectionDescription}>Products and services highlighted on your site.</Text>
       <View style={styles.sectionCard}>
         {hasOfferings ? (
           <View style={styles.offeringList}>
             {keyOfferings.map((offering, index) => (
-              <View key={`${offering.title}-${index}`} style={styles.offeringCard}>
+              <View key={`${offering.title}-${index}`} style={styles.offeringCard} wrap={false}>
                 <Text style={styles.offeringTitle}>{offering.title}</Text>
                 {offering.description ? (
                   <Text style={styles.offeringDescription}>{offering.description}</Text>
@@ -261,14 +285,14 @@ function renderValueProps(valueProps: readonly string[]): ReactElement {
   const hasValueProps = valueProps.length > 0;
 
   return (
-    <View style={styles.section}>
+    <View break style={[styles.section, styles.sectionBreak]}>
       <Text style={styles.sectionTitle}>Value propositions</Text>
       <Text style={styles.sectionDescription}>Core differentiators surfaced across your public pages.</Text>
       <View style={styles.sectionCard}>
         {hasValueProps ? (
           <View style={styles.valuePropList}>
             {valueProps.map((value, index) => (
-              <View key={`${value}-${index}`} style={styles.valuePropCard}>
+              <View key={`${value}-${index}`} style={styles.valuePropCard} wrap={false}>
                 <Text style={styles.valuePropText}>{value}</Text>
               </View>
             ))}
@@ -295,6 +319,7 @@ export function CompanyIntelReportDocument({
   const valuePropsToDisplay = valueProps ?? [];
   const industriesToDisplay = primaryIndustries ?? [];
   const offeringsToDisplay = keyOfferings ?? [];
+  const primarySectionSpacing = overview ? 'compact' : 'default';
 
   return (
     <Document author="AgenAI" title={`${companyName} · Company Intel Snapshot`}>
@@ -313,18 +338,24 @@ export function CompanyIntelReportDocument({
 
           {stats.length > 0 ? (
             <View style={styles.statRow}>
-              {stats.map(stat => (
-                <View key={stat.label} style={styles.statCard}>
-                  <Text style={styles.statLabel}>{stat.label}</Text>
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                </View>
-              ))}
+              {stats.map((stat, index) => {
+                const cardStyle =
+                  index === stats.length - 1
+                    ? [styles.statCard, styles.statCardLast]
+                    : styles.statCard;
+                return (
+                  <View key={stat.label} style={cardStyle}>
+                    <Text style={styles.statLabel}>{stat.label}</Text>
+                    <Text style={styles.statValue}>{stat.value}</Text>
+                  </View>
+                );
+              })}
             </View>
           ) : null}
         </View>
 
         {overview ? (
-          <View style={styles.section}>
+          <View style={[styles.section, styles.sectionCompact]}>
             <Text style={styles.sectionTitle}>Executive overview</Text>
             <Text style={styles.sectionDescription}>AI-generated narrative from the latest run.</Text>
             <View style={styles.sectionCardSoft}>
@@ -333,7 +364,7 @@ export function CompanyIntelReportDocument({
           </View>
         ) : null}
 
-        {renderPrimaryIndustries(industriesToDisplay)}
+        {renderPrimaryIndustries(industriesToDisplay, { spacing: primarySectionSpacing })}
         {renderKeyOfferings(offeringsToDisplay)}
         {renderValueProps(valuePropsToDisplay)}
       </Page>

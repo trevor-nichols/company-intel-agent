@@ -55,6 +55,8 @@ STRUCTURED_REASONING_EFFORT=medium # low|medium|high
 OVERVIEW_REASONING_EFFORT=medium # low|medium|high
 CHAT_REASONING_EFFORT=low # low|medium|high
 REDIS_URL=
+DATABASE_URL=
+PERSISTENCE_BACKEND= # postgres|redis|memory
 ALLOW_ORIGINS=http://localhost:3000
 ```
 
@@ -101,7 +103,7 @@ Events (in practice you’ll see a subset, in this order):
 * `run-error` `{ message }`
 * **Terminal:** send `data: [DONE]` and close.
 
-## 9) Persistence contract (default memory, optional Redis)
+## 9) Persistence contract (memory, Redis, Postgres)
 
 Implement `CompanyIntelPersistence` with:
 
@@ -109,6 +111,12 @@ Implement `CompanyIntelPersistence` with:
 * **Snapshots** (global newest→oldest list)
 * `replaceSnapshotPages(snapshotId, pages[])` writes normalized page records
 * Serialize dates to ISO at boundaries; parse on read
+
+Adapters:
+
+* **Postgres + Drizzle** (`DATABASE_URL` / `PERSISTENCE_BACKEND=postgres`): production-ready, powers downstream syncing + resume story.
+* **Redis** (`REDIS_URL`): fast dev/prod cache backed by ioredis.
+* **Memory**: zero-config fallback for Storybook/demo runs.
 
 Redis keys (optional):
 `ci:profile` • `ci:snapshot:<id>` • `ci:snapshots`

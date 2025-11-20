@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import postgres from 'postgres';
 
-const RESOLVED_DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://companyintel:companyintel@localhost:55432/companyintel';
+const RESOLVED_DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://companyintel:companyintel@localhost:5432/companyintel';
 const MAX_ATTEMPTS = Number(process.env.DB_WAIT_ATTEMPTS ?? 20);
 const WAIT_INTERVAL_MS = Number(process.env.DB_WAIT_INTERVAL_MS ?? 3000);
 

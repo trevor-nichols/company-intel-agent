@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: companyintel
       POSTGRES_DB: companyintel
     ports:
-      - '55432:5432'
+      - '5432:5432'
     volumes:
       - companyintel-db:/var/lib/postgresql/data
     healthcheck:

@@ -55,10 +55,10 @@ Spin up a disposable Postgres the same way CI will run it:
 
 ```bash
 docker compose up postgres -d
-# waits until pg_isready passes, creates companyintel/companyintel db/user mapped to localhost:55432
+# waits until pg_isready passes, creates companyintel/companyintel db/user mapped to localhost:5432
 
 # Run migrations once the container is healthy
-DATABASE_URL=postgres://companyintel:companyintel@localhost:55432/companyintel pnpm db:migrate:docker
+DATABASE_URL=postgres://companyintel:companyintel@localhost:5432/companyintel pnpm db:migrate:docker
 ```
 
 With that in place you can set `DATABASE_URL` + `PERSISTENCE_BACKEND=postgres` in `.env` and run `pnpm dev` normally.
@@ -71,7 +71,7 @@ When you want to prove the Postgres adapter matches in-memory behavior, make sur
 TEST_DATABASE_ALLOW_DROP=true pnpm test:postgres
 ```
 
-The script defaults `TEST_DATABASE_URL` to `postgres://companyintel:companyintel@localhost:55432/companyintel_test`, aligns `DATABASE_URL` with it, and sets `TEST_DATABASE_ALLOW_DROP=true` so the helper can recreate schemas safely. CI can override `TEST_DATABASE_URL` to its own throwaway DB if needed.
+The script defaults `TEST_DATABASE_URL` to `postgres://companyintel:companyintel@localhost:5432/companyintel_test`, aligns `DATABASE_URL` with it, and sets `TEST_DATABASE_ALLOW_DROP=true` so the helper can recreate schemas safely. CI can override `TEST_DATABASE_URL` to its own throwaway DB if needed.
 
 ### Syncing Snapshots into Postgres & Downstream Agents
 

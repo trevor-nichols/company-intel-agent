@@ -158,7 +158,7 @@ When Postgres is enabled, snapshots land in `company_profiles`, `company_snapsho
 TEST_DATABASE_ALLOW_DROP=true pnpm test:postgres
 ```
 
-The helper targets `postgres://companyintel:companyintel@localhost:55432/companyintel_test` by default and will refuse to run destructive setup unless `TEST_DATABASE_ALLOW_DROP=true` is present.
+The helper targets `postgres://companyintel:companyintel@localhost:5432/companyintel_test` by default and will refuse to run destructive setup unless `TEST_DATABASE_ALLOW_DROP=true` is present.
 
 ```ts
 import postgres from 'postgres';

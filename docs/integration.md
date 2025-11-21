@@ -27,6 +27,15 @@ configureCompanyIntelFeature({
 
 const { server, runtime, persistence } = createCompanyIntelEnvironment({
   redisUrl: process.env.REDIS_URL,
+  databaseUrl: process.env.DATABASE_URL,
+  persistenceBackend:
+    process.env.PERSISTENCE_BACKEND === 'postgres'
+      ? 'postgres'
+      : process.env.PERSISTENCE_BACKEND === 'redis'
+        ? 'redis'
+        : process.env.PERSISTENCE_BACKEND === 'memory'
+          ? 'memory'
+          : undefined,
 });
 ```
 
@@ -132,3 +141,41 @@ data: [DONE]
 ```
 
 Ensure you keep the headers listed in `AGENTS.md §8` when integrating with another HTTP stack.
+
+**Persistence selection:**
+
+- If both `DATABASE_URL` and `REDIS_URL` are set you should set `PERSISTENCE_BACKEND` (`postgres` | `redis` | `memory`) to make the choice explicit. Otherwise bootstrap logs a warning and defaults to Postgres.
+- If only `DATABASE_URL` is set (and `PERSISTENCE_BACKEND` is unset) the feature uses the Postgres + Drizzle adapter.
+- If only `REDIS_URL` is set (and `PERSISTENCE_BACKEND` is unset) the Redis adapter is used.
+- Set `PERSISTENCE_BACKEND=memory` to force in-memory storage even when URLs are available.
+- You can also inject a custom adapter via the `persistence` override when embedding the package.
+
+## 7. Syncing Snapshots into Postgres / Downstream Systems
+
+When Postgres is enabled, snapshots land in `company_profiles`, `company_snapshots`, and `company_snapshot_pages`. A simple worker can mirror those rows into your CRM or agent prompt store. To run the Postgres parity suite locally:
+
+```bash
+TEST_DATABASE_ALLOW_DROP=true pnpm test:postgres
+```
+
+The helper targets `postgres://companyintel:companyintel@localhost:5432/companyintel_test` by default and will refuse to run destructive setup unless `TEST_DATABASE_ALLOW_DROP=true` is present.
+
+```ts
+import postgres from 'postgres';
+
+const sql = postgres(process.env.DATABASE_URL!);
+const lastSynced = Number(process.env.LAST_SYNCED_SNAPSHOT_ID ?? 0);
+const ready = await sql`
+  select id, summaries, vector_store_id
+  from company_snapshots
+  where status = 'complete' and id > ${lastSynced}
+  order by id asc
+`;
+
+for (const snapshot of ready) {
+  // hydrate downstream agents here
+  process.env.LAST_SYNCED_SNAPSHOT_ID = String(snapshot.id);
+}
+```
+
+Because the JSON payloads are already validated by Zod, you can map values like `summaries -> structuredProfile -> valueProps` directly into template variables (`{company_tagline}`, `{core_offerings}`, etc.). Mentioning this pipeline (“Company-Intel snapshots stream into Postgres via Drizzle and power downstream agents”) is a strong resume bullet.

@@ -12,7 +12,7 @@ import { createOpenAIClient } from './integrations/openai/client';
 import { createTavilyClient, type TavilyClient } from './integrations/tavily/client';
 import type { TavilyExtractDepth } from './integrations/tavily/types';
 import type { OpenAIClientLike } from './agents/shared/openai';
-import { createMemoryPersistence, createRedisPersistence } from './persistence';
+import { createMemoryPersistence, createPostgresPersistence, createRedisPersistence } from './persistence';
 import { CompanyIntelRunCoordinator } from './runtime/runCoordinator';
 import { isReasoningEffortLevel, type ReasoningEffortLevel } from './agents/shared/reasoning';
 
@@ -27,6 +27,8 @@ const DEFAULT_CHAT_REASONING_EFFORT: ReasoningEffortLevel = 'low';
 export interface CompanyIntelBootstrapOverrides {
   readonly persistence?: CompanyIntelPersistence;
   readonly redisUrl?: string | null;
+  readonly databaseUrl?: string | null;
+  readonly persistenceBackend?: 'postgres' | 'redis' | 'memory';
   readonly openAIClient?: OpenAIClientLike;
   readonly tavilyClient?: TavilyClient;
   readonly tavilyExtractDepth?: TavilyExtractDepth;
@@ -57,17 +59,67 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 let cachedEnvironment: CompanyIntelEnvironment | null = globalThis.__companyIntelEnvironment ?? null;
 
-function resolvePersistence(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): CompanyIntelPersistence {
+type PersistenceBackend = 'postgres' | 'redis' | 'memory' | 'custom';
+
+type PersistenceResolution = {
+  readonly adapter: CompanyIntelPersistence;
+  readonly backend: PersistenceBackend;
+};
+
+function normalizeBackend(candidate?: string | null): Exclude<PersistenceBackend, 'custom'> | undefined {
+  if (!candidate) {
+    return undefined;
+  }
+  const normalized = candidate.trim().toLowerCase();
+  if (normalized === 'postgres' || normalized === 'redis' || normalized === 'memory') {
+    return normalized;
+  }
+  return undefined;
+}
+
+function resolvePersistence(overrides: CompanyIntelBootstrapOverrides, log: typeof defaultLogger): PersistenceResolution {
   if (overrides.persistence) {
-    return overrides.persistence;
+    return { adapter: overrides.persistence, backend: 'custom' } satisfies PersistenceResolution;
   }
 
+  const envPreference = normalizeBackend(getEnvVar('PERSISTENCE_BACKEND'));
+  const requestedBackend = overrides.persistenceBackend ?? envPreference;
+  const databaseUrl = overrides.databaseUrl ?? getEnvVar('DATABASE_URL');
   const redisUrl = overrides.redisUrl ?? getEnvVar('REDIS_URL');
-  if (redisUrl) {
-    return createRedisPersistence({ url: redisUrl, logger: log });
+
+  if (!requestedBackend && databaseUrl && redisUrl) {
+    log.warn('company-intel:persistence:conflict', {
+      message: 'Both DATABASE_URL and REDIS_URL are set with no PERSISTENCE_BACKEND; defaulting to postgres.',
+    });
   }
 
-  return createMemoryPersistence({ logger: log });
+  const shouldUsePostgres = requestedBackend === 'postgres' || (!requestedBackend && databaseUrl);
+  if (shouldUsePostgres) {
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL must be set to use Postgres persistence.');
+    }
+    return {
+      adapter: createPostgresPersistence({ url: databaseUrl, logger: log }),
+      backend: 'postgres',
+    } satisfies PersistenceResolution;
+  }
+
+  if (requestedBackend === 'redis' && !redisUrl) {
+    throw new Error('REDIS_URL must be defined when PERSISTENCE_BACKEND=redis.');
+  }
+
+  const shouldUseRedis = requestedBackend === 'redis' || (!requestedBackend && Boolean(redisUrl));
+  if (shouldUseRedis && redisUrl) {
+    return {
+      adapter: createRedisPersistence({ url: redisUrl, logger: log }),
+      backend: 'redis',
+    } satisfies PersistenceResolution;
+  }
+
+  return {
+    adapter: createMemoryPersistence({ logger: log }),
+    backend: 'memory',
+  } satisfies PersistenceResolution;
 }
 
 function resolveOpenAI(overrides: CompanyIntelBootstrapOverrides): OpenAIClientLike {
@@ -167,7 +219,7 @@ function resolveChatReasoningEffort(overrides: CompanyIntelBootstrapOverrides): 
 
 export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOverrides = {}): CompanyIntelEnvironment {
   const log = overrides.logger ?? defaultLogger;
-  const persistence = resolvePersistence(overrides, log);
+  const { adapter: persistence, backend } = resolvePersistence(overrides, log);
   const openAI = resolveOpenAI(overrides);
   const tavily = resolveTavily(overrides, log);
   const tavilyExtractDepth = resolveTavilyExtractDepth(overrides);
@@ -194,6 +246,10 @@ export function createCompanyIntelEnvironment(overrides: CompanyIntelBootstrapOv
   const runtime = new CompanyIntelRunCoordinator({
     server,
     logger: log,
+  });
+
+  log.info('company-intel:persistence:selected', {
+    backend,
   });
 
   return { server, persistence, runtime, openAI, chatModel, chatReasoningEffort } satisfies CompanyIntelEnvironment;

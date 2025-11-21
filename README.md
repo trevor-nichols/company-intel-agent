@@ -40,7 +40,7 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
    ```
    Storybook runs at `http://localhost:6007` and uses MSW fixtures to simulate streaming states.
 
-### Database Tooling (Postgres milestone)
+### Database Tooling
 
 The Postgres adapter work (MILESTONE_POSTGRES_IMPLEMENTATION) ships with Drizzle migrations so schema changes stay deterministic:
 
@@ -49,7 +49,7 @@ The Postgres adapter work (MILESTONE_POSTGRES_IMPLEMENTATION) ships with Drizzle
 
 You only need these when working on the Postgres backend; Redis/memory flows remain unchanged.
 
-### Docker (local Postgres)
+### Docker / Postgres
 
 Spin up a disposable Postgres the same way CI will run it:
 

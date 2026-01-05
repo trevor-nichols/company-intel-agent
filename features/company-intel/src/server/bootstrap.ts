@@ -16,10 +16,10 @@ import { createMemoryPersistence, createPostgresPersistence, createRedisPersiste
 import { CompanyIntelRunCoordinator } from './runtime/runCoordinator';
 import { isReasoningEffortLevel, type ReasoningEffortLevel } from './agents/shared/reasoning';
 
-const DEFAULT_STRUCTURED_MODEL = 'gpt-5.1';
-const DEFAULT_OVERVIEW_MODEL = 'gpt-5.1';
+const DEFAULT_STRUCTURED_MODEL = 'gpt-5.2';
+const DEFAULT_OVERVIEW_MODEL = 'gpt-5.2';
 const DEFAULT_TAVILY_EXTRACT_DEPTH: TavilyExtractDepth = 'basic';
-const DEFAULT_CHAT_MODEL = 'gpt-5.1';
+const DEFAULT_CHAT_MODEL = 'gpt-5.2';
 const DEFAULT_STRUCTURED_REASONING_EFFORT: ReasoningEffortLevel = 'medium';
 const DEFAULT_OVERVIEW_REASONING_EFFORT: ReasoningEffortLevel = 'medium';
 const DEFAULT_CHAT_REASONING_EFFORT: ReasoningEffortLevel = 'low';

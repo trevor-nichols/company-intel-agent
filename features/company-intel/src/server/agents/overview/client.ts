@@ -66,7 +66,7 @@ export async function generateCompanyOverview(
 
   const userMessage = `Domain: ${params.domain}\n\n${instructions}\n\n<pages>\n${contentPayload}\n</pages>`;
 
-  const model = params.model ?? 'gpt-5.1';
+  const model = params.model ?? 'gpt-5.2';
 
   const requestPayload: ResponseCreateParams = {
     model,

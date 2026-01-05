@@ -23,7 +23,7 @@ vi.mock('@company-intel/feature/server/bootstrap', () => ({
         create: vi.fn(),
       },
     },
-    chatModel: 'gpt-5.1',
+    chatModel: 'gpt-5.2',
     chatReasoningEffort: 'low',
   }),
 }));

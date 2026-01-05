@@ -38,7 +38,7 @@ describe('createChatStream', () => {
     const result = await createChatStream({ snapshotId: 1, body: { messages: [{ role: 'user', content: 'Ping' }] } }, {
       persistence,
       openAI: {} as OpenAIClientLike,
-      chatModel: 'gpt-5.1',
+      chatModel: 'gpt-5.2',
       chatReasoningEffort: 'low' as ReasoningEffortLevel,
     });
     expect(result.ok).toBe(false);
@@ -55,7 +55,7 @@ describe('createChatStream', () => {
       {
         persistence,
         openAI: {} as OpenAIClientLike,
-        chatModel: 'gpt-5.1',
+        chatModel: 'gpt-5.2',
         chatReasoningEffort: 'low' as ReasoningEffortLevel,
       },
     );

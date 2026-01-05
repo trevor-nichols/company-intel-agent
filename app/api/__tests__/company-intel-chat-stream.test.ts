@@ -24,7 +24,7 @@ vi.mock('@company-intel/feature/server/bootstrap', () => ({
       getSnapshotById,
     },
     openAI: openAIStub,
-    chatModel: 'gpt-5.1',
+    chatModel: 'gpt-5.2',
     chatReasoningEffort: 'low',
   }),
 }));
@@ -98,7 +98,7 @@ describe('Company intel chat stream route', () => {
           type: 'response.created' as const,
           response: {
             id: 'resp_stream',
-            model: 'gpt-5.1',
+            model: 'gpt-5.2',
             output: [],
           },
         };

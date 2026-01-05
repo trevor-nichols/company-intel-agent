@@ -54,7 +54,7 @@ function createEnv(overrides: Partial<CompanyIntelEnvironment>): CompanyIntelEnv
     persistence: overrides.persistence ?? ({} as CompanyIntelPersistence),
     runtime: overrides.runtime ?? ({} as CompanyIntelRunCoordinator),
     openAI: overrides.openAI ?? ({} as OpenAIClientLike),
-    chatModel: overrides.chatModel ?? 'gpt-5.1',
+    chatModel: overrides.chatModel ?? 'gpt-5.2',
     chatReasoningEffort: overrides.chatReasoningEffort ?? 'low',
   };
 }

@@ -18,7 +18,7 @@ An end-to-end Next.js agent for building company-intelligence experiences. The a
 - **Durable runs:** Active collections survive refreshes via a runtime coordinator backed by Redis. Clients can resume a stream or cancel the run with dedicated APIs.
 - **Historical snapshots:** Analysts can load any prior completed run back into the editor or chat via the snapshot detail API, hydrate drafts, and re-export PDFs without re-running the pipeline.
 - **Swappable persistence:** Choose in-memory for demos, Redis for fast prototyping, or Postgres + Drizzle for production auditing—all wired through the same `CompanyIntelPersistence` interface and selectable via `PERSISTENCE_BACKEND`.
-- **Operational guardrails:** JSON-ish logging, configurable origins, secret scanning, strict ESLint/Prettier, Vitest, and CI workflows baked in.
+- **Operational guardrails:** Configurable origins, secret scanning, strict ESLint/Prettier, Vitest, and CI workflows baked in.
 
 ## Quickstart
 Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
@@ -28,21 +28,21 @@ Prerequisites: Node.js ≥ 20.11, pnpm ≥ 9.
    cp .env.example .env
    ```
    You must provide `OPENAI_API_KEY` (Responses API) and `TAVILY_API_KEY` to run live collections.
-2. Install dependencies and start the dev server:
+2. Setup Docker
+  ```bash
+  docker compose up postgres -d && pnpm db:generate && pnpm db:migrate
+  ```
+
+3. Install dependencies and start the dev server:
    ```bash
    pnpm install
    pnpm dev
    ```
-3. Visit `http://localhost:3000` to use the demo workflow. By default the app uses in-memory persistence; set `REDIS_URL` to enable Redis-backed storage. For a production build run `pnpm build` followed by `pnpm start`.
-4. Launch Storybook (optional) to explore isolated UI states:
-   ```bash
-   pnpm storybook
-   ```
-   Storybook runs at `http://localhost:6007` and uses MSW fixtures to simulate streaming states.
+4. Visit `http://localhost:3000` to use the demo workflow. By default the app uses in-memory persistence; set `REDIS_URL` to enable Redis-backed storage. For a production build run `pnpm build` followed by `pnpm start`.
 
 ### Database Tooling
 
-The Postgres adapter work (MILESTONE_POSTGRES_IMPLEMENTATION) ships with Drizzle migrations so schema changes stay deterministic:
+The Postgres adapter work ships with Drizzle migrations so schema changes stay deterministic:
 
 - `pnpm db:generate` — diff `database/schema.ts` into `database/migrations/` (requires `DATABASE_URL` for Drizzle config).
 - `pnpm db:migrate` — apply migrations to the database referenced by `DATABASE_URL`.
@@ -152,6 +152,13 @@ For finer-grained control (e.g., tests), use `configureCompanyIntelEnv(customSou
 The integration steps below are identical regardless of distribution method.
 
 For a detailed integration guide (including server bootstrap, API mounting, and SSE expectations) see [`docs/integration.md`](docs/integration.md).
+
+### Storybook
+Launch Storybook (optional) to explore isolated UI states:
+   ```bash
+   pnpm storybook
+   ```
+   Storybook runs at `http://localhost:6007` and uses MSW fixtures to simulate streaming states.
 
 ## Environment
 
